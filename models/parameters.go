@@ -58,15 +58,6 @@ var (
 	// DateFormatRegex to store a regex of dd/mm/yyyy date format
 	DateFormatRegex = "(^\\d{4}\\-(0[1-9]|1[012])\\-(0[1-9]|[12][0-9]|3[01])$)"
 
-	// BatchSizeVoucherCodes to store a max length of data that need to be inserted for
-	BatchSizeVoucherCodes = 21845
-
 	// LetterBytes a string to generate random ID
 	LetterBytes = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-	// VoucherSMSMessage is a message for voucher sms notification
-	VoucherSMSMessage = "Selamat, Anda mendapatkan Voucher %s dengan kode %s Info: %s, %s"
-
-	// ErrSMSNotSent to store error sms not sent
-	ErrSMSNotSent = "Ref Transaksi: %s, Gagal mengirim SMS"
 )
