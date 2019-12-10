@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"gade/srv-gold-card/models"
+	"gade/srv-goldcard/models"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"gopkg.in/go-playground/validator.v9"

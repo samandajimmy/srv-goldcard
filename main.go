@@ -3,8 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"gade/srv-gold-card/middleware"
-	"gade/srv-gold-card/models"
+	"gade/srv-goldcard/middleware"
+	"gade/srv-goldcard/models"
 	"net/http"
 	"os"
 	"runtime"
@@ -72,20 +72,30 @@ func main() {
 }
 
 func ping(echTx echo.Context) error {
+	var body interface{}
+	var resps models.Response
+
 	res := echTx.Response()
 	rid := res.Header().Get(echo.HeaderXRequestID)
 	params := map[string]interface{}{"rid": rid}
+	apiRequest, err := models.NewClientRequest("https://apidigitaldev.pegadaian.co.id/v2", "application/json")
+
+	apiRequest.ApiRequest(echTx, "/profile/testing_go", "GET", body, &resps)
+
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	requestLogger := logrus.WithFields(logrus.Fields{"params": params})
-
 	requestLogger.Info("Start to ping server.")
-	// response := models.Response{}
-	// response.Status = models.StatusSuccess
-	// response.Message = "PONG!!"
+	response := models.Response{}
+	response.Status = models.StatusSuccess
+	response.Message = "PONG!!"
 
 	requestLogger.Info("End of ping server.")
 
-	return echTx.JSON(http.StatusOK, "response")
+	// return echTx.JSON(http.StatusOK, "response")
+	return echTx.JSON(http.StatusOK, resps)
 }
 
 func getDBConn() *sql.DB {
