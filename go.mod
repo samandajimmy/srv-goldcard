@@ -1,4 +1,4 @@
-module gade/srv-gold-card
+module gade/srv-goldcard
 
 go 1.13
 
