@@ -10,6 +10,7 @@ import (
 	"runtime"
 	"strings"
 
+	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -27,8 +28,8 @@ func init() {
 	loadEnv()
 	logrus.SetReportCaller(true)
 	formatter := &logrus.TextFormatter{
-		FullTimestamp: true,
-		// TimestampFormat: models.DateTimeFormatMillisecond + "000",
+		FullTimestamp:   true,
+		TimestampFormat: models.DateTimeFormatMillisecond + "000",
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 			tmp := strings.Split(f.File, "/")
 			filename := tmp[len(tmp)-1]
@@ -47,6 +48,12 @@ func main() {
 	defer dbConn.Close()
 	defer migrate.Close()
 
+	echoGroup := models.EchoGroup{
+		Admin: ech.Group("/admin"),
+		API:   ech.Group("/api"),
+		Token: ech.Group("/token"),
+	}
+
 	// contextTimeout, err := strconv.Atoi(os.Getenv(`CONTEXT_TIMEOUT`))
 
 	// if err != nil {
@@ -55,14 +62,11 @@ func main() {
 
 	// timeoutContext := time.Duration(contextTimeout) * time.Second
 
-	echoGroup := models.EchoGroup{
-		Admin: ech.Group("/admin"),
-		API:   ech.Group("/api"),
-		Token: ech.Group("/token"),
-	}
-
 	// load all middlewares
 	middleware.InitMiddleware(ech, echoGroup)
+
+	// REGISTRATIONS
+	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup)
 
 	// PING
 	ech.GET("/ping", ping)
@@ -78,9 +82,9 @@ func ping(echTx echo.Context) error {
 	res := echTx.Response()
 	rid := res.Header().Get(echo.HeaderXRequestID)
 	params := map[string]interface{}{"rid": rid}
-	apiRequest, err := models.NewClientRequest("https://apidigitaldev.pegadaian.co.id/v2", "application/json")
+	apiRequest, err := models.NewClientRequest("https://apidigitaldev.pegadaian.co.id/v2", "application/x-www-form-urlencoded")
 
-	apiRequest.ApiRequest(echTx, "/profile/testing_go", "GET", body, &resps)
+	apiRequest.ApiRequest(echTx, "/profile/testing_go", "POST", body, &resps)
 
 	if err != nil {
 		fmt.Println(err)
@@ -94,7 +98,6 @@ func ping(echTx echo.Context) error {
 
 	requestLogger.Info("End of ping server.")
 
-	// return echTx.JSON(http.StatusOK, "response")
 	return echTx.JSON(http.StatusOK, resps)
 }
 
