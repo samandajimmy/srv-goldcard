@@ -13,8 +13,8 @@ var response models.Response
 type RegistrationsHandler struct {
 }
 
-// NewRegistrationHandler represent to registration gold card
-func NewRegistrationHandler(echoGroup models.EchoGroup) {
+// NewRegistrationsHandler represent to registration gold card
+func NewRegistrationsHandler(echoGroup models.EchoGroup) {
 	handler := &RegistrationsHandler{}
 
 	// End Point For External
@@ -23,10 +23,10 @@ func NewRegistrationHandler(echoGroup models.EchoGroup) {
 
 // Registrations a handler to create a campaign
 func (reg *RegistrationsHandler) Registrations(c echo.Context) error {
-	var registration models.Registrations
+	var registrations models.Registrations
 
 	response = models.Response{}
-	err := c.Bind(&registration)
+	err := c.Bind(&registrations)
 
 	if err != nil {
 		response.Status = models.StatusError
@@ -36,7 +36,7 @@ func (reg *RegistrationsHandler) Registrations(c echo.Context) error {
 
 	apiRequest, err := models.NewClientRequest("https://apidigitaldev.pegadaian.co.id/v2", "application/x-www-form-urlencoded")
 
-	apiRequest.ApiRequest(c, "/profile/testing_go", "POST", registration, &response)
+	apiRequest.ApiRequest(c, "/profile/testing_go", "POST", registrations, &response)
 
 	if err != nil {
 		response.Status = models.StatusError

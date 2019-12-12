@@ -1,4 +1,4 @@
-package registration
+package registrations
 
 import (
 	"gade/srv-goldcard/models"

@@ -10,8 +10,7 @@ import (
 	"runtime"
 	"strings"
 
-	_registrationHttpDelivery "gade/srv-goldcard/registration/delivery/http"
-
+	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -29,7 +28,7 @@ func init() {
 	loadEnv()
 	logrus.SetReportCaller(true)
 	formatter := &logrus.TextFormatter{
-		FullTimestamp: true,
+		FullTimestamp:   true,
 		TimestampFormat: models.DateTimeFormatMillisecond + "000",
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 			tmp := strings.Split(f.File, "/")
@@ -55,19 +54,19 @@ func main() {
 		Token: ech.Group("/token"),
 	}
 
-	contextTimeout, err := strconv.Atoi(os.Getenv(`CONTEXT_TIMEOUT`))
+	// contextTimeout, err := strconv.Atoi(os.Getenv(`CONTEXT_TIMEOUT`))
 
-	if err != nil {
-		fmt.Println(err)
-	}
+	// if err != nil {
+	// 	fmt.Println(err)
+	// }
 
-	timeoutContext := time.Duration(contextTimeout) * time.Second
+	// timeoutContext := time.Duration(contextTimeout) * time.Second
 
 	// load all middlewares
 	middleware.InitMiddleware(ech, echoGroup)
 
-	// REGISTRATION
-	_registrationHttpDelivery.NewRegistrationHandler(echoGroup)
+	// REGISTRATIONS
+	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup)
 
 	// PING
 	ech.GET("/ping", ping)
