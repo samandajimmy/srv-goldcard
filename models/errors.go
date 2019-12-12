@@ -23,6 +23,9 @@ var (
 
 	// ErrRefIDStatus to not found ref_trx error message
 	ErrRefIDStatus = errors.New("Transaksi ID ")
+
+	// ErrReqUndefined to store undefine request body error message
+	ErrReqUndefined = errors.New("Request data tidak tersedia")
 )
 
 // DynamicErr to return parameterize errors

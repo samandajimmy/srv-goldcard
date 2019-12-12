@@ -84,7 +84,7 @@ func ping(echTx echo.Context) error {
 	params := map[string]interface{}{"rid": rid}
 	apiRequest, err := models.NewClientRequest("https://apidigitaldev.pegadaian.co.id/v2", "application/x-www-form-urlencoded")
 
-	apiRequest.ApiRequest(echTx, "/profile/testing_go", "POST", body, &resps)
+	apiRequest.APIRequest(echTx, "/profile/testing_go", "POST", body, &resps)
 
 	if err != nil {
 		fmt.Println(err)
