@@ -8,5 +8,5 @@ import (
 
 // UseCase represent the rewards usecases
 type UseCase interface {
-	TestRegistration(echo.Context, *models.Registration) error
+	Registrations(echo.Context, *models.Registrations) error
 }

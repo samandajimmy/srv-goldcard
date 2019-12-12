@@ -30,7 +30,7 @@ func init() {
 	logrus.SetReportCaller(true)
 	formatter := &logrus.TextFormatter{
 		FullTimestamp: true,
-		// TimestampFormat: models.DateTimeFormatMillisecond + "000",
+		TimestampFormat: models.DateTimeFormatMillisecond + "000",
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 			tmp := strings.Split(f.File, "/")
 			filename := tmp[len(tmp)-1]
@@ -55,19 +55,18 @@ func main() {
 		Token: ech.Group("/token"),
 	}
 
-	// contextTimeout, err := strconv.Atoi(os.Getenv(`CONTEXT_TIMEOUT`))
+	contextTimeout, err := strconv.Atoi(os.Getenv(`CONTEXT_TIMEOUT`))
 
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	// timeoutContext := time.Duration(contextTimeout) * time.Second
+	timeoutContext := time.Duration(contextTimeout) * time.Second
 
 	// load all middlewares
 	middleware.InitMiddleware(ech, echoGroup)
 
 	// REGISTRATION
-	// registrationUseCase := _registrationUseCase.NewCampaignUseCase(campaignRepository, rewardUseCase)
 	_registrationHttpDelivery.NewRegistrationHandler(echoGroup)
 
 	// PING
@@ -100,7 +99,6 @@ func ping(echTx echo.Context) error {
 
 	requestLogger.Info("End of ping server.")
 
-	// return echTx.JSON(http.StatusOK, "response")
 	return echTx.JSON(http.StatusOK, resps)
 }
 
