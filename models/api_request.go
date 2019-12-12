@@ -18,7 +18,6 @@ type Client struct {
 	UserAgent   string
 	HTTPClient  *http.Client
 	ContentType string
-	Payload     interface{} `json:"payload,omitempty"`
 }
 
 // NewClientRequest for create new client request
@@ -37,23 +36,23 @@ func NewClientRequest(baseURL string, contentType string) (Client, error) {
 	}, nil
 }
 
-// ApiRequest represent global API Request
-func (c *Client) ApiRequest(ctx echo.Context, pathName string, method string, body interface{}, strct interface{}) (*http.Response, error) {
+// APIRequest represent global API Request
+func (c *Client) APIRequest(ctx echo.Context, pathName string, method string, body interface{}, strct interface{}) (*http.Response, error) {
 	var jsonData []byte
-	var mapData map[string]interface{}
 
 	c.URL.Path += pathName
-
 	jsonData, err := json.Marshal(body)
+
 	if err != nil {
 		return nil, err
 	}
+
 	if body != nil {
 		switch ct := c.ContentType; ct {
 		case "application/x-www-form-urlencoded":
-			return c.requestUrlEncoded(method, jsonData, mapData, body, &strct)
-		case "application/json":
-			return c.requestJson(method, jsonData, body, &strct)
+			return c.requestURLEncoded(method, jsonData, body, &strct)
+		default:
+			return c.requestJSON(method, jsonData, body, &strct)
 		}
 	}
 
@@ -75,12 +74,16 @@ func (c *Client) do(req *http.Request, v interface{}) (*http.Response, error) {
 	return resp, err
 }
 
-func (c *Client) requestUrlEncoded(method string, jsonData []byte, mapData map[string]interface{}, body interface{}, strct interface{}) (*http.Response, error) {
+func (c *Client) requestURLEncoded(method string, jsonData []byte, body interface{}, strct interface{}) (*http.Response, error) {
+	var mapData map[string]interface{}
+
 	data := url.Values{}
 	json.Unmarshal(jsonData, &mapData)
+
 	for k, v := range mapData {
 		data.Set(k, fmt.Sprintf("%v", v))
 	}
+
 	req, err := http.NewRequest(method, c.URL.String(), strings.NewReader(data.Encode()))
 	req.Header.Set("Content-Type", c.ContentType)
 	req.Header.Set("Accept", c.ContentType)
@@ -94,17 +97,22 @@ func (c *Client) requestUrlEncoded(method string, jsonData []byte, mapData map[s
 	return response, nil
 }
 
-func (c *Client) requestJson(method string, jsonData []byte, body interface{}, strct interface{}) (*http.Response, error) {
+func (c *Client) requestJSON(method string, jsonData []byte, body interface{}, strct interface{}) (*http.Response, error) {
 	var buf io.ReadWriter
-	if body != nil {
-		buf = new(bytes.Buffer)
-		err := json.NewEncoder(buf).Encode(body)
-		if err != nil {
-			return nil, err
-		}
+
+	if body == nil {
+		return nil, ErrReqUndefined
+	}
+
+	buf = new(bytes.Buffer)
+	err := json.NewEncoder(buf).Encode(body)
+
+	if err != nil {
+		return nil, err
 	}
 
 	req, err := http.NewRequest(method, c.URL.String(), buf)
+
 	if err != nil {
 		return nil, err
 	}
@@ -112,10 +120,11 @@ func (c *Client) requestJson(method string, jsonData []byte, body interface{}, s
 	req.Header.Set("Content-Type", c.ContentType)
 	req.Header.Set("Accept", c.ContentType)
 	req.Header.Set("User-Agent", c.UserAgent)
-
 	response, err := c.do(req, &strct)
+
 	if err != nil {
 		return nil, err
 	}
+
 	return response, nil
 }

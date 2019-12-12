@@ -36,7 +36,7 @@ func (reg *RegistrationsHandler) Registrations(c echo.Context) error {
 
 	apiRequest, err := models.NewClientRequest("https://apidigitaldev.pegadaian.co.id/v2", "application/x-www-form-urlencoded")
 
-	apiRequest.ApiRequest(c, "/profile/testing_go", "POST", registrations, &response)
+	apiRequest.APIRequest(c, "/profile/testing_go", "POST", registrations, &response)
 
 	if err != nil {
 		response.Status = models.StatusError
