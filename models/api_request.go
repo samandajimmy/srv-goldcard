@@ -46,17 +46,16 @@ func (c *Client) APIRequest(ctx echo.Context, pathName string, method string, bo
 	if err != nil {
 		return nil, err
 	}
-
-	if body != nil {
-		switch ct := c.ContentType; ct {
-		case "application/x-www-form-urlencoded":
-			return c.requestURLEncoded(method, jsonData, body, &strct)
-		default:
-			return c.requestJSON(method, jsonData, body, &strct)
-		}
+	if body == nil {
+		return nil, ErrReqUndefined
 	}
 
-	return nil, err
+	switch ct := c.ContentType; ct {
+	case "application/x-www-form-urlencoded":
+		return c.requestURLEncoded(method, jsonData, body, &strct)
+	default:
+		return c.requestJSON(method, jsonData, body, &strct)
+	}
 
 }
 

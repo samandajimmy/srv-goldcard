@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"strings"
 
+	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
+	_productreqsUseCase "gade/srv-goldcard/productreqs/usecase"
 	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -67,6 +69,10 @@ func main() {
 
 	// REGISTRATIONS
 	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup)
+
+	// PRODUCT REQUIREMENTS
+	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
+	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
 
 	// PING
 	ech.GET("/ping", ping)
