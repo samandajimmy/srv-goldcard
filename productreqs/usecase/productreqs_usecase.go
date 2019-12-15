@@ -22,8 +22,8 @@ func (prodreqs *productreqsUseCase) ProductRequirements(c echo.Context) (map[str
 	val := []byte("")
 
 	viper.SetConfigName("product_requirements")
-	viper.AddConfigPath("$GOPATH/src/gade/srv-goldcard") // path to look for the config file in
-	err := viper.ReadInConfig()                          // Find and read the config file
+	viper.AddConfigPath("$GOPATH/src/gade/srv-goldcard/configs") // path to look for the config file in
+	err := viper.ReadInConfig()                                  // Find and read the config file
 
 	if err != nil {
 		return nil, err
