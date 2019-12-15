@@ -37,7 +37,7 @@ func InitMiddleware(ech *echo.Echo, echoGroup models.EchoGroup) {
 	ech.Use(middleware.Recover())
 	cm.cors()
 	cm.basicAuth()
-	cm.jwtAuth()
+	// cm.jwtAuth()
 	cm.customValidation()
 }
 
