@@ -12,6 +12,8 @@ import (
 	"strings"
 	"time"
 
+	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
+	_productreqsUseCase "gade/srv-goldcard/productreqs/usecase"
 	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -21,6 +23,7 @@ import (
 	"github.com/labstack/echo"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var ech *echo.Echo
@@ -29,6 +32,7 @@ func init() {
 	ech = echo.New()
 	ech.Debug = true
 	loadEnv()
+	viper.AddConfigPath("$GOPATH" + os.Getenv(`CONFIG_DIR`)) // load all configs
 	logrus.SetReportCaller(true)
 	formatter := &logrus.TextFormatter{
 		FullTimestamp:   true,
@@ -70,6 +74,10 @@ func main() {
 
 	// REGISTRATIONS
 	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup)
+
+	// PRODUCT REQUIREMENTS
+	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
+	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
 
 	// PING
 	ech.GET("/ping", ping)

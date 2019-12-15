@@ -1,0 +1,8 @@
+requirements:
+    aktivasiFinansial: true
+    registrasiGTE: true
+    saldoTabunganEmas: true
+    saldoMinEfektif: 0.1
+    limitPengajuan: 
+        max: 999000000
+        min: 3000000
