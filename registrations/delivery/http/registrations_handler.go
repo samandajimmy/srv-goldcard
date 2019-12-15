@@ -34,14 +34,15 @@ func (reg *RegistrationsHandler) Registrations(c echo.Context) error {
 		return c.JSON(http.StatusOK, response)
 	}
 
-	apiRequest, err := models.NewClientRequest("https://apidigitaldev.pegadaian.co.id/v2", "application/x-www-form-urlencoded")
-
-	apiRequest.APIRequest(c, "/profile/testing_go", "POST", registrations, &response)
+	api, _ := models.NewAPI("https://apidigitaldev.pegadaian.co.id/v2", "application/x-www-form-urlencoded")
+	req, _ := api.Request("/profile/testing_go", "POST", registrations)
+	_, _ = api.Do(req, &response)
 
 	if err != nil {
 		response.Status = models.StatusError
 		response.Message = err.Error()
 		return c.JSON(http.StatusOK, response)
 	}
+
 	return c.JSON(http.StatusOK, response)
 }

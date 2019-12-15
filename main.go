@@ -8,11 +8,14 @@ import (
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
+	"time"
 
 	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
 	_productreqsUseCase "gade/srv-goldcard/productreqs/usecase"
 	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -56,13 +59,13 @@ func main() {
 		Token: ech.Group("/token"),
 	}
 
-	// contextTimeout, err := strconv.Atoi(os.Getenv(`CONTEXT_TIMEOUT`))
+	contextTimeout, err := strconv.Atoi(os.Getenv(`CONTEXT_TIMEOUT`))
 
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
+	if err != nil {
+		fmt.Println(err)
+	}
 
-	// timeoutContext := time.Duration(contextTimeout) * time.Second
+	_ = time.Duration(contextTimeout) * time.Second
 
 	// load all middlewares
 	middleware.InitMiddleware(ech, echoGroup)
@@ -82,19 +85,9 @@ func main() {
 }
 
 func ping(echTx echo.Context) error {
-	var body interface{}
-	var resps models.Response
-
 	res := echTx.Response()
 	rid := res.Header().Get(echo.HeaderXRequestID)
 	params := map[string]interface{}{"rid": rid}
-	apiRequest, err := models.NewClientRequest("https://apidigitaldev.pegadaian.co.id/v2", "application/x-www-form-urlencoded")
-
-	apiRequest.APIRequest(echTx, "/profile/testing_go", "POST", body, &resps)
-
-	if err != nil {
-		fmt.Println(err)
-	}
 
 	requestLogger := logrus.WithFields(logrus.Fields{"params": params})
 	requestLogger.Info("Start to ping server.")
@@ -104,7 +97,7 @@ func ping(echTx echo.Context) error {
 
 	requestLogger.Info("End of ping server.")
 
-	return echTx.JSON(http.StatusOK, resps)
+	return echTx.JSON(http.StatusOK, response)
 }
 
 func getDBConn() *sql.DB {
