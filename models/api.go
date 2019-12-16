@@ -36,13 +36,11 @@ func NewAPI(baseURL string, contentType string) (API, error) {
 func (api *API) Request(pathName string, method string, body interface{}) (*http.Request, error) {
 	api.Host.Path += pathName
 
-	if body != nil {
-		switch ct := api.ContentType; ct {
-		case echo.MIMEApplicationForm:
-			return api.requestURLEncoded(method, body)
-		default:
-			return api.requestJSON(method, body)
-		}
+	switch ct := api.ContentType; ct {
+	case echo.MIMEApplicationForm:
+		return api.requestURLEncoded(method, body)
+	case echo.MIMEApplicationJSON:
+		return api.requestJSON(method, body)
 	}
 
 	return nil, nil
@@ -53,7 +51,7 @@ func (api *API) Do(req *http.Request, v interface{}) (*http.Response, error) {
 	resp, err := api.HTTPClient.Do(req)
 
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
 
 	defer resp.Body.Close()
@@ -61,10 +59,10 @@ func (api *API) Do(req *http.Request, v interface{}) (*http.Response, error) {
 	err = json.NewDecoder(resp.Body).Decode(v)
 
 	if err != nil {
-		return nil, err
+		return resp, err
 	}
 
-	return resp, err
+	return resp, nil
 }
 
 func (api *API) requestURLEncoded(method string, body interface{}) (*http.Request, error) {
