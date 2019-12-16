@@ -1,6 +1,7 @@
 package models_test
 
 import (
+	"fmt"
 	"gade/srv-goldcard/models"
 	"testing"
 
@@ -66,7 +67,11 @@ func TestNewBriAPI(t *testing.T) {
 
 	bri, _ := models.NewBriAPI()
 	req, _ := bri.Request("/v1/cobranding/register", echo.POST, body)
-	_, _ = bri.Do(req, &response)
+	resp, _ := bri.Do(req, &response)
+
+	fmt.Println(req)
+	fmt.Println(resp)
+	fmt.Println(response)
 }
 
 func mltplFunc(a, b interface{}) []interface{} {
