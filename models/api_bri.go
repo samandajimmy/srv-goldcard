@@ -7,16 +7,17 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/labstack/echo"
 )
 
-const (
-	hostBRI      = "https://sandbox.partner.api.bri.co.id"
-	grantType    = "client_credentials"
-	clientID     = "YtkJkC2vrGGxsD7KVjSLWAk38cPq4thm"
-	clientSecret = "HG2X0VaAP0nRmc4X"
+var (
+	hostBRI      = os.Getenv(`BRI_HOST`)
+	grantType    = os.Getenv(`BRI_GRANT_TYPE`)
+	clientID     = os.Getenv(`BRI_CLIENT_ID`)
+	clientSecret = os.Getenv(`BRI_CLIENT_SECRET`)
 )
 
 // APIbri struct represents a request for API BRI
