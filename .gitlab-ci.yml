@@ -13,9 +13,9 @@ build:
   image: 10.251.4.79:8083/docker:latest
   services:
     - name: 10.251.4.79:8083/docker:dind
-      command: ["--insecure-registry=10.251.4.82:5000"]
+      command: ["--insecure-registry=10.251.4.79:8083"]
   script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN 10.251.4.82:5000
+    - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS 10.251.4.79:8083
     - docker build --pull -t $CONTAINER_TEST_IMAGE .
     - docker push $CONTAINER_TEST_IMAGE
 
@@ -23,10 +23,10 @@ release:
   image: 10.251.4.79:8083/docker:latest
   services:
     - name: 10.251.4.79:8083/docker:dind
-      command: ["--insecure-registry=10.251.4.82:5000"]
+      command: ["--insecure-registry=10.251.4.79:8083"]
   stage: release
   script:
-    - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN 10.251.4.82:5000
+    - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS 10.251.4.79:8083
     - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_RELEASE_IMAGE
     - docker push $CONTAINER_RELEASE_IMAGE
   only:
