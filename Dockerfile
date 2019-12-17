@@ -1,4 +1,4 @@
-FROM 10.251.4.79:8083/golang:1.13-alpine as build-env
+FROM 10.251.4.79:8083/golang:1.13 as build-env
 RUN apt-get update && apt-get install git
 # All these steps will be cached
 
