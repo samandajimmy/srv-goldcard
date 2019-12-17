@@ -35,7 +35,6 @@ func NewAPI(baseURL string, contentType string) (API, error) {
 // Request represent global API Request
 func (api *API) Request(pathName string, method string, body interface{}) (*http.Request, error) {
 	api.Host.Path += pathName
-
 	switch ct := api.ContentType; ct {
 	case echo.MIMEApplicationForm:
 		return api.requestURLEncoded(method, body)

@@ -2,6 +2,9 @@ requirements:
     aktivasiFinansial: true
     registrasiGTE: true
     saldoTabunganEmas: true
+    openTE: true
+    umur: 21
+    kyc: true
     saldoMinEfektif: 0.1
     limitPengajuan: 
         max: 999000000
