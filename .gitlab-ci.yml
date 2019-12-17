@@ -17,7 +17,6 @@ variables:
   && cd ${PACKAGE_PATH}
   && export GO111MODULE=on
   && export PATH="$PATH:/go/bin"
-  && export PATH="$PATH:/go/bin"
   && export GOPROXY="http://10.251.4.79:8081/repository/go-group-01/"
   && echo $PATH
 

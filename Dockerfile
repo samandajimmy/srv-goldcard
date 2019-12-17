@@ -8,6 +8,9 @@ WORKDIR /srv-goldcard
 # Force the go compiler to use modules
 ENV GO111MODULE=on
 
+# Force to download lib from nexus pgdn
+ENV GOPROXY="http://10.251.4.79:8081/repository/go-group-01/"
+
 # COPY go.mod and go.sum files to the workspace
 COPY go.mod .
 COPY go.sum .
