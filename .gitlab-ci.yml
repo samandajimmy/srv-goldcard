@@ -5,9 +5,10 @@ stages:
   - release
 
 variables:
+  DOCKER_AUTH_CONFIG:  '{"auths": {"10.251.4.79:8083": {"auth": "$DOCKER_AU_CONFIG"}}}'
   CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
-  PACKAGE_PATH: /go/src/gade/srv-gold-card
+  PACKAGE_PATH: /go/src/gade/srv-gade-point
 
 # A hack to make Golang-in-Gitlab happy
 .anchors: &inject-gopath |
@@ -16,17 +17,15 @@ variables:
   && cd ${PACKAGE_PATH}
   && export GO111MODULE=on
   && export PATH="$PATH:/go/bin"
+  && export PATH="$PATH:/go/bin"
+  && export GOPROXY="http://10.251.4.79:8081/repository/go-group-01/"
   && echo $PATH
 
-before_script:
-  - docker login -u gitlab-ci-token -p $CI_JOB_TOKEN 10.251.4.82:5000
-
 lint:
-  image:
-    name: golangci/golangci-lint:v1.17.1
-    entrypoint: [""]
-  stage: build
+  stage: lint
+  image: 10.251.4.79:8083/golangci-lint:v1.17.1
   script:
+    - *inject-gopath
     - go mod download
     - golangci-lint run
   only:
@@ -34,31 +33,31 @@ lint:
 
 test:
   stage: test
-  image: golang:1.13
-  before_script:
-    - *inject-gopath
+  image: 10.251.4.79:8083/golang:1.13
   script:
+    - *inject-gopath
     - go mod download
     - go test
 
 build:
-  image: docker:stable
-  services:
-    - name: docker:dind
-      command: ["--insecure-registry=10.251.4.82:5000"]
   stage: build
+  image: 10.251.4.79:8083/docker:stable
+  services:
+    - name: 10.251.4.79:8083/docker:dind
+      command: ["--insecure-registry=10.251.4.82:5000"]
   script:
+    - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS 10.251.4.79:8083
     - docker build --pull -t $CONTAINER_TEST_IMAGE .
     - docker push $CONTAINER_TEST_IMAGE
 
 release:
-  image: docker:stable
+  image: 10.251.4.79:8083/docker:stable
   services:
-    - name: docker:dind
+    - name: 10.251.4.79:8083/docker:dind
       command: ["--insecure-registry=10.251.4.82:5000"]
   stage: release
   script:
-    - docker pull $CONTAINER_TEST_IMAGE
+    - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS 10.251.4.79:8083
     - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_RELEASE_IMAGE
     - docker push $CONTAINER_RELEASE_IMAGE
   only:
