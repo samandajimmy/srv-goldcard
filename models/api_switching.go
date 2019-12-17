@@ -15,7 +15,6 @@ var (
 	switchingUserName      = os.Getenv(`SWITCHING_USERNAME`)
 	switchingPassword      = os.Getenv(`SWITCHING_PASSWORD`)
 	switchingPasswordToken = os.Getenv(`SWITCHING_PASSWORD_TOKEN`)
-	switchingToken         = os.Getenv(`SWITCHING_TOKEN`)
 )
 
 // APIswitching struct represents a request for API Switching
