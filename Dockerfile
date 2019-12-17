@@ -43,5 +43,5 @@ RUN cp /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
 RUN echo "Asia/Jakarta" > /etc/timezone
 RUN apk del tzdata
 
-EXPOSE 8080
+EXPOSE 8083
 ENTRYPOINT ["sh", "/srv-goldcard/entrypoint.sh"]

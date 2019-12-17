@@ -3,7 +3,7 @@ stages:
   - release
 
 variables:
-  DOCKER_AUTH_CONFIG:  '{"auths": {"10.251.4.79:8083": {"auth": "$DOCKER_AU_CONFIG"}}}'
+  DOCKER_AUTH_CONFIG: '{"auths": {"10.251.4.79:8083": {"auth": "$DOCKER_AU_CONFIG"}}}'
   CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
   PACKAGE_PATH: /go/src/gade/srv-gade-point
