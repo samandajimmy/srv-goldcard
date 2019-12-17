@@ -10,7 +10,7 @@ variables:
 
 build:
   stage: build
-  image: 10.251.4.79:8083/docker:stable
+  image: 10.251.4.79:8083/docker:latest
   services:
     - name: 10.251.4.79:8083/docker:dind
       command: ["--insecure-registry=10.251.4.82:5000"]
@@ -20,7 +20,7 @@ build:
     - docker push $CONTAINER_TEST_IMAGE
 
 release:
-  image: 10.251.4.79:8083/docker:stable
+  image: 10.251.4.79:8083/docker:latest
   services:
     - name: 10.251.4.79:8083/docker:dind
       command: ["--insecure-registry=10.251.4.82:5000"]
