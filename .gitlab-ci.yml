@@ -1,6 +1,4 @@
 stages:
-  - lint
-  - test
   - build
   - release
 
@@ -9,35 +7,6 @@ variables:
   CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   CONTAINER_RELEASE_IMAGE: $CI_REGISTRY_IMAGE:latest
   PACKAGE_PATH: /go/src/gade/srv-gade-point
-
-# A hack to make Golang-in-Gitlab happy
-.anchors:
-  - &inject-gopath
-    mkdir -p $(dirname ${PACKAGE_PATH})
-    && ln -s ${CI_PROJECT_DIR} ${PACKAGE_PATH}
-    && cd ${PACKAGE_PATH}
-    && export GO111MODULE=on
-    && export PATH="$PATH:/go/bin"
-    && export GOPROXY="http://10.251.4.79:8081/repository/go-group-01/"
-    && echo $PATH
-
-lint:
-  stage: lint
-  image: 10.251.4.79:8083/golangci-lint:v1.17.1
-  script:
-    - *inject-gopath
-    - go mod download
-    - golangci-lint run
-  only:
-    - merge_requests
-
-test:
-  stage: test
-  image: 10.251.4.79:8083/golang:1.13
-  script:
-    - *inject-gopath
-    - go mod download
-    - go test
 
 build:
   stage: build
