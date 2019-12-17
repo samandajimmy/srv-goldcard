@@ -32,7 +32,7 @@ lint:
 
 test:
   stage: test
-  image: 10.251.4.79:8083/golang:1.13
+  image: 10.251.4.79:8083/golang:1.13-alpine
   script:
     - *inject-gopath
     - go mod download
@@ -43,7 +43,7 @@ build:
   image: 10.251.4.79:8083/docker:stable
   services:
     - name: 10.251.4.79:8083/docker:dind
-      command: ["--insecure-registry=10.251.4.82:5000"]
+      command: ["--insecure-registry=10.251.4.79:8083"]
   script:
     - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS 10.251.4.79:8083
     - docker build --pull -t $CONTAINER_TEST_IMAGE .
@@ -53,7 +53,7 @@ release:
   image: 10.251.4.79:8083/docker:stable
   services:
     - name: 10.251.4.79:8083/docker:dind
-      command: ["--insecure-registry=10.251.4.82:5000"]
+      command: ["--insecure-registry=10.251.4.79:8083"]
   stage: release
   script:
     - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS 10.251.4.79:8083
