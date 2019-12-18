@@ -29,6 +29,7 @@ FROM alpine:3.7
 COPY --from=build-env /go/bin/srv-goldcard /go/bin/srv-goldcard
 COPY --from=build-env /srv-goldcard/entrypoint.sh /srv-goldcard/entrypoint.sh
 COPY --from=build-env /srv-goldcard/migrations /migrations
+COPY --from=build-env /srv-goldcard/configs /configs
 
 # add apk ca certificate
 RUN apk add --no-cache ca-certificates

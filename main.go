@@ -32,7 +32,7 @@ func init() {
 	ech = echo.New()
 	ech.Debug = true
 	loadEnv()
-	viper.AddConfigPath("$GOPATH" + os.Getenv(`CONFIG_DIR`)) // load all configs
+	viper.AddConfigPath(os.Getenv(`CONFIG_DIR`)) // load all configs
 	logrus.SetReportCaller(true)
 	formatter := &logrus.TextFormatter{
 		FullTimestamp:   true,
