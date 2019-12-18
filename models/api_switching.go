@@ -36,6 +36,10 @@ func NewSwitchingAPI() (APIswitching, error) {
 
 	api, err := NewAPI(switchingHost, echo.MIMEApplicationJSON)
 
+	if err != nil {
+		return apiSwitching, err
+	}
+
 	err = apiSwitching.setAccessTokenSwitching()
 
 	if err != nil {
