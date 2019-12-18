@@ -6,6 +6,6 @@ requirements:
     umur: 21
     kyc: true
     saldo_min_efektif: 0.1
-    limit_pengajuan: 
+    limit_pengajuan:
         max: 999000000
         min: 3000000

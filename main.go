@@ -32,6 +32,7 @@ func init() {
 	ech = echo.New()
 	ech.Debug = true
 	loadEnv()
+	viper.SetConfigType("yaml")
 	viper.AddConfigPath(os.Getenv(`CONFIG_DIR`)) // load all configs
 	logrus.SetReportCaller(true)
 	formatter := &logrus.TextFormatter{
