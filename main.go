@@ -3,12 +3,18 @@ package main
 import (
 	"database/sql"
 	"fmt"
-	"gade/srv-gold-card/middleware"
-	"gade/srv-gold-card/models"
+	"gade/srv-goldcard/middleware"
+	"gade/srv-goldcard/models"
 	"net/http"
 	"os"
 	"runtime"
+	"strconv"
 	"strings"
+	"time"
+
+	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
+	_productreqsUseCase "gade/srv-goldcard/productreqs/usecase"
+	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -17,6 +23,7 @@ import (
 	"github.com/labstack/echo"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 var ech *echo.Echo
@@ -25,10 +32,11 @@ func init() {
 	ech = echo.New()
 	ech.Debug = true
 	loadEnv()
+	viper.AddConfigPath(os.Getenv(`CONFIG_DIR`)) // load all configs
 	logrus.SetReportCaller(true)
 	formatter := &logrus.TextFormatter{
-		FullTimestamp: true,
-		// TimestampFormat: models.DateTimeFormatMillisecond + "000",
+		FullTimestamp:   true,
+		TimestampFormat: models.DateTimeFormatMillisecond + "000",
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 			tmp := strings.Split(f.File, "/")
 			filename := tmp[len(tmp)-1]
@@ -47,22 +55,29 @@ func main() {
 	defer dbConn.Close()
 	defer migrate.Close()
 
-	// contextTimeout, err := strconv.Atoi(os.Getenv(`CONTEXT_TIMEOUT`))
-
-	// if err != nil {
-	// 	fmt.Println(err)
-	// }
-
-	// timeoutContext := time.Duration(contextTimeout) * time.Second
-
 	echoGroup := models.EchoGroup{
 		Admin: ech.Group("/admin"),
 		API:   ech.Group("/api"),
 		Token: ech.Group("/token"),
 	}
 
+	contextTimeout, err := strconv.Atoi(os.Getenv(`CONTEXT_TIMEOUT`))
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	_ = time.Duration(contextTimeout) * time.Second
+
 	// load all middlewares
 	middleware.InitMiddleware(ech, echoGroup)
+
+	// REGISTRATIONS
+	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup)
+
+	// PRODUCT REQUIREMENTS
+	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
+	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
 
 	// PING
 	ech.GET("/ping", ping)
@@ -77,15 +92,14 @@ func ping(echTx echo.Context) error {
 	params := map[string]interface{}{"rid": rid}
 
 	requestLogger := logrus.WithFields(logrus.Fields{"params": params})
-
 	requestLogger.Info("Start to ping server.")
-	// response := models.Response{}
-	// response.Status = models.StatusSuccess
-	// response.Message = "PONG!!"
+	response := models.Response{}
+	response.Status = models.StatusSuccess
+	response.Message = "PONG!!"
 
 	requestLogger.Info("End of ping server.")
 
-	return echTx.JSON(http.StatusOK, "response")
+	return echTx.JSON(http.StatusOK, response)
 }
 
 func getDBConn() *sql.DB {

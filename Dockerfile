@@ -1,12 +1,15 @@
-FROM golang:1.13 as build-env
+FROM 10.251.4.79:8083/golang:1.13 as build-env
 RUN apt-get update && apt-get install git
 # All these steps will be cached
 
-RUN mkdir /srv-gold-card
-WORKDIR /srv-gold-card
+RUN mkdir /srv-goldcard
+WORKDIR /srv-goldcard
 
 # Force the go compiler to use modules
 ENV GO111MODULE=on
+
+# Force to download lib from nexus pgdn
+ENV GOPROXY="http://10.251.4.79:8081/repository/go-group-01/"
 
 # COPY go.mod and go.sum files to the workspace
 COPY go.mod .
@@ -22,13 +25,14 @@ RUN go mod download
 COPY . .
 
 # Build the binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /go/bin/srv-gold-card
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /go/bin/srv-goldcard
 
 # Second step to build minimal image
-FROM alpine:3.7
-COPY --from=build-env /go/bin/srv-gold-card /go/bin/srv-gold-card
-COPY --from=build-env /srv-gold-card/entrypoint.sh /srv-gold-card/entrypoint.sh
-COPY --from=build-env /srv-gold-card/migrations /migrations
+FROM 10.251.4.79:8083/alpine:3.7
+COPY --from=build-env /go/bin/srv-goldcard /go/bin/srv-goldcard
+COPY --from=build-env /srv-goldcard/entrypoint.sh /srv-goldcard/entrypoint.sh
+COPY --from=build-env /srv-goldcard/migrations /migrations
+COPY --from=build-env /srv-goldcard/configs /configs
 
 # add apk ca certificate
 RUN apk add --no-cache ca-certificates
@@ -40,5 +44,5 @@ RUN cp /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
 RUN echo "Asia/Jakarta" > /etc/timezone
 RUN apk del tzdata
 
-EXPOSE 8080
-ENTRYPOINT ["sh", "/srv-gold-card/entrypoint.sh"]
+EXPOSE 8083
+ENTRYPOINT ["sh", "/srv-goldcard/entrypoint.sh"]

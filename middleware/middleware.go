@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"gade/srv-gold-card/models"
+	"gade/srv-goldcard/models"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"gopkg.in/go-playground/validator.v9"
@@ -37,7 +37,7 @@ func InitMiddleware(ech *echo.Echo, echoGroup models.EchoGroup) {
 	ech.Use(middleware.Recover())
 	cm.cors()
 	cm.basicAuth()
-	cm.jwtAuth()
+	// cm.jwtAuth() // klo gk di tutup gk bisa request.
 	cm.customValidation()
 }
 

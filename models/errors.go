@@ -23,6 +23,12 @@ var (
 
 	// ErrRefIDStatus to not found ref_trx error message
 	ErrRefIDStatus = errors.New("Transaksi ID ")
+
+	// ErrReqUndefined to store undefine request body error message
+	ErrReqUndefined = errors.New("Request data tidak tersedia")
+
+	// ErrFileProdReqsNotFound to errors file production requirements not found
+	ErrFileProdReqsNotFound = errors.New(("File Product Requirements Tidak di Temukan"))
 )
 
 // DynamicErr to return parameterize errors

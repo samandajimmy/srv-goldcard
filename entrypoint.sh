@@ -3,5 +3,5 @@
 sleep 5
 
 # Start server
-echo "== Running ./srv-gold-card"
-/go/bin/srv-gold-card
+echo "== Running ./srv-goldcard"
+/go/bin/srv-goldcard
