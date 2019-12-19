@@ -15,13 +15,13 @@ type Requirements struct {
 
 // RequirementsValue represent value of Requirements struct
 var RequirementsValue = Requirements{
-	AktivasiFinansial: "true",
-	KYC:               "true",
+	AktivasiFinansial: "1",
+	KYC:               "1",
 	LimitPengajuanMax: 999000000,
 	LimitPengajuanMin: 3000000,
-	OpenTE:            "true",
-	RegistrasiGTE:     "true",
+	OpenTE:            "1",
+	RegistrasiGTE:     "1",
 	SaldoMinEfektif:   0.1,
-	SaldoTabunganEmas: "true",
+	SaldoTabunganEmas: "1",
 	Umur:              21,
 }
