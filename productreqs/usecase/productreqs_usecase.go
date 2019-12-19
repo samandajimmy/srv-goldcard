@@ -18,5 +18,5 @@ func ProductReqsUseCase() productreqs.UseCase {
 
 // ProductRequirements represent to get all product requirements
 func (prodreqs *productreqsUseCase) ProductRequirements(c echo.Context) (models.Requirements, error) {
-	return models.Requirements{}, nil
+	return models.RequirementsValue, nil
 }

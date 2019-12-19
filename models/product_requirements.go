@@ -13,8 +13,8 @@ type Requirements struct {
 	Umur              int64   `json:"umur"`
 }
 
-// ValList represent value of Requirements struct
-var ValList = Requirements{
+// RequirementsValue represent value of Requirements struct
+var RequirementsValue = Requirements{
 	AktivasiFinansial: "true",
 	KYC:               "true",
 	LimitPengajuanMax: 999000000,
