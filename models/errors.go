@@ -29,6 +29,12 @@ var (
 
 	// ErrFileProdReqsNotFound to errors file production requirements not found
 	ErrFileProdReqsNotFound = errors.New(("File Product Requirements Tidak di Temukan"))
+
+	// ErrAddressEmpty to errors address is empty
+	ErrAddressEmpty = errors.New(("Alamat tidak boleh kosong"))
+
+	// ErrPostAddressFailed to errors post address failed
+	ErrPostAddressFailed = errors.New(("Menambahkan alamat gagal"))
 )
 
 // DynamicErr to return parameterize errors
