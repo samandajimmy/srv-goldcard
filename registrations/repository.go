@@ -9,4 +9,5 @@ import (
 // Repository represent the campaigntrx's repository contract
 type Repository interface {
 	PostAddress(echo.Context, *models.Registrations) error
+	GetAddress(echo.Context, string) (string, error)
 }

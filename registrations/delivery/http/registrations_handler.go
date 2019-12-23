@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
 	"net/http"
@@ -28,7 +27,7 @@ func NewRegistrationsHandler(
 	// End Point For External
 	echoGroup.API.POST("/registrations", handler.Registrations)
 	echoGroup.API.POST("/registrations/address/simpan", handler.PostAddress)
-	echoGroup.API.GET("/registrations/address/dapat", handler.GetAddress)
+	echoGroup.API.GET("/registrations/address", handler.GetAddress)
 }
 
 // Registrations a handler to create a campaign
@@ -57,6 +56,7 @@ func (reg *RegistrationsHandler) Registrations(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// PostAddress a handler to update Address in table personal_informations
 func (reg *RegistrationsHandler) PostAddress(c echo.Context) error {
 	respErrors := &models.ResponseErrors{}
 	logger := models.RequestLogger{}
@@ -74,18 +74,35 @@ func (reg *RegistrationsHandler) PostAddress(c echo.Context) error {
 
 		return c.JSON(getStatusCode(err), response)
 	}
+
+	response.Code = "00"
+	response.Status = models.StatusSuccess
+	response.Message = models.MessageUpdateSuccess
 	logger.DataLog(c, response).Info("End of Post Address")
 	return c.JSON(getStatusCode(err), response)
 }
 
+// GetAddress a handler to get Address in table personal_informations
 func (reg *RegistrationsHandler) GetAddress(c echo.Context) error {
-	var registrations models.Registrations
-
+	respErrors := &models.ResponseErrors{}
+	logger := models.RequestLogger{}
 	response = models.Response{}
 
-	fmt.Println(c.Bind(&registrations))
+	logger.DataLog(c, c.QueryParam("phoneno")).Info("Start of Get Address")
+	res, err := reg.registrationsUseCase.GetAddress(c, c.QueryParam("phoneno"))
 
-	return nil
+	if err != nil {
+		respErrors.SetTitle(err.Error())
+		response.SetResponse("", respErrors)
+		logger.DataLog(c, response).Info("End of Get Address")
+
+		return c.JSON(getStatusCode(err), res)
+	}
+
+	logger.DataLog(c, response).Info("End of Post Address")
+
+	response.SetResponse(res, respErrors)
+	return c.JSON(getStatusCode(err), response)
 }
 
 func getStatusCode(err error) int {

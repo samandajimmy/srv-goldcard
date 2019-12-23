@@ -13,10 +13,15 @@ type registrationsUseCase struct {
 }
 
 // RegistrationsUseCase represent Registrations Use Case
-func RegistrationsUseCase() registrations.UseCase {
-	return &registrationsUseCase{}
+func RegistrationsUseCase(
+	regRepository registrations.Repository,
+) registrations.UseCase {
+	return &registrationsUseCase{
+		registrationsRepository: regRepository,
+	}
 }
 
+// PostAddress representation update address to database
 func (reg *registrationsUseCase) PostAddress(c echo.Context, registrations *models.Registrations) error {
 	logger := models.RequestLogger{}
 	requestLogger := logger.GetRequestLogger(c, nil)
@@ -42,4 +47,28 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, registrations *mode
 	}
 
 	return nil
+}
+
+// PostAddress representation get address from database
+func (reg *registrationsUseCase) GetAddress(c echo.Context, phoneNo string) (map[string]interface{}, error) {
+	logger := models.RequestLogger{}
+	requestLogger := logger.GetRequestLogger(c, nil)
+
+	if phoneNo == "" {
+		requestLogger.Debug(models.ErrBadParamInput)
+
+		return nil, models.ErrBadParamInput
+	}
+
+	res, err := reg.registrationsRepository.GetAddress(c, phoneNo)
+
+	response := map[string]interface{}{"address": res}
+
+	if err != nil {
+		requestLogger.Debug(models.ErrPostAddressFailed)
+
+		return nil, models.ErrPostAddressFailed
+	}
+
+	return response, nil
 }
