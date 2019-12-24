@@ -26,7 +26,7 @@ func NewRegistrationsHandler(
 
 	// End Point For External
 	echoGroup.API.POST("/registrations", handler.Registrations)
-	echoGroup.API.POST("/registrations/address/simpan", handler.PostAddress)
+	echoGroup.API.POST("/registrations/address", handler.PostAddress)
 	echoGroup.API.GET("/registrations/address", handler.GetAddress)
 }
 
