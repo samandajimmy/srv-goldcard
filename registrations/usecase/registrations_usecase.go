@@ -42,12 +42,6 @@ func (reg *registrationsUseCase) GetAddress(c echo.Context, phoneNo string) (map
 	logger := models.RequestLogger{}
 	requestLogger := logger.GetRequestLogger(c, nil)
 
-	if phoneNo == "" {
-		requestLogger.Debug(models.ErrBadParamInput)
-
-		return nil, models.ErrBadParamInput
-	}
-
 	res, err := reg.registrationsRepository.GetAddress(c, phoneNo)
 
 	response := map[string]interface{}{"address": res}

@@ -95,9 +95,28 @@ func (reg *RegistrationsHandler) GetAddress(c echo.Context) error {
 	respErrors := &models.ResponseErrors{}
 	logger := models.RequestLogger{}
 	response = models.Response{}
+	var getAddress models.PayloadGetAddress
 
-	logger.DataLog(c, c.QueryParam("phoneno")).Info("Start of Get Address")
-	res, err := reg.registrationsUseCase.GetAddress(c, c.QueryParam("phoneno"))
+	err := c.Bind(&getAddress)
+
+	if err != nil {
+		respErrors.SetTitle(models.MessageUnprocessableEntity)
+		response.SetResponse("", respErrors)
+		logger.DataLog(c, response).Info("End of Get Address")
+
+		return c.JSON(http.StatusUnprocessableEntity, response)
+	}
+
+	if err = c.Validate(getAddress); err != nil {
+		respErrors.SetTitle(err.Error())
+		response.SetResponse("", respErrors)
+		logger.DataLog(c, response).Info("End of Get Address")
+
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
+	logger.DataLog(c, getAddress.PhoneNumber).Info("Start of Get Address")
+	res, err := reg.registrationsUseCase.GetAddress(c, getAddress.PhoneNumber)
 
 	if err != nil {
 		respErrors.SetTitle(err.Error())
