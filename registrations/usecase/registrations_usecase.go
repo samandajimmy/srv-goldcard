@@ -26,18 +26,6 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, registrations *mode
 	logger := models.RequestLogger{}
 	requestLogger := logger.GetRequestLogger(c, nil)
 
-	if registrations.PhoneNumber == "" {
-		requestLogger.Debug(models.ErrBadParamInput)
-
-		return models.ErrBadParamInput
-	}
-
-	if registrations.ResidenceAddress == "" {
-		requestLogger.Debug(models.ErrAddressEmpty)
-
-		return models.ErrAddressEmpty
-	}
-
 	err := reg.registrationsRepository.PostAddress(c, registrations)
 
 	if err != nil {

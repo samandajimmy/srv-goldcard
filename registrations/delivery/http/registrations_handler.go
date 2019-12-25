@@ -75,6 +75,14 @@ func (reg *RegistrationsHandler) PostAddress(c echo.Context) error {
 		return c.JSON(getStatusCode(err), response)
 	}
 
+	if err = c.Validate(registrations); err != nil {
+		respErrors.SetTitle(err.Error())
+		response.SetResponse("", respErrors)
+		logger.DataLog(c, response).Info("End of Post Address")
+
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
 	response.Code = "00"
 	response.Status = models.StatusSuccess
 	response.Message = models.MessageUpdateSuccess

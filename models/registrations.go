@@ -14,9 +14,9 @@ type Registrations struct {
 	POB                   string     `json:"pob,omitempty"`
 	Email                 string     `json:"email,omitempty"`
 	ResidenceStatus       string     `json:"residence_status,omitempty"`
-	ResidenceAddress      string     `json:"residence_address,omitempty"`
+	ResidenceAddress      string     `json:"residence_address,omitempty" validate:"required"`
 	ResidencePhoneNumber  string     `json:"residence_phone_number,omitempty"`
-	PhoneNumber           string     `json:"phone_number,omitempty"`
+	PhoneNumber           string     `json:"phone_number,omitempty" validate:"required"`
 	LatestEducationDegree string     `json:"latest_education_degree,omitempty"`
 	MotherName            string     `json:"mother_name,omitempty"`
 	CreatedAT             *time.Time `json:"created_at,omitempty"`
