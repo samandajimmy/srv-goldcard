@@ -29,6 +29,9 @@ var (
 
 	// ErrFileProdReqsNotFound to errors file production requirements not found
 	ErrFileProdReqsNotFound = errors.New(("File Product Requirements Tidak di Temukan"))
+
+	// ErrSavingAccountEmpty to failed for save saving account
+	ErrSavingAccountFailed = errors.New(("Gagal menyimpan saving account"))
 )
 
 // DynamicErr to return parameterize errors

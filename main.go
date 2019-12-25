@@ -16,6 +16,10 @@ import (
 	_productreqsUseCase "gade/srv-goldcard/productreqs/usecase"
 	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
 
+	_applicationsHttpDelivery "gade/srv-goldcard/applications/delivery/http"
+	_applicationsRepository "gade/srv-goldcard/applications/repository"
+	_applicationsUseCase "gade/srv-goldcard/applications/usecase"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -78,6 +82,11 @@ func main() {
 	// PRODUCT REQUIREMENTS
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
+
+	// APPLICATIONS
+	applicationsRepository := _applicationsRepository.NewPsqlApplicationsRepository(dbConn)
+	applicationsUseCase := _applicationsUseCase.ApplicationsUseCase(applicationsRepository)
+	_applicationsHttpDelivery.NewApplicationsHandler(echoGroup, applicationsUseCase)
 
 	// PING
 	ech.GET("/ping", ping)
