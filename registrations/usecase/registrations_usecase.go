@@ -8,15 +8,54 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type registrationUseCase struct {
+type registrationsUseCase struct {
+	registrationsRepository registrations.Repository
 }
 
-// NewRegistrationUseCase will create new an registrationUseCase object representation of registrations.UseCase interface
-func NewRegistrationUseCase() registrations.UseCase {
-	return &registrationUseCase{}
+// RegistrationsUseCase represent Registrations Use Case
+func RegistrationsUseCase(
+	regRepository registrations.Repository,
+) registrations.UseCase {
+	return &registrationsUseCase{
+		registrationsRepository: regRepository,
+	}
 }
 
-func (reg *registrationUseCase) sendApplicationNotif(payload map[string]string) error {
+// PostAddress representation update address to database
+func (reg *registrationsUseCase) PostAddress(c echo.Context, registrations *models.Registrations) (string, error) {
+	logger := models.RequestLogger{}
+	requestLogger := logger.GetRequestLogger(c, nil)
+
+	err := reg.registrationsRepository.PostAddress(c, registrations)
+
+	if err != nil {
+		requestLogger.Debug(models.ErrPostAddressFailed)
+
+		return "", models.ErrPostAddressFailed
+	}
+
+	return "", nil
+}
+
+// PostAddress representation get address from database
+func (reg *registrationsUseCase) GetAddress(c echo.Context, phoneNo string) (map[string]interface{}, error) {
+	logger := models.RequestLogger{}
+	requestLogger := logger.GetRequestLogger(c, nil)
+
+	res, err := reg.registrationsRepository.GetAddress(c, phoneNo)
+
+	response := map[string]interface{}{"address": res}
+
+	if err != nil {
+		requestLogger.Debug(models.ErrPostAddressFailed)
+
+		return nil, models.ErrPostAddressFailed
+	}
+
+	return response, nil
+}
+
+func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string) error {
 	response := map[string]interface{}{}
 	pds, err := models.NewPdsAPI(echo.MIMEApplicationForm)
 

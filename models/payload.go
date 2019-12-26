@@ -11,3 +11,8 @@ type PayloadList struct {
 	Page            int64  `json:"page,omitempty" validate:"min=1"`
 	Limit           int64  `json:"limit,omitempty" validate:"min=1"`
 }
+
+// PayloadGetAddress a struct to store all payload for a get address
+type PayloadGetAddress struct {
+	PhoneNumber string `json:"phoneNumber,omitempty" validate:"required"`
+}

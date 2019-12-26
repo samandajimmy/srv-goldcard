@@ -15,6 +15,8 @@ import (
 	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
 	_productreqsUseCase "gade/srv-goldcard/productreqs/usecase"
 	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
+	_registrationsRepository "gade/srv-goldcard/registrations/repository"
+	_registrationsUseCase "gade/srv-goldcard/registrations/usecase"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -71,7 +73,9 @@ func main() {
 	middleware.InitMiddleware(ech, echoGroup)
 
 	// REGISTRATIONS
-	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup)
+	registrationsRepository := _registrationsRepository.NewPsqlRegistrationsRepository(dbConn)
+	registrationsUserCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository)
+	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup, registrationsUserCase)
 
 	// PRODUCT REQUIREMENTS
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
