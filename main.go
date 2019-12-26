@@ -15,10 +15,8 @@ import (
 	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
 	_productreqsUseCase "gade/srv-goldcard/productreqs/usecase"
 	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
-
-	_applicationsHttpDelivery "gade/srv-goldcard/applications/delivery/http"
-	_applicationsRepository "gade/srv-goldcard/applications/repository"
-	_applicationsUseCase "gade/srv-goldcard/applications/usecase"
+	_registrationsRepository "gade/srv-goldcard/registrations/repository"
+	_registrationsUseCase "gade/srv-goldcard/registrations/usecase"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -27,7 +25,6 @@ import (
 	"github.com/labstack/echo"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 var ech *echo.Echo
@@ -36,7 +33,6 @@ func init() {
 	ech = echo.New()
 	ech.Debug = true
 	loadEnv()
-	viper.AddConfigPath(os.Getenv(`CONFIG_DIR`)) // load all configs
 	logrus.SetReportCaller(true)
 	formatter := &logrus.TextFormatter{
 		FullTimestamp:   true,
@@ -77,16 +73,13 @@ func main() {
 	middleware.InitMiddleware(ech, echoGroup)
 
 	// REGISTRATIONS
-	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup)
+	registrationsRepository := _registrationsRepository.NewPsqlRegistrationsRepository(dbConn)
+	registrationsUserCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository)
+	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup, registrationsUserCase)
 
 	// PRODUCT REQUIREMENTS
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
-
-	// APPLICATIONS
-	applicationsRepository := _applicationsRepository.NewPsqlApplicationsRepository(dbConn)
-	applicationsUseCase := _applicationsUseCase.ApplicationsUseCase(applicationsRepository)
-	_applicationsHttpDelivery.NewApplicationsHandler(echoGroup, applicationsUseCase)
 
 	// PING
 	ech.GET("/ping", ping)

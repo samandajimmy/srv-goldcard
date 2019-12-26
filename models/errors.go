@@ -30,8 +30,20 @@ var (
 	// ErrFileProdReqsNotFound to errors file production requirements not found
 	ErrFileProdReqsNotFound = errors.New(("File Product Requirements Tidak di Temukan"))
 
-	// ErrSavingAccountEmpty to failed for save saving account
-	ErrSavingAccountFailed = errors.New(("Gagal menyimpan saving account"))
+	// ErrAddressEmpty to errors address is empty
+	ErrAddressEmpty = errors.New(("Alamat tidak boleh kosong"))
+
+	// ErrPostAddressFailed to errors post address failed
+	ErrPostAddressFailed = errors.New(("Menambahkan alamat gagal"))
+
+	// ErrPostSavingAccountFailed to errors post address failed
+	ErrPostSavingAccountFailed = errors.New(("Menambahkan saving account gagal"))
+
+	// ErrSavingAccount to errors saving account is empty
+	ErrSavingAccountEmpty = errors.New(("Saving account tidak boleh kosong"))
+
+	// ErrAddressEmpty to errors address is empty
+	ErrApplicationNumberEmpty = errors.New(("Application number tidak boleh kosong"))
 )
 
 // DynamicErr to return parameterize errors

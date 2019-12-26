@@ -37,6 +37,7 @@ func (preq *ProductreqsHandler) productRequirements(c echo.Context) error {
 
 	if err != nil {
 		respErrors.SetTitle(err.Error())
+		response.SetResponse("", respErrors)
 		logger.DataLog(c, response).Info("End of check productRequirements.")
 
 		return c.JSON(http.StatusBadRequest, response)
@@ -44,7 +45,7 @@ func (preq *ProductreqsHandler) productRequirements(c echo.Context) error {
 
 	response.SetResponse(responseData, respErrors)
 
-	logger.DataLog(c, response).Info("End of check rewards.")
+	logger.DataLog(c, response).Info("End of check productRequirements.")
 
 	return c.JSON(getStatusCode(err), response)
 }

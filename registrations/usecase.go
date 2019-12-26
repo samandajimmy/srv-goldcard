@@ -8,5 +8,7 @@ import (
 
 // UseCase represent the rewards usecases
 type UseCase interface {
-	Registrations(echo.Context, *models.Registrations) error
+	PostAddress(echo.Context, *models.Registrations) (string, error)
+	GetAddress(echo.Context, string) (map[string]interface{}, error)
+	PostSavingAccount(echo.Context, *models.Applications) (string, error)
 }
