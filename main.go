@@ -23,7 +23,6 @@ import (
 	"github.com/labstack/echo"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 var ech *echo.Echo
@@ -32,7 +31,6 @@ func init() {
 	ech = echo.New()
 	ech.Debug = true
 	loadEnv()
-	viper.AddConfigPath(os.Getenv(`CONFIG_DIR`)) // load all configs
 	logrus.SetReportCaller(true)
 	formatter := &logrus.TextFormatter{
 		FullTimestamp:   true,
