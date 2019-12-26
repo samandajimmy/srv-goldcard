@@ -65,7 +65,7 @@ func (reg *RegistrationsHandler) PostAddress(c echo.Context) error {
 
 	c.Bind(&registrations)
 	logger.DataLog(c, registrations).Info("Start of Post Address")
-	err := reg.registrationsUseCase.PostAddress(c, &registrations)
+	dataResponse, err := reg.registrationsUseCase.PostAddress(c, &registrations)
 
 	if err != nil {
 		respErrors.SetTitle(err.Error())
@@ -83,10 +83,8 @@ func (reg *RegistrationsHandler) PostAddress(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	response.Code = "00"
-	response.Status = models.StatusSuccess
-	response.Message = models.MessageUpdateSuccess
-	logger.DataLog(c, response).Info("End of Post Address")
+	response.SetResponse(dataResponse, respErrors)
+
 	return c.JSON(getStatusCode(err), response)
 }
 

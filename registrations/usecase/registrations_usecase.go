@@ -22,7 +22,7 @@ func RegistrationsUseCase(
 }
 
 // PostAddress representation update address to database
-func (reg *registrationsUseCase) PostAddress(c echo.Context, registrations *models.Registrations) error {
+func (reg *registrationsUseCase) PostAddress(c echo.Context, registrations *models.Registrations) (string, error) {
 	logger := models.RequestLogger{}
 	requestLogger := logger.GetRequestLogger(c, nil)
 
@@ -31,10 +31,10 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, registrations *mode
 	if err != nil {
 		requestLogger.Debug(models.ErrPostAddressFailed)
 
-		return models.ErrPostAddressFailed
+		return "", models.ErrPostAddressFailed
 	}
 
-	return nil
+	return "", nil
 }
 
 // PostAddress representation get address from database
