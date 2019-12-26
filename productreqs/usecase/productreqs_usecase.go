@@ -1,11 +1,10 @@
 package usecase
 
 import (
-	"encoding/json"
+	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/productreqs"
 
 	"github.com/labstack/echo"
-	"github.com/spf13/viper"
 )
 
 type productreqsUseCase struct {
@@ -18,22 +17,6 @@ func ProductReqsUseCase() productreqs.UseCase {
 }
 
 // ProductRequirements represent to get all product requirements
-func (prodreqs *productreqsUseCase) ProductRequirements(c echo.Context) (map[string]interface{}, error) {
-	val := []byte("")
-
-	viper.SetConfigName("product_requirements")
-	err := viper.ReadInConfig() // Find and read the config file
-
-	if err != nil {
-		return nil, err
-	}
-
-	readResponse := viper.Get("requirements")
-
-	json.Unmarshal(val, &readResponse)
-
-	myMap := readResponse.(map[string]interface{})
-
-	return myMap, err
-
+func (prodreqs *productreqsUseCase) ProductRequirements(c echo.Context) (models.Requirements, error) {
+	return models.RequirementsValue, nil
 }

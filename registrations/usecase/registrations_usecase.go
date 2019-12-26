@@ -5,10 +5,10 @@ import (
 	"gade/srv-goldcard/registrations"
 
 	"github.com/labstack/echo"
+	"github.com/sirupsen/logrus"
 )
 
 type registrationsUseCase struct {
-	registrationsUseCase    registrations.UseCase
 	registrationsRepository registrations.Repository
 }
 
@@ -53,4 +53,33 @@ func (reg *registrationsUseCase) GetAddress(c echo.Context, phoneNo string) (map
 	}
 
 	return response, nil
+}
+
+func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string) error {
+	response := map[string]interface{}{}
+	pds, err := models.NewPdsAPI(echo.MIMEApplicationForm)
+
+	if err != nil {
+		logrus.Debug(err)
+
+		return err
+	}
+
+	req, err := pds.Request("/goldcard/status_pengajuan_notif", echo.POST, payload)
+
+	if err != nil {
+		logrus.Debug(err)
+
+		return err
+	}
+
+	_, err = pds.Do(req, &response)
+
+	if err != nil {
+		logrus.Debug(err)
+
+		return err
+	}
+
+	return nil
 }
