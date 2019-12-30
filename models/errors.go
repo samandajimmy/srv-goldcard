@@ -35,6 +35,9 @@ var (
 
 	// ErrPostAddressFailed to errors post address failed
 	ErrPostAddressFailed = errors.New(("Menambahkan alamat gagal"))
+
+	// ErrPostSavingAccountFailed to errors post address failed
+	ErrPostSavingAccountFailed = errors.New(("Menambahkan Rekening Tabungan gagal"))
 )
 
 // DynamicErr to return parameterize errors

@@ -10,4 +10,5 @@ import (
 type Repository interface {
 	PostAddress(echo.Context, *models.Registrations) error
 	GetAddress(echo.Context, string) (string, error)
+	PostSavingAccount(echo.Context, *models.Applications) error
 }
