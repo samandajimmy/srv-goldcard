@@ -2,11 +2,12 @@ package middleware
 
 import (
 	"gade/srv-goldcard/models"
+	"os"
+	"reflect"
+
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"gopkg.in/go-playground/validator.v9"
-	"os"
-	"reflect"
 )
 
 type customValidator struct {
@@ -37,8 +38,9 @@ func InitMiddleware(ech *echo.Echo, echoGroup models.EchoGroup) {
 	ech.Use(middleware.Recover())
 	cm.cors()
 	cm.basicAuth()
-	// cm.jwtAuth() // klo gk di tutup gk bisa request.
+	cm.jwtAuth() // klo gk di tutup gk bisa request.
 	cm.customValidation()
+
 }
 
 func (cm *customMiddleware) customValidation() {
@@ -76,7 +78,6 @@ func (cm customMiddleware) jwtAuth() {
 		SigningMethod: "HS512",
 		SigningKey:    []byte(os.Getenv(`JWT_SECRET`)),
 	}))
-
 }
 
 func (cv *customValidator) isRequiredWith(fl validator.FieldLevel) bool {
