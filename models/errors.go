@@ -35,6 +35,15 @@ var (
 
 	// ErrPostAddressFailed to errors post address failed
 	ErrPostAddressFailed = errors.New(("Menambahkan alamat gagal"))
+
+	// ErrUsername to store username error message
+	ErrUsername = errors.New("Username atau Password yang digunakan tidak valid")
+
+	// ErrPassword to store password error message
+	ErrPassword = errors.New("Username atau Password yang digunakan tidak valid")
+
+	// ErrTokenExpired to store password error message
+	ErrTokenExpired = errors.New("Token Anda telah expire")
 )
 
 // DynamicErr to return parameterize errors

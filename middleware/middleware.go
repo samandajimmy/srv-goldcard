@@ -38,7 +38,7 @@ func InitMiddleware(ech *echo.Echo, echoGroup models.EchoGroup) {
 	ech.Use(middleware.Recover())
 	cm.cors()
 	cm.basicAuth()
-	cm.jwtAuth() // klo gk di tutup gk bisa request.
+	cm.jwtAuth()
 	cm.customValidation()
 
 }
