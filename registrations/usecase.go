@@ -10,5 +10,5 @@ import (
 type UseCase interface {
 	PostAddress(echo.Context, *models.Registrations) (string, error)
 	GetAddress(echo.Context, string) (map[string]interface{}, error)
-	PostSavingAccount(echo.Context, *models.Applications) (string, error)
+	PostSavingAccount(echo.Context, *models.Applications) error
 }

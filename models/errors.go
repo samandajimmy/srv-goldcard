@@ -37,13 +37,7 @@ var (
 	ErrPostAddressFailed = errors.New(("Menambahkan alamat gagal"))
 
 	// ErrPostSavingAccountFailed to errors post address failed
-	ErrPostSavingAccountFailed = errors.New(("Menambahkan saving account gagal"))
-
-	// ErrSavingAccount to errors saving account is empty
-	ErrSavingAccountEmpty = errors.New(("Saving account tidak boleh kosong"))
-
-	// ErrAddressEmpty to errors address is empty
-	ErrApplicationNumberEmpty = errors.New(("Application number tidak boleh kosong"))
+	ErrPostSavingAccountFailed = errors.New(("Menambahkan Rekening Tabungan gagal"))
 )
 
 // DynamicErr to return parameterize errors

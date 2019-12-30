@@ -141,15 +141,7 @@ func (reg *RegistrationsHandler) PostSavingAccount(c echo.Context) error {
 
 	c.Bind(&applications)
 	logger.DataLog(c, applications).Info("Start of Post Saving Account")
-	dataResponse, err := reg.registrationsUseCase.PostSavingAccount(c, &applications)
-
-	if err != nil {
-		respErrors.SetTitle(err.Error())
-		response.SetResponse("", respErrors)
-		logger.DataLog(c, response).Info("End of Post Saving Account")
-
-		return c.JSON(getStatusCode(err), response)
-	}
+	err := reg.registrationsUseCase.PostSavingAccount(c, &applications)
 
 	if err = c.Validate(applications); err != nil {
 		respErrors.SetTitle(err.Error())
@@ -159,12 +151,15 @@ func (reg *RegistrationsHandler) PostSavingAccount(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
-	// response.Code = "00"
-	// response.Status = models.StatusSuccess
-	// response.Message = models.MessageUpdateSuccess
-	// logger.DataLog(c, response).Info("End of Post Saving Account")
+	if err != nil {
+		respErrors.SetTitle(err.Error())
+		response.SetResponse("", respErrors)
+		logger.DataLog(c, response).Info("End of Post Saving Account")
 
-	response.SetResponse(dataResponse, respErrors)
+		return c.JSON(getStatusCode(err), response)
+	}
+
+	response.SetResponse("", respErrors)
 
 	return c.JSON(getStatusCode(err), response)
 }

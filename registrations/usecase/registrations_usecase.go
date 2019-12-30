@@ -85,27 +85,17 @@ func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string)
 }
 
 // PostAddress representation update address to database
-func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, applications *models.Applications) (string, error) {
+func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, applications *models.Applications) error {
 	logger := models.RequestLogger{}
 	requestLogger := logger.GetRequestLogger(c, nil)
-
-	if applications.ApplicationNumber == "" {
-		requestLogger.Debug(models.ErrApplicationNumberEmpty)
-		return "", models.ErrApplicationNumberEmpty
-	}
-
-	if applications.SavingAccount == "" {
-		requestLogger.Debug(models.ErrSavingAccountEmpty)
-		return "", models.ErrSavingAccountEmpty
-	}
 
 	err := reg.registrationsRepository.PostSavingAccount(c, applications)
 
 	if err != nil {
 		requestLogger.Debug(models.ErrPostSavingAccountFailed)
 
-		return "", models.ErrPostSavingAccountFailed
+		return models.ErrPostSavingAccountFailed
 	}
 
-	return "", nil
+	return nil
 }
