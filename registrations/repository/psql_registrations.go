@@ -68,3 +68,31 @@ func (regis *psqlRegistrationsRepository) GetAddress(c echo.Context, phoneNo str
 	}
 	return address, nil
 }
+
+// PostSavingAccount representation update saving account to database
+func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, applications *models.Applications) error {
+	logger := models.RequestLogger{}
+	requestLogger := logger.GetRequestLogger(c, nil)
+	var lastID int64
+	now := time.Now()
+	query := `UPDATE applications
+		set saving_account = $1,
+			updated_at = $3
+		WHERE application_number = $2 RETURNING id`
+	stmt, err := regis.Conn.Prepare(query)
+
+	if err != nil {
+		requestLogger.Debug(err)
+
+		return err
+	}
+
+	err = stmt.QueryRow(applications.SavingAccount, applications.ApplicationNumber, &now).Scan(&lastID)
+	if err != nil {
+		requestLogger.Debug(err)
+
+		return err
+	}
+
+	return nil
+}

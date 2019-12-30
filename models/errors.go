@@ -44,6 +44,9 @@ var (
 
 	// ErrTokenExpired to store password error message
 	ErrTokenExpired = errors.New("Token Anda telah expire")
+
+	// ErrPostSavingAccountFailed to errors post address failed
+	ErrPostSavingAccountFailed = errors.New(("Menambahkan Rekening Tabungan gagal"))
 )
 
 // DynamicErr to return parameterize errors

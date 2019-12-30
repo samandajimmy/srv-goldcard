@@ -28,6 +28,8 @@ func NewRegistrationsHandler(
 	echoGroup.API.POST("/registrations", handler.Registrations)
 	echoGroup.API.POST("/registrations/address", handler.PostAddress)
 	echoGroup.API.GET("/registrations/address", handler.GetAddress)
+	echoGroup.API.POST("/registrations/saving_account", handler.PostSavingAccount)
+
 }
 
 // Registrations a handler to create a campaign
@@ -127,6 +129,38 @@ func (reg *RegistrationsHandler) GetAddress(c echo.Context) error {
 	logger.DataLog(c, response).Info("End of Post Address")
 
 	response.SetResponse(res, respErrors)
+	return c.JSON(getStatusCode(err), response)
+}
+
+// PostAddress a handler to update Saving Account in table applications
+func (reg *RegistrationsHandler) PostSavingAccount(c echo.Context) error {
+	respErrors := &models.ResponseErrors{}
+	logger := models.RequestLogger{}
+	response = models.Response{}
+	var applications models.Applications
+
+	c.Bind(&applications)
+	logger.DataLog(c, applications).Info("Start of Post Saving Account")
+	err := reg.registrationsUseCase.PostSavingAccount(c, &applications)
+
+	if err = c.Validate(applications); err != nil {
+		respErrors.SetTitle(err.Error())
+		response.SetResponse("", respErrors)
+		logger.DataLog(c, response).Info("End of Post Saving Account")
+
+		return c.JSON(http.StatusBadRequest, response)
+	}
+
+	if err != nil {
+		respErrors.SetTitle(err.Error())
+		response.SetResponse("", respErrors)
+		logger.DataLog(c, response).Info("End of Post Saving Account")
+
+		return c.JSON(getStatusCode(err), response)
+	}
+
+	response.SetResponse("", respErrors)
+
 	return c.JSON(getStatusCode(err), response)
 }
 
