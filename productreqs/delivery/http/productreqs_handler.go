@@ -30,22 +30,16 @@ func (preq *ProductreqsHandler) productRequirements(c echo.Context) error {
 	response = models.Response{}
 	respErrors := &models.ResponseErrors{}
 
-	logger := models.RequestLogger{}
-	logger.DataLog(c, nil).Info("Start to get productRequirements.")
-
 	responseData, err := preq.productReqsUseCase.ProductRequirements(c)
 
 	if err != nil {
 		respErrors.SetTitle(err.Error())
 		response.SetResponse("", respErrors)
-		logger.DataLog(c, response).Info("End of check productRequirements.")
 
 		return c.JSON(http.StatusBadRequest, response)
 	}
 
 	response.SetResponse(responseData, respErrors)
-
-	logger.DataLog(c, response).Info("End of check productRequirements.")
 
 	return c.JSON(getStatusCode(err), response)
 }

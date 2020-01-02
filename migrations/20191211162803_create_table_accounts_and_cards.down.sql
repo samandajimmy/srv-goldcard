@@ -1,5 +1,5 @@
-DROP TYPE account_status;
-DROP TYPE gender_enum;
+DROP INDEX index_accounts;
+DROP TABLE IF EXISTS accounts;
 
 DROP INDEX index_banks;
 DROP TABLE IF EXISTS banks;
@@ -22,5 +22,5 @@ DROP TABLE IF EXISTS emergency_contacts;
 DROP INDEX index_correspondences;
 DROP TABLE IF EXISTS correspondences;
 
-DROP INDEX index_accounts;
-DROP TABLE IF EXISTS accounts;
+DROP TYPE status_enum_default;
+DROP TYPE gender_enum;

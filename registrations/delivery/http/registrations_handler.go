@@ -3,8 +3,6 @@ package http
 import (
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
-	"net/http"
-	"strings"
 
 	"github.com/labstack/echo"
 )
@@ -13,6 +11,8 @@ var response models.Response
 
 // RegistrationsHandler represent the httphandler for registrations
 type RegistrationsHandler struct {
+	response             models.Response
+	respErrors           models.ResponseErrors
 	registrationsUseCase registrations.UseCase
 }
 
@@ -28,159 +28,166 @@ func NewRegistrationsHandler(
 	echoGroup.API.POST("/registrations", handler.Registrations)
 	echoGroup.API.POST("/registrations/address", handler.PostAddress)
 	echoGroup.API.GET("/registrations/address", handler.GetAddress)
-	echoGroup.API.POST("/registrations/saving_account", handler.PostSavingAccount)
-
+	echoGroup.API.POST("/registrations/saving-account", handler.PostSavingAccount)
+	echoGroup.API.POST("/registrations/personal-informations", handler.personalInfomations)
 }
 
 // Registrations a handler to create a campaign
 func (reg *RegistrationsHandler) Registrations(c echo.Context) error {
-	var registrations models.Registrations
+	var pr models.PayloadRegistration
+	reg.response, reg.respErrors = models.NewResponse()
 
-	response = models.Response{}
-	err := c.Bind(&registrations)
+	if err := c.Bind(&pr); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
 
-	if err != nil {
-		response.Status = models.StatusError
-		response.Message = err.Error()
-		return c.JSON(http.StatusOK, response)
+		return reg.response.Body(c, err)
 	}
 
-	api, _ := models.NewAPI("https://apidigitaldev.pegadaian.co.id/v2", "application/x-www-form-urlencoded")
-	req, _ := api.Request("/profile/testing_go", "POST", registrations)
-	_, _ = api.Do(req, &response)
+	if err := c.Validate(pr); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
 
-	if err != nil {
-		response.Status = models.StatusError
-		response.Message = err.Error()
-		return c.JSON(http.StatusOK, response)
+		return reg.response.Body(c, err)
 	}
 
-	return c.JSON(http.StatusOK, response)
+	appNumber, err := reg.registrationsUseCase.PostRegistration(c, pr)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse(map[string]string{"applicationNumber": appNumber}, &reg.respErrors)
+
+	return reg.response.Body(c, err)
 }
 
 // PostAddress a handler to update Address in table personal_informations
 func (reg *RegistrationsHandler) PostAddress(c echo.Context) error {
-	respErrors := &models.ResponseErrors{}
-	logger := models.RequestLogger{}
-	response = models.Response{}
 	var registrations models.Registrations
+	reg.response, reg.respErrors = models.NewResponse()
 
-	c.Bind(&registrations)
-	logger.DataLog(c, registrations).Info("Start of Post Address")
-	dataResponse, err := reg.registrationsUseCase.PostAddress(c, &registrations)
+	if err := c.Bind(&registrations); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(registrations); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.PostAddress(c, &registrations)
 
 	if err != nil {
-		respErrors.SetTitle(err.Error())
-		response.SetResponse("", respErrors)
-		logger.DataLog(c, response).Info("End of Post Address")
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
 
-		return c.JSON(getStatusCode(err), response)
+		return reg.response.Body(c, err)
 	}
 
-	if err = c.Validate(registrations); err != nil {
-		respErrors.SetTitle(err.Error())
-		response.SetResponse("", respErrors)
-		logger.DataLog(c, response).Info("End of Post Address")
+	reg.response.SetResponse("", &reg.respErrors)
 
-		return c.JSON(http.StatusBadRequest, response)
-	}
-
-	response.SetResponse(dataResponse, respErrors)
-
-	return c.JSON(getStatusCode(err), response)
+	return reg.response.Body(c, err)
 }
 
 // GetAddress a handler to get Address in table personal_informations
 func (reg *RegistrationsHandler) GetAddress(c echo.Context) error {
-	respErrors := &models.ResponseErrors{}
-	logger := models.RequestLogger{}
-	response = models.Response{}
 	var getAddress models.PayloadGetAddress
+	reg.response, reg.respErrors = models.NewResponse()
 
-	err := c.Bind(&getAddress)
+	if err := c.Bind(&getAddress); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
 
-	if err != nil {
-		respErrors.SetTitle(models.MessageUnprocessableEntity)
-		response.SetResponse("", respErrors)
-		logger.DataLog(c, response).Info("End of Get Address")
-
-		return c.JSON(http.StatusUnprocessableEntity, response)
+		return reg.response.Body(c, err)
 	}
 
-	if err = c.Validate(getAddress); err != nil {
-		respErrors.SetTitle(err.Error())
-		response.SetResponse("", respErrors)
-		logger.DataLog(c, response).Info("End of Get Address")
+	if err := c.Validate(getAddress); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
 
-		return c.JSON(http.StatusBadRequest, response)
+		return reg.response.Body(c, err)
 	}
 
-	logger.DataLog(c, getAddress.PhoneNumber).Info("Start of Get Address")
 	res, err := reg.registrationsUseCase.GetAddress(c, getAddress.PhoneNumber)
 
 	if err != nil {
-		respErrors.SetTitle(err.Error())
-		response.SetResponse("", respErrors)
-		logger.DataLog(c, response).Info("End of Get Address")
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
 
-		return c.JSON(getStatusCode(err), res)
+		return reg.response.Body(c, err)
 	}
 
-	logger.DataLog(c, response).Info("End of Post Address")
-
-	response.SetResponse(res, respErrors)
-	return c.JSON(getStatusCode(err), response)
+	reg.response.SetResponse(res, &reg.respErrors)
+	return reg.response.Body(c, err)
 }
 
-// PostAddress a handler to update Saving Account in table applications
+// PostSavingAccount a handler to update Saving Account in table applications
 func (reg *RegistrationsHandler) PostSavingAccount(c echo.Context) error {
-	respErrors := &models.ResponseErrors{}
-	logger := models.RequestLogger{}
-	response = models.Response{}
 	var applications models.Applications
+	reg.response, reg.respErrors = models.NewResponse()
 
-	c.Bind(&applications)
-	logger.DataLog(c, applications).Info("Start of Post Saving Account")
+	if err := c.Bind(&applications); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(applications); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
 	err := reg.registrationsUseCase.PostSavingAccount(c, &applications)
 
-	if err = c.Validate(applications); err != nil {
-		respErrors.SetTitle(err.Error())
-		response.SetResponse("", respErrors)
-		logger.DataLog(c, response).Info("End of Post Saving Account")
-
-		return c.JSON(http.StatusBadRequest, response)
-	}
-
 	if err != nil {
-		respErrors.SetTitle(err.Error())
-		response.SetResponse("", respErrors)
-		logger.DataLog(c, response).Info("End of Post Saving Account")
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
 
-		return c.JSON(getStatusCode(err), response)
+		return reg.response.Body(c, err)
 	}
 
-	response.SetResponse("", respErrors)
-
-	return c.JSON(getStatusCode(err), response)
+	reg.response.SetResponse("", &reg.respErrors)
+	return reg.response.Body(c, err)
 }
 
-func getStatusCode(err error) int {
-	if err == nil {
-		return http.StatusOK
+func (reg *RegistrationsHandler) personalInfomations(c echo.Context) error {
+	var ppi models.PayloadPersonalInformation
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&ppi); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
 	}
 
-	if strings.Contains(err.Error(), "400") {
-		return http.StatusBadRequest
+	if err := c.Validate(ppi); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
 	}
 
-	switch err {
-	case models.ErrInternalServerError:
-		return http.StatusInternalServerError
-	case models.ErrNotFound:
-		return http.StatusNotFound
-	case models.ErrConflict:
-		return http.StatusConflict
-	default:
-		return http.StatusOK
+	err := reg.registrationsUseCase.PostPersonalInfo(c, ppi)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
 	}
+
+	return reg.response.Body(c, err)
 }

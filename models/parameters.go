@@ -60,4 +60,7 @@ var (
 
 	// LetterBytes a string to generate random ID
 	LetterBytes = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+	// BriBankCode a string to store BRI bank code
+	BriBankCode = "002"
 )

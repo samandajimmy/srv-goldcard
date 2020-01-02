@@ -1,8 +1,21 @@
 package models
 
 import (
+	"net/http"
 	"strings"
+
+	"github.com/labstack/echo"
 )
+
+var (
+	responseSuccess = "Success"
+	responseError   = "Error"
+)
+
+var responseCode = map[string]string{
+	responseSuccess: "00",
+	responseError:   "99",
+}
 
 // Response struct is represent a data for output payload
 type Response struct {
@@ -20,14 +33,9 @@ type ResponseErrors struct {
 	Details []string
 }
 
-var (
-	responseSuccess = "Success"
-	responseError   = "Error"
-)
-
-var responseCode = map[string]string{
-	responseSuccess: "00",
-	responseError:   "99",
+// NewResponse is a function to do initial response
+func NewResponse() (Response, ResponseErrors) {
+	return Response{}, ResponseErrors{}
 }
 
 // SetTitle title of Response errors
@@ -40,7 +48,7 @@ func (re *ResponseErrors) AddError(errString string) {
 	re.Details = append(re.Details, errString)
 }
 
-// SetResponse to bla bla
+// SetResponse is a function to set response
 func (resp *Response) SetResponse(respData interface{}, respErrors *ResponseErrors) {
 	if respErrors != nil && respErrors.Title != "" {
 		resp.Status = responseError
@@ -54,5 +62,31 @@ func (resp *Response) SetResponse(respData interface{}, respErrors *ResponseErro
 		resp.Code = responseCode[responseSuccess]
 		resp.Message = MessageDataSuccess
 		resp.Data = respData
+	}
+}
+
+// Body is function to get response body
+func (resp *Response) Body(c echo.Context, err error) error {
+	return c.JSON(getStatusCode(err), resp)
+}
+
+func getStatusCode(err error) int {
+	if err == nil {
+		return http.StatusOK
+	}
+
+	if strings.Contains(err.Error(), "400") {
+		return http.StatusBadRequest
+	}
+
+	switch err {
+	case ErrInternalServerError:
+		return http.StatusInternalServerError
+	case ErrNotFound:
+		return http.StatusNotFound
+	case ErrConflict:
+		return http.StatusConflict
+	default:
+		return http.StatusOK
 	}
 }
