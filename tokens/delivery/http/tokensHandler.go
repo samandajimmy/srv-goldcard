@@ -27,17 +27,17 @@ func NewTokensHandler(echoGroup models.EchoGroup, tknUseCase tokens.UseCase) {
 	echoGroup.Token.GET("/refresh", handler.refreshToken)
 }
 
-func (tkn *TokensHandler) createToken(echTx echo.Context) error {
+func (tkn *TokensHandler) createToken(c echo.Context) error {
 	var accountToken models.AccountToken
 	response = models.Response{}
-	ctx := echTx.Request().Context()
-	err := echTx.Bind(&accountToken)
+	ctx := c.Request().Context()
+	err := c.Bind(&accountToken)
 
 	if err != nil {
 		response.Status = models.StatusError
 		response.Message = models.MessageUnprocessableEntity
 
-		return echTx.JSON(getStatusCode(err), response)
+		return c.JSON(getStatusCode(err), response)
 	}
 
 	err = tkn.TokenUseCase.CreateToken(ctx, &accountToken)
@@ -46,7 +46,7 @@ func (tkn *TokensHandler) createToken(echTx echo.Context) error {
 		response.Status = models.StatusError
 		response.Message = err.Error()
 
-		return echTx.JSON(getStatusCode(err), response)
+		return c.JSON(getStatusCode(err), response)
 	}
 
 	accountToken.Password = ""
@@ -54,7 +54,7 @@ func (tkn *TokensHandler) createToken(echTx echo.Context) error {
 	response.Message = models.MessageDataSuccess
 	response.Data = accountToken
 
-	return echTx.JSON(getStatusCode(err), response)
+	return c.JSON(getStatusCode(err), response)
 }
 
 func (tkn *TokensHandler) getToken(echTx echo.Context) error {

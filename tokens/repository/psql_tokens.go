@@ -27,7 +27,7 @@ func (m *psqlTokenRepository) Create(ctx context.Context, accToken *models.Accou
 	var lastID int64
 	now := time.Now()
 	tokenExp := now.Add(stringToDuration(os.Getenv(`JWT_TOKEN_EXP`)) * time.Hour)
-	defStatus := int8(1)
+	defStatus := int64(1)
 
 	token, err := createJWTToken(accToken, now, tokenExp)
 

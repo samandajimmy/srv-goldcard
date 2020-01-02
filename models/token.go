@@ -19,7 +19,7 @@ type AccountToken struct {
 	Password  string     `json:"password,omitempty"`
 	Token     string     `json:"token,omitempty"`
 	ExpireAt  *time.Time `json:"expireAt,omitempty"`
-	Status    *int8      `json:"status,omitempty"`
+	Status    *int64     `json:"status,omitempty"`
 	CreatedAt *time.Time `json:"created_at,omitempty"`
 	UpdatedAt *time.Time `json:"updated_at,omitempty"`
 }
