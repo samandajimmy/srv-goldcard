@@ -4,12 +4,12 @@ import (
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo"
-	"github.com/sirupsen/logrus"
 )
 
 type registrationsUseCase struct {
-	registrationsRepository registrations.Repository
+	regRepo registrations.Repository
 }
 
 // RegistrationsUseCase represent Registrations Use Case
@@ -17,42 +17,67 @@ func RegistrationsUseCase(
 	regRepository registrations.Repository,
 ) registrations.UseCase {
 	return &registrationsUseCase{
-		registrationsRepository: regRepository,
+		regRepo: regRepository,
 	}
 }
 
-// PostAddress representation update address to database
-func (reg *registrationsUseCase) PostAddress(c echo.Context, registrations *models.Registrations) (string, error) {
-	logger := models.RequestLogger{}
-	requestLogger := logger.GetRequestLogger(c, nil)
-
-	err := reg.registrationsRepository.PostAddress(c, registrations)
+func (reg *registrationsUseCase) PostAddress(c echo.Context, registrations *models.Registrations) error {
+	err := reg.regRepo.PostAddress(c, registrations)
 
 	if err != nil {
-		requestLogger.Debug(models.ErrPostAddressFailed)
-
-		return "", models.ErrPostAddressFailed
+		return models.ErrPostAddressFailed
 	}
 
-	return "", nil
+	return nil
 }
 
-// PostAddress representation get address from database
 func (reg *registrationsUseCase) GetAddress(c echo.Context, phoneNo string) (map[string]interface{}, error) {
-	logger := models.RequestLogger{}
-	requestLogger := logger.GetRequestLogger(c, nil)
-
-	res, err := reg.registrationsRepository.GetAddress(c, phoneNo)
-
-	response := map[string]interface{}{"address": res}
+	res, err := reg.regRepo.GetAddress(c, phoneNo)
 
 	if err != nil {
-		requestLogger.Debug(models.ErrPostAddressFailed)
-
 		return nil, models.ErrPostAddressFailed
 	}
 
+	response := map[string]interface{}{"address": res}
+
 	return response, nil
+}
+
+func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models.PayloadRegistration) (string, error) {
+	appNumber, _ := uuid.NewRandom()
+
+	// get BRI bank_id
+	bankID, err := reg.regRepo.GetBankIDByCode(c, models.BriBankCode)
+
+	app := models.Applications{ApplicationNumber: appNumber.String()}
+	acc := models.Account{CIF: payload.CIF, BankID: bankID}
+	pi := models.PersonalInformation{PhoneNumber: payload.PhoneNumber}
+	err = reg.regRepo.CreateApplication(c, app, acc, pi)
+
+	if err != nil {
+		return "", models.ErrCreateApplication
+	}
+
+	return appNumber.String(), nil
+}
+
+func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, payload models.PayloadPersonalInformation) error {
+	// TODO: get parameters needed
+
+	// TODO: save personal info data
+
+	// TODO: save application data
+
+	// TODO: save card data
+
+	// TODO: save occupation data
+
+	// TODO: save correspondence
+
+	// TODO: request POST `/register` API BRI
+
+	// TODO: update account data
+	return nil
 }
 
 func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string) error {
@@ -60,24 +85,18 @@ func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string)
 	pds, err := models.NewPdsAPI(echo.MIMEApplicationForm)
 
 	if err != nil {
-		logrus.Debug(err)
-
 		return err
 	}
 
 	req, err := pds.Request("/goldcard/status_pengajuan_notif", echo.POST, payload)
 
 	if err != nil {
-		logrus.Debug(err)
-
 		return err
 	}
 
 	_, err = pds.Do(req, &response)
 
 	if err != nil {
-		logrus.Debug(err)
-
 		return err
 	}
 
@@ -86,14 +105,9 @@ func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string)
 
 // PostAddress representation update address to database
 func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, applications *models.Applications) error {
-	logger := models.RequestLogger{}
-	requestLogger := logger.GetRequestLogger(c, nil)
-
-	err := reg.registrationsRepository.PostSavingAccount(c, applications)
+	err := reg.regRepo.PostSavingAccount(c, applications)
 
 	if err != nil {
-		requestLogger.Debug(models.ErrPostSavingAccountFailed)
-
 		return models.ErrPostSavingAccountFailed
 	}
 

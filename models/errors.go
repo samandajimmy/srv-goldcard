@@ -38,6 +38,9 @@ var (
 
 	// ErrPostSavingAccountFailed to errors post address failed
 	ErrPostSavingAccountFailed = errors.New(("Menambahkan Rekening Tabungan gagal"))
+
+	// ErrCreateApplication to errors create application failed
+	ErrCreateApplication = errors.New(("Terjadi kesalahan pada proses pembuatan pengajuan"))
 )
 
 // DynamicErr to return parameterize errors

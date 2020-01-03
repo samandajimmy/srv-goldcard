@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-// Registrations is a struct to store registration data
+// Applications is a struct to store application data
 type Applications struct {
 	ID                int64      `json:"id"`
 	ApplicationNumber string     `json:"applicationNumber" validate:"required"`
@@ -11,6 +11,6 @@ type Applications struct {
 	KTP               string     `json:"ktp"`
 	NPWP              string     `json:"npwp"`
 	SavingAccount     string     `json:"savingAccount" validate:"required"`
-	CreatedAT         *time.Time `json:"createdAt"`
-	UpdatedAT         *time.Time `json:"updatedAt"`
+	CreatedAt         *time.Time `json:"createdAt"`
+	UpdatedAt         *time.Time `json:"updatedAt"`
 }
