@@ -57,25 +57,25 @@ func (tkn *TokensHandler) createToken(c echo.Context) error {
 	return c.JSON(getStatusCode(err), response)
 }
 
-func (tkn *TokensHandler) getToken(echTx echo.Context) error {
+func (tkn *TokensHandler) getToken(c echo.Context) error {
 	response = models.Response{}
-	ctx := echTx.Request().Context()
-	username := echTx.QueryParam("username")
-	password := echTx.QueryParam("password")
+	ctx := c.Request().Context()
+	username := c.QueryParam("username")
+	password := c.QueryParam("password")
 	accToken, err := tkn.TokenUseCase.GetToken(ctx, username, password)
 
 	if err != nil {
 		response.Status = models.StatusError
 		response.Message = err.Error()
 
-		return echTx.JSON(getStatusCode(err), response)
+		return c.JSON(getStatusCode(err), response)
 	}
 
 	response.Status = models.StatusSuccess
 	response.Message = models.MessageDataSuccess
 	response.Data = accToken
 
-	return echTx.JSON(getStatusCode(err), response)
+	return c.JSON(getStatusCode(err), response)
 }
 
 func (tkn *TokensHandler) refreshToken(echTx echo.Context) error {
