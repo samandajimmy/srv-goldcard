@@ -49,9 +49,20 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 	// get BRI bank_id
 	bankID, err := reg.regRepo.GetBankIDByCode(c, models.BriBankCode)
 
+	if err != nil {
+		return "", models.ErrBankNotFound
+	}
+
+	// get pegadaian emergency_contact_id
+	ecID, err := reg.regRepo.GetEmergencyContactIDByType(c, models.EmergencyContactDef)
+
+	if err != nil {
+		return "", models.ErrEmergecyContactNotFound
+	}
+
 	app := models.Applications{ApplicationNumber: appNumber.String()}
-	acc := models.Account{CIF: payload.CIF, BankID: bankID}
-	pi := models.PersonalInformation{PhoneNumber: payload.PhoneNumber}
+	acc := models.Account{CIF: payload.CIF, BankID: bankID, EmergencyContactID: ecID}
+	pi := models.PersonalInformation{HandPhoneNumber: payload.HandPhoneNumber}
 	err = reg.regRepo.CreateApplication(c, app, acc, pi)
 
 	if err != nil {
@@ -62,21 +73,37 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 }
 
 func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, payload models.PayloadPersonalInformation) error {
-	// TODO: get parameters needed
+	// get account by appNumber
+	acc, err := reg.regRepo.GetAccountByAppNumber(c, payload.ApplicationNumber)
 
-	// TODO: save personal info data
+	if err != nil {
+		return models.ErrAppNumberNotFound
+	}
 
-	// TODO: save application data
+	err = acc.MappingRegistrationData(c, payload)
 
-	// TODO: save card data
+	if err != nil {
+		return models.ErrMappingData
+	}
 
-	// TODO: save occupation data
+	// update account data
+	err = reg.regRepo.UpdateAllRegistrationData(c, acc)
 
-	// TODO: save correspondence
+	if err != nil {
+		return models.ErrUpdateRegData
+	}
 
-	// TODO: request POST `/register` API BRI
+	return nil
+}
 
-	// TODO: update account data
+// PostAddress representation update address to database
+func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, applications *models.Applications) error {
+	err := reg.regRepo.PostSavingAccount(c, applications)
+
+	if err != nil {
+		return models.ErrPostSavingAccountFailed
+	}
+
 	return nil
 }
 
@@ -98,17 +125,6 @@ func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string)
 
 	if err != nil {
 		return err
-	}
-
-	return nil
-}
-
-// PostAddress representation update address to database
-func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, applications *models.Applications) error {
-	err := reg.regRepo.PostSavingAccount(c, applications)
-
-	if err != nil {
-		return models.ErrPostSavingAccountFailed
 	}
 
 	return nil

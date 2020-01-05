@@ -24,3 +24,4 @@ DROP TABLE IF EXISTS correspondences;
 
 DROP TYPE status_enum_default;
 DROP TYPE gender_enum;
+DROP TYPE ec_enum;

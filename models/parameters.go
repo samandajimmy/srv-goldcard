@@ -63,4 +63,7 @@ var (
 
 	// BriBankCode a string to store BRI bank code
 	BriBankCode = "002"
+
+	// EmergencyContactDef a string to store default emergency contact
+	EmergencyContactDef = "pegadaian"
 )
