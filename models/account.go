@@ -88,6 +88,16 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	return nil
 }
 
+// MappingAddressData a function to map all data addresses
+func (acc *Account) MappingAddressData(c echo.Context, pl PayloadAddress) error {
+	acc.Correspondence.AddressLine1 = pl.AddressLine1
+	acc.Correspondence.AddressLine2 = pl.AddressLine2
+	acc.Correspondence.AddressLine3 = pl.AddressLine3
+	acc.Correspondence.AddressCity = pl.AddressCity
+
+	return nil
+}
+
 // Bank is a struct to strore bank data
 type Bank struct {
 	ID          int64     `json:"id"`
@@ -123,4 +133,12 @@ type EmergencyContact struct {
 	Zipcode      string    `json:"zipcode"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
+}
+
+// AddressData is a struct to store address data
+type AddressData struct {
+	City        string `json:"city"`
+	Province    string `json:"province"`
+	Subdistrict string `json:"subdistrict"`
+	Village     string `json:"village"`
 }

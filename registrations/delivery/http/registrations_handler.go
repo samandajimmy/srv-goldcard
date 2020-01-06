@@ -27,9 +27,9 @@ func NewRegistrationsHandler(
 	// End Point For External
 	echoGroup.API.POST("/registrations", handler.Registrations)
 	echoGroup.API.POST("/registrations/address", handler.PostAddress)
-	echoGroup.API.GET("/registrations/address", handler.GetAddress)
 	echoGroup.API.POST("/registrations/saving-account", handler.PostSavingAccount)
 	echoGroup.API.POST("/registrations/personal-informations", handler.personalInfomations)
+	echoGroup.API.POST("/registrations/card-limit", handler.cardLimit)
 }
 
 // Registrations a handler to create a campaign
@@ -67,24 +67,24 @@ func (reg *RegistrationsHandler) Registrations(c echo.Context) error {
 
 // PostAddress a handler to update Address in table personal_informations
 func (reg *RegistrationsHandler) PostAddress(c echo.Context) error {
-	var registrations models.Registrations
+	var plAddr models.PayloadAddress
 	reg.response, reg.respErrors = models.NewResponse()
 
-	if err := c.Bind(&registrations); err != nil {
+	if err := c.Bind(&plAddr); err != nil {
 		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
 		reg.response.SetResponse("", &reg.respErrors)
 
 		return reg.response.Body(c, err)
 	}
 
-	if err := c.Validate(registrations); err != nil {
+	if err := c.Validate(plAddr); err != nil {
 		reg.respErrors.SetTitle(err.Error())
 		reg.response.SetResponse("", &reg.respErrors)
 
 		return reg.response.Body(c, err)
 	}
 
-	err := reg.registrationsUseCase.PostAddress(c, &registrations)
+	err := reg.registrationsUseCase.PostAddress(c, plAddr)
 
 	if err != nil {
 		reg.respErrors.SetTitle(err.Error())
@@ -98,58 +98,26 @@ func (reg *RegistrationsHandler) PostAddress(c echo.Context) error {
 	return reg.response.Body(c, err)
 }
 
-// GetAddress a handler to get Address in table personal_informations
-func (reg *RegistrationsHandler) GetAddress(c echo.Context) error {
-	var getAddress models.PayloadGetAddress
-	reg.response, reg.respErrors = models.NewResponse()
-
-	if err := c.Bind(&getAddress); err != nil {
-		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
-		reg.response.SetResponse("", &reg.respErrors)
-
-		return reg.response.Body(c, err)
-	}
-
-	if err := c.Validate(getAddress); err != nil {
-		reg.respErrors.SetTitle(err.Error())
-		reg.response.SetResponse("", &reg.respErrors)
-
-		return reg.response.Body(c, err)
-	}
-
-	res, err := reg.registrationsUseCase.GetAddress(c, getAddress.PhoneNumber)
-
-	if err != nil {
-		reg.respErrors.SetTitle(err.Error())
-		reg.response.SetResponse("", &reg.respErrors)
-
-		return reg.response.Body(c, err)
-	}
-
-	reg.response.SetResponse(res, &reg.respErrors)
-	return reg.response.Body(c, err)
-}
-
 // PostSavingAccount a handler to update Saving Account in table applications
 func (reg *RegistrationsHandler) PostSavingAccount(c echo.Context) error {
-	var applications models.Applications
+	var pl models.PayloadSavingAccount
 	reg.response, reg.respErrors = models.NewResponse()
 
-	if err := c.Bind(&applications); err != nil {
+	if err := c.Bind(&pl); err != nil {
 		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
 		reg.response.SetResponse("", &reg.respErrors)
 
 		return reg.response.Body(c, err)
 	}
 
-	if err := c.Validate(applications); err != nil {
+	if err := c.Validate(pl); err != nil {
 		reg.respErrors.SetTitle(err.Error())
 		reg.response.SetResponse("", &reg.respErrors)
 
 		return reg.response.Body(c, err)
 	}
 
-	err := reg.registrationsUseCase.PostSavingAccount(c, &applications)
+	err := reg.registrationsUseCase.PostSavingAccount(c, pl)
 
 	if err != nil {
 		reg.respErrors.SetTitle(err.Error())
@@ -181,6 +149,38 @@ func (reg *RegistrationsHandler) personalInfomations(c echo.Context) error {
 	}
 
 	err := reg.registrationsUseCase.PostPersonalInfo(c, ppi)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
+
+	return reg.response.Body(c, err)
+}
+
+func (reg *RegistrationsHandler) cardLimit(c echo.Context) error {
+	var pl models.PayloadCardLimit
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.PostCardLimit(c, pl)
 
 	if err != nil {
 		reg.respErrors.SetTitle(err.Error())

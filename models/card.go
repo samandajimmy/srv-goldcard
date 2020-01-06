@@ -7,7 +7,7 @@ type Card struct {
 	ID          int64     `json:"id"`
 	CardName    string    `json:"cardName"`
 	CardNumber  string    `json:"cardNumber"`
-	CardLimit   string    `json:"cardLimit"`
+	CardLimit   int64     `json:"cardLimit"`
 	ValidUntil  string    `json:"validUntil"`
 	PinNumber   string    `json:"pinNumber"`
 	Description string    `json:"description"`
