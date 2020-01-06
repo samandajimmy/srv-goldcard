@@ -15,32 +15,35 @@ var (
 	// ErrConflict to store conflicted error message
 	ErrConflict = errors.New("Item sudah ada")
 
-	// ErrBadParamInput to store bad parameter error message
-	ErrBadParamInput = errors.New("Parameter yang diberikan tidak valid")
-
-	// ErrGetCampaignCounter to get campaign counter error message
-	ErrGetCampaignCounter = errors.New("Campaign tidak tersedia")
-
-	// ErrRefIDStatus to not found ref_trx error message
-	ErrRefIDStatus = errors.New("Transaksi ID ")
-
-	// ErrReqUndefined to store undefine request body error message
-	ErrReqUndefined = errors.New("Request data tidak tersedia")
+	// ErrMappingData to store mapping data error message
+	ErrMappingData = errors.New("Error mapping data")
 
 	// ErrFileProdReqsNotFound to errors file production requirements not found
-	ErrFileProdReqsNotFound = errors.New(("File Product Requirements Tidak di Temukan"))
+	ErrFileProdReqsNotFound = errors.New("File Product Requirements Tidak di Temukan")
 
 	// ErrAddressEmpty to errors address is empty
-	ErrAddressEmpty = errors.New(("Alamat tidak boleh kosong"))
+	ErrAddressEmpty = errors.New("Alamat tidak boleh kosong")
 
 	// ErrPostAddressFailed to errors post address failed
-	ErrPostAddressFailed = errors.New(("Menambahkan alamat gagal"))
+	ErrPostAddressFailed = errors.New("Menambahkan alamat gagal")
 
 	// ErrPostSavingAccountFailed to errors post address failed
-	ErrPostSavingAccountFailed = errors.New(("Menambahkan Rekening Tabungan gagal"))
+	ErrPostSavingAccountFailed = errors.New("Menambahkan Rekening Tabungan gagal")
 
 	// ErrCreateApplication to errors create application failed
-	ErrCreateApplication = errors.New(("Terjadi kesalahan pada proses pembuatan pengajuan"))
+	ErrCreateApplication = errors.New("Terjadi kesalahan pada proses pembuatan pengajuan")
+
+	// ErrAppNumberNotFound to store error find application number
+	ErrAppNumberNotFound = errors.New("Nomor pengajuan tidak ditemukan")
+
+	// ErrBankNotFound to store error find bank id
+	ErrBankNotFound = errors.New("Kode bank tidak ditemukan")
+
+	// ErrEmergecyContactNotFound to store emergency contact not found error message
+	ErrEmergecyContactNotFound = errors.New("Emergency contact tidak ditemukan")
+
+	// ErrUpdateRegData to store updating registration data error message
+	ErrUpdateRegData = errors.New("Terjadi kesalahan saat update data pengajuan")
 )
 
 // DynamicErr to return parameterize errors

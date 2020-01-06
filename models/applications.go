@@ -6,10 +6,10 @@ import "time"
 type Applications struct {
 	ID                int64      `json:"id"`
 	ApplicationNumber string     `json:"applicationNumber" validate:"required"`
-	CardLimit         string     `json:"cardLimit"`
 	Status            string     `json:"status"`
-	KTP               string     `json:"ktp"`
-	NPWP              string     `json:"npwp"`
+	KtpImageBase64    string     `json:"ktpImageBase64"`
+	NpwpImageBase64   string     `json:"npwpImageBase64"`
+	SelfieImageBase64 string     `json:"selfieImageBase64"`
 	SavingAccount     string     `json:"savingAccount" validate:"required"`
 	CreatedAt         *time.Time `json:"createdAt"`
 	UpdatedAt         *time.Time `json:"updatedAt"`

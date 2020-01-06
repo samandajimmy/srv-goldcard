@@ -189,5 +189,7 @@ func (reg *RegistrationsHandler) personalInfomations(c echo.Context) error {
 		return reg.response.Body(c, err)
 	}
 
+	reg.response.SetResponse("", &reg.respErrors)
+
 	return reg.response.Body(c, err)
 }
