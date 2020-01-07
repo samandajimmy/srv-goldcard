@@ -19,6 +19,6 @@ type Registrations struct {
 	PhoneNumber           string     `json:"phoneNumber" validate:"required"`
 	LatestEducationDegree string     `json:"latestEducationDegree"`
 	MotherName            string     `json:"motherName"`
-	CreatedAT             *time.Time `json:"createdAT"`
-	UpdatedAT             *time.Time `json:"updatedAT"`
+	CreatedAt             *time.Time `json:"createdAt"`
+	UpdatedAt             *time.Time `json:"updatedAt"`
 }

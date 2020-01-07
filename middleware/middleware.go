@@ -1,12 +1,14 @@
 package middleware
 
 import (
+	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"os"
 	"reflect"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/go-playground/validator.v9"
 )
 
@@ -28,19 +30,55 @@ var echGroup models.EchoGroup
 func InitMiddleware(ech *echo.Echo, echoGroup models.EchoGroup) {
 	cm := &customMiddleware{ech}
 	echGroup = echoGroup
+
 	ech.Use(middleware.RequestIDWithConfig(middleware.DefaultRequestIDConfig))
-
-	ech.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "requestID=${id}, method=${method}, status=${status}, path=${path}, latency=${latency_human} " +
-			"host=${host}, remote_ip=${remote_ip}, user_agent=${user_agent}, error=${error} \n",
-	}))
-
+	cm.customLogging()
+	cm.customBodyDump()
 	ech.Use(middleware.Recover())
 	cm.cors()
 	cm.basicAuth()
 	cm.jwtAuth()
 	cm.customValidation()
 
+}
+
+func (cm *customMiddleware) customBodyDump() {
+	cm.e.Use(middleware.BodyDumpWithConfig(middleware.BodyDumpConfig{
+		Handler: func(c echo.Context, req, resp []byte) {
+			reqBody := c.Request()
+			reqStr := string(req)
+			respStr := string(resp)
+
+			logger.MakeWithoutReportCaller(c, reqStr).Info("Request payload for endpoint " + reqBody.Method + " " + reqBody.URL.String())
+			logger.MakeWithoutReportCaller(c, respStr).Info("Response payload for endpoint " + reqBody.Method + " " + reqBody.URL.String())
+		},
+	}))
+}
+
+func (cm *customMiddleware) customLogging() {
+	cm.e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			logrus.SetReportCaller(false)
+			req := c.Request()
+			res := c.Response()
+			reqID := req.Header.Get(echo.HeaderXRequestID)
+
+			if reqID == "" {
+				reqID = res.Header().Get(echo.HeaderXRequestID)
+			}
+
+			logrus.WithFields(logrus.Fields{
+				"requestID":  reqID,
+				"method":     req.Method,
+				"status":     res.Status,
+				"host":       req.Host,
+				"user_agent": req.UserAgent(),
+				"uri":        req.URL.String(),
+				"ip":         c.RealIP(),
+			}).Info("Incoming request")
+			return next(c)
+		}
+	})
 }
 
 func (cm *customMiddleware) customValidation() {
