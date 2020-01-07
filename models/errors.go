@@ -44,6 +44,12 @@ var (
 
 	// ErrUpdateRegData to store updating registration data error message
 	ErrUpdateRegData = errors.New("Terjadi kesalahan saat update data pengajuan")
+
+	// ErrUpdateCardLimit to store updating card limit data error message
+	ErrUpdateCardLimit = errors.New("Terjadi kesalahan saat update card limit")
+
+	// ErrZipcodeNotFound to store zip code not found error message
+	ErrZipcodeNotFound = errors.New("Kode pos tidak ditemukan")
 )
 
 // DynamicErr to return parameterize errors

@@ -44,7 +44,7 @@ CREATE INDEX index_banks ON banks (id, code, name, created_at);
 
 CREATE TABLE IF NOT EXISTS cards (
     id SERIAL PRIMARY KEY NOT NULL,
-    card_name VARCHAR(255) NOT NULL,
+    card_name VARCHAR(255),
     card_number VARCHAR(50),
     card_limit INTEGER,
     valid_until VARCHAR(10),
@@ -168,7 +168,7 @@ CREATE TABLE IF NOT EXISTS accounts (
     application_id INTEGER REFERENCES applications(id) UNIQUE,
     personal_information_id INTEGER REFERENCES personal_informations(id) UNIQUE,
     occupation_id INTEGER REFERENCES occupations(id) UNIQUE,
-    emergency_contact_id INTEGER REFERENCES emergency_contacts(id) UNIQUE,
+    emergency_contact_id INTEGER REFERENCES emergency_contacts(id),
     correspondence_id INTEGER REFERENCES correspondences(id) UNIQUE,
     created_at TIMESTAMP DEFAULT NULL,
     updated_at TIMESTAMP DEFAULT NULL
