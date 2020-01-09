@@ -52,7 +52,7 @@ func (m *psqlTokenRepository) Create(c echo.Context, accToken *models.AccountTok
 		return err
 	}
 
-	err = stmt.QueryRow(c, accToken.Username, accToken.Password, accToken.Token,
+	err = stmt.QueryRow(accToken.Username, accToken.Password, accToken.Token,
 		accToken.ExpireAt, accToken.Status, accToken.CreatedAt).Scan(&lastID)
 
 	if err != nil {
@@ -111,7 +111,7 @@ func (m *psqlTokenRepository) UpdateToken(c echo.Context, accToken *models.Accou
 		return err
 	}
 
-	err = stmt.QueryRow(c, token, tokenExp, now, accToken.Username).Scan(&ID)
+	err = stmt.QueryRow(token, tokenExp, now, accToken.Username).Scan(&ID)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)

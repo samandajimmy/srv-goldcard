@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -29,8 +28,6 @@ func (tkn *tokenUseCase) CreateToken(c echo.Context, accToken *models.AccountTok
 	err := tkn.tokenRepo.Create(c, accToken)
 
 	if err != nil {
-		log.Error(err)
-
 		return err
 	}
 
@@ -45,14 +42,10 @@ func (tkn *tokenUseCase) GetToken(c echo.Context, username string, password stri
 	err := tkn.tokenRepo.GetByUsername(c, accToken)
 
 	if err != nil {
-		log.Error(err)
-
 		return nil, models.ErrUsername
 	}
 
 	if err = verifyToken(accToken, password, false); err != nil {
-		log.Error(err)
-
 		return nil, err
 	}
 
@@ -72,14 +65,10 @@ func (tkn *tokenUseCase) RefreshToken(c echo.Context, username string, password 
 	err := tkn.tokenRepo.GetByUsername(c, accToken)
 
 	if err != nil {
-		log.Error(err)
-
 		return nil, models.ErrUsername
 	}
 
 	if err = verifyToken(accToken, password, true); err != nil {
-		log.Error(err)
-
 		return nil, err
 	}
 

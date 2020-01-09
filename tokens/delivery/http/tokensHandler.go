@@ -29,7 +29,6 @@ func NewTokensHandler(echoGroup models.EchoGroup, tknUseCase tokens.UseCase) {
 
 func (tkn *TokensHandler) createToken(c echo.Context) error {
 	var accountToken models.AccountToken
-	response = models.Response{}
 	tkn.response, tkn.respErrors = models.NewResponse()
 	err := c.Bind(&accountToken)
 
@@ -55,7 +54,7 @@ func (tkn *TokensHandler) createToken(c echo.Context) error {
 }
 
 func (tkn *TokensHandler) getToken(c echo.Context) error {
-	response = models.Response{}
+	tkn.response, tkn.respErrors = models.NewResponse()
 	var getToken models.PayloadGetToken
 
 	if err := c.Bind(&getToken); err != nil {
@@ -80,7 +79,7 @@ func (tkn *TokensHandler) getToken(c echo.Context) error {
 }
 
 func (tkn *TokensHandler) refreshToken(c echo.Context) error {
-	response = models.Response{}
+	tkn.response, tkn.respErrors = models.NewResponse()
 	var refToken models.PayloadRefreshToken
 	if err := c.Bind(&refToken); err != nil {
 		tkn.respErrors.SetTitle(models.StatusError)
