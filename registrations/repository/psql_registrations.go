@@ -6,6 +6,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo"
@@ -77,21 +78,25 @@ func (regis *psqlRegistrationsRepository) GetBankIDByCode(c echo.Context, bankCo
 	return bankID, nil
 }
 
-func (regis *psqlRegistrationsRepository) PostAddress(c echo.Context, registrations *models.Registrations) error {
-	var lastID int64
-	now := time.Now()
-	query := `UPDATE personal_informations
-		set residence_address = $1, updated_at = $3
-		WHERE phone_number = $2 RETURNING id`
-	stmt, err := regis.Conn.Prepare(query)
+func (regis *psqlRegistrationsRepository) PostAddress(c echo.Context, acc models.Account) error {
+	var nilFilters []string
+	corr := acc.Correspondence
 
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return err
+	stmts := []*gcdb.PipelineStmt{
+		gcdb.NewPipelineStmt(`INSERT INTO correspondences (address_line_1, address_line_2,
+			address_line_3, address_city, zipcode, created_at)
+			VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`,
+			[]string{"corrID"}, corr.AddressLine1, corr.AddressLine2, corr.AddressLine3,
+			corr.AddressCity, corr.Zipcode, time.Now()),
+		gcdb.NewPipelineStmt(`UPDATE accounts set correspondence_id = {corrID}, updated_at = $1
+			WHERE id = $2`,
+			nilFilters, time.Now(), acc.ID),
 	}
 
-	err = stmt.QueryRow(registrations.ResidenceAddress, registrations.PhoneNumber, &now).Scan(&lastID)
+	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
+		return gcdb.RunPipelineQueryRow(tx, stmts...)
+	})
+
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
@@ -101,33 +106,9 @@ func (regis *psqlRegistrationsRepository) PostAddress(c echo.Context, registrati
 	return nil
 }
 
-func (regis *psqlRegistrationsRepository) GetAddress(c echo.Context, phoneNo string) (string, error) {
-	var address string
-	query := `SELECT residence_address from personal_informations WHERE phone_number = $1`
-	stmt, err := regis.Conn.Prepare(query)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return "", err
-	}
-
-	err = stmt.QueryRow(phoneNo).Scan(&address)
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return "", err
-	}
-	return address, nil
-}
-
-func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, applications *models.Applications) error {
-	var lastID int64
-	now := time.Now()
-	query := `UPDATE applications
-		set saving_account = $1,
-			updated_at = $3
-		WHERE application_number = $2 RETURNING id`
+func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc models.Account) error {
+	query := `UPDATE applications set saving_account = $1, updated_at = $2
+		WHERE id = $3;`
 	stmt, err := regis.Conn.Prepare(query)
 
 	if err != nil {
@@ -136,7 +117,8 @@ func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, appl
 		return err
 	}
 
-	err = stmt.QueryRow(applications.SavingAccount, applications.ApplicationNumber, &now).Scan(&lastID)
+	_, err = stmt.Exec(acc.Application.SavingAccount, time.Now(), acc.ApplicationID)
+
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
@@ -178,9 +160,9 @@ func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Conte
 	pi := acc.PersonalInformation
 
 	stmts := []*gcdb.PipelineStmt{
-		// insert card
-		gcdb.NewPipelineStmt("INSERT INTO cards (card_name, created_at) VALUES ($1, $2) RETURNING id;",
-			[]string{"cardID"}, acc.Card.CardName, time.Now()),
+		// update card
+		gcdb.NewPipelineStmt("UPDATE cards SET card_name = $1, updated_at = $2 WHERE id = $3;",
+			nilFilters, acc.Card.CardName, time.Now(), acc.CardID),
 		// insert occupation
 		gcdb.NewPipelineStmt(`INSERT INTO occupations (job_bidang_usaha, job_sub_bidang_usaha,
 			job_category, job_status, total_employee, company, job_title, work_since,
@@ -209,10 +191,53 @@ func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Conte
 			pi.StayedSince, pi.Child, time.Now(), acc.PersonalInformationID),
 		// update account
 		gcdb.NewPipelineStmt(`UPDATE accounts set product_request = $1, billing_cycle = $2,
-			card_deliver = $3, card_id = {cardID}, occupation_id = {occID}, updated_at = $4
-			WHERE id = $5`,
+			card_deliver = $3, occupation_id = {occID}, updated_at = $4 WHERE id = $5`,
 			nilFilters, acc.ProductRequest, acc.BillingCycle, acc.CardDeliver, time.Now(),
 			acc.ID),
+	}
+
+	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
+		return gcdb.RunPipelineQueryRow(tx, stmts...)
+	})
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (regis *psqlRegistrationsRepository) GetZipcode(c echo.Context, addrData models.AddressData) (string, error) {
+	var zipcode string
+	query := `SELECT postal_code FROM ref_postal_codes pc
+		LEFT JOIN ref_provinces p ON pc.province_code = p.province_code
+		WHERE p.province_name = $1 AND pc.city = $2 AND pc.sub_district = $3 AND pc.village = $4
+		LIMIT 1`
+
+	err := regis.Conn.QueryRow(query, strings.ToUpper(addrData.Province), strings.ToUpper(addrData.City),
+		strings.ToUpper(addrData.Subdistrict), strings.ToUpper(addrData.Village)).Scan(&zipcode)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return zipcode, err
+	}
+
+	return zipcode, nil
+}
+
+func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account) error {
+	var nilFilters []string
+
+	stmts := []*gcdb.PipelineStmt{
+		gcdb.NewPipelineStmt(`INSERT INTO cards (card_limit, created_at)
+			VALUES ($1, $2) RETURNING id;`,
+			[]string{"cardID"}, acc.Card.CardLimit, time.Now()),
+		gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1
+			WHERE id = $2`,
+			nilFilters, time.Now(), acc.ID),
 	}
 
 	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {

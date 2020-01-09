@@ -1,5 +1,10 @@
 package models
 
+var (
+	// UseExistingAddress is var to store use existing address status
+	UseExistingAddress int64
+)
+
 // PayloadList a struct to store all payload for a list response
 type PayloadList struct {
 	CIF             string `json:"cif,omitempty"`
@@ -12,15 +17,35 @@ type PayloadList struct {
 	Limit           int64  `json:"limit,omitempty" validate:"min=1"`
 }
 
-// PayloadGetAddress a struct to store all payload for a get address
-type PayloadGetAddress struct {
-	PhoneNumber string `json:"phoneNumber,omitempty" validate:"required"`
-}
-
 // PayloadRegistration a struct to store all payload for registration
 type PayloadRegistration struct {
 	CIF             string `json:"cif" validate:"required"`
 	HandPhoneNumber string `json:"handPhoneNumber" validate:"required"`
+}
+
+// PayloadSavingAccount a struct to store all payload for saving account
+type PayloadSavingAccount struct {
+	ApplicationNumber string `json:"applicationNumber" validate:"required"`
+	AccountNumber     string `json:"accountNumber" validate:"required"`
+}
+
+// PayloadCardLimit a struct to store all payload for card limit
+type PayloadCardLimit struct {
+	ApplicationNumber string `json:"applicationNumber" validate:"required"`
+	CardLimit         int64  `json:"cardLimit" validate:"required"`
+}
+
+// PayloadAddress a struct to store all payload for user address
+type PayloadAddress struct {
+	ApplicationNumber string `json:"applicationNumber" validate:"required"`
+	IsNew             int64  `json:"isNew" validate:"min=0,max=1"`
+	AddressLine1      string `json:"addressLine1" validate:"required_with=IsNew"`
+	AddressLine2      string `json:"addressLine2"`
+	AddressLine3      string `json:"addressLine3"`
+	AddressCity       string `json:"addressCity" validate:"required_with=IsNew"`
+	Province          string `json:"province" validate:"required_with=IsNew"`
+	Subdistrict       string `json:"subdistrict" validate:"required_with=IsNew"`
+	Village           string `json:"village" validate:"required_with=IsNew"`
 }
 
 // PayloadPersonalInformation a struct to store all payload for a payload personal information
@@ -78,6 +103,9 @@ type PayloadPersonalInformation struct {
 	KtpImageBase64       string `json:"ktpImageBase64" validate:"required"`
 	NpwpImageBase64      string `json:"npwpImageBase64" validate:"required"`
 	SelfieImageBase64    string `json:"selfieImageBase64" validate:"required"`
+	Province             string `json:"province" validate:"required"`
+	Subdistrict          string `json:"subdistrict" validate:"required"`
+	Village              string `json:"village" validate:"required"`
 }
 
 // PayloadGetToken a struct to store all payload for get token
