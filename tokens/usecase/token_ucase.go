@@ -1,11 +1,11 @@
 package usecase
 
 import (
-	"context"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/tokens"
 	"time"
 
+	"github.com/labstack/echo"
 	"github.com/labstack/gommon/log"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -23,10 +23,10 @@ func NewTokenUseCase(tkn tokens.Repository, timeout time.Duration) tokens.UseCas
 	}
 }
 
-func (tkn *tokenUseCase) CreateToken(ctx context.Context, accToken *models.AccountToken) error {
+func (tkn *tokenUseCase) CreateToken(c echo.Context, accToken *models.AccountToken) error {
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(accToken.Password), bcrypt.DefaultCost)
 	accToken.Password = string(hashedPassword)
-	err := tkn.tokenRepo.Create(ctx, accToken)
+	err := tkn.tokenRepo.Create(c, accToken)
 
 	if err != nil {
 		log.Error(err)
@@ -37,12 +37,12 @@ func (tkn *tokenUseCase) CreateToken(ctx context.Context, accToken *models.Accou
 	return nil
 }
 
-func (tkn *tokenUseCase) GetToken(ctx context.Context, username string, password string) (*models.AccountToken, error) {
+func (tkn *tokenUseCase) GetToken(c echo.Context, username string, password string) (*models.AccountToken, error) {
 	accToken := &models.AccountToken{}
 	accToken.Username = username
 
 	// get account
-	err := tkn.tokenRepo.GetByUsername(ctx, accToken)
+	err := tkn.tokenRepo.GetByUsername(c, accToken)
 
 	if err != nil {
 		log.Error(err)
@@ -64,12 +64,12 @@ func (tkn *tokenUseCase) GetToken(ctx context.Context, username string, password
 	return accToken, nil
 }
 
-func (tkn *tokenUseCase) RefreshToken(ctx context.Context, username string, password string) (*models.AccountToken, error) {
+func (tkn *tokenUseCase) RefreshToken(c echo.Context, username string, password string) (*models.AccountToken, error) {
 	accToken := &models.AccountToken{}
 	accToken.Username = username
 
 	// get account
-	err := tkn.tokenRepo.GetByUsername(ctx, accToken)
+	err := tkn.tokenRepo.GetByUsername(c, accToken)
 
 	if err != nil {
 		log.Error(err)
@@ -84,13 +84,13 @@ func (tkn *tokenUseCase) RefreshToken(ctx context.Context, username string, pass
 	}
 
 	// refresh JWT
-	err = tkn.tokenRepo.UpdateToken(ctx, accToken)
+	err = tkn.tokenRepo.UpdateToken(c, accToken)
 
 	if err != nil {
 		return nil, err
 	}
 
-	_ = tkn.tokenRepo.GetByUsername(ctx, accToken)
+	_ = tkn.tokenRepo.GetByUsername(c, accToken)
 
 	// rearrange accountToken
 	accToken.ID = 0

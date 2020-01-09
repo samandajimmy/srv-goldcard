@@ -3,8 +3,6 @@ package http
 import (
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/tokens"
-	"net/http"
-	"strings"
 
 	"github.com/labstack/echo"
 )
@@ -13,6 +11,8 @@ var response models.Response
 
 // TokensHandler represent the httphandler for tokens
 type TokensHandler struct {
+	response     models.Response
+	respErrors   models.ResponseErrors
 	TokenUseCase tokens.UseCase
 }
 
@@ -30,92 +30,75 @@ func NewTokensHandler(echoGroup models.EchoGroup, tknUseCase tokens.UseCase) {
 func (tkn *TokensHandler) createToken(c echo.Context) error {
 	var accountToken models.AccountToken
 	response = models.Response{}
-	ctx := c.Request().Context()
+	tkn.response, tkn.respErrors = models.NewResponse()
 	err := c.Bind(&accountToken)
 
 	if err != nil {
-		response.Status = models.StatusError
-		response.Message = models.MessageUnprocessableEntity
+		tkn.respErrors.SetTitle(models.StatusError)
+		tkn.response.SetResponse("", &tkn.respErrors)
 
-		return c.JSON(getStatusCode(err), response)
+		return tkn.response.Body(c, err)
 	}
 
-	err = tkn.TokenUseCase.CreateToken(ctx, &accountToken)
+	err = tkn.TokenUseCase.CreateToken(c, &accountToken)
 
 	if err != nil {
-		response.Status = models.StatusError
-		response.Message = err.Error()
+		tkn.respErrors.SetTitle(err.Error())
+		tkn.response.SetResponse("", &tkn.respErrors)
 
-		return c.JSON(getStatusCode(err), response)
+		return tkn.response.Body(c, err)
 	}
 
-	accountToken.Password = ""
-	response.Status = models.StatusSuccess
-	response.Message = models.MessageDataSuccess
-	response.Data = accountToken
+	tkn.response.SetResponse(accountToken, &tkn.respErrors)
 
-	return c.JSON(getStatusCode(err), response)
+	return tkn.response.Body(c, err)
 }
 
 func (tkn *TokensHandler) getToken(c echo.Context) error {
 	response = models.Response{}
-	ctx := c.Request().Context()
-	username := c.QueryParam("username")
-	password := c.QueryParam("password")
-	accToken, err := tkn.TokenUseCase.GetToken(ctx, username, password)
+	var getToken models.PayloadGetToken
 
-	if err != nil {
-		response.Status = models.StatusError
-		response.Message = err.Error()
+	if err := c.Bind(&getToken); err != nil {
+		tkn.respErrors.SetTitle(models.StatusError)
+		tkn.response.SetResponse("", &tkn.respErrors)
 
-		return c.JSON(getStatusCode(err), response)
+		return tkn.response.Body(c, err)
 	}
 
-	response.Status = models.StatusSuccess
-	response.Message = models.MessageDataSuccess
-	response.Data = accToken
+	accToken, err := tkn.TokenUseCase.GetToken(c, getToken.UserName, getToken.Password)
 
-	return c.JSON(getStatusCode(err), response)
+	if err != nil {
+		tkn.respErrors.SetTitle(models.StatusError)
+		tkn.response.SetResponse("", &tkn.respErrors)
+
+		return tkn.response.Body(c, err)
+	}
+
+	tkn.response.SetResponse(accToken, &tkn.respErrors)
+
+	return tkn.response.Body(c, err)
 }
 
-func (tkn *TokensHandler) refreshToken(echTx echo.Context) error {
+func (tkn *TokensHandler) refreshToken(c echo.Context) error {
 	response = models.Response{}
-	ctx := echTx.Request().Context()
-	username := echTx.QueryParam("username")
-	password := echTx.QueryParam("password")
-	accToken, err := tkn.TokenUseCase.RefreshToken(ctx, username, password)
+	var refToken models.PayloadRefreshToken
+	if err := c.Bind(&refToken); err != nil {
+		tkn.respErrors.SetTitle(models.StatusError)
+		tkn.response.SetResponse("", &tkn.respErrors)
+
+		return tkn.response.Body(c, err)
+	}
+
+	accToken, err := tkn.TokenUseCase.RefreshToken(c, refToken.UserName, refToken.Password)
 
 	if err != nil {
-		response.Status = models.StatusError
-		response.Message = err.Error()
+		tkn.respErrors.SetTitle(models.StatusError)
+		tkn.response.SetResponse("", &tkn.respErrors)
 
-		return echTx.JSON(getStatusCode(err), response)
+		return tkn.response.Body(c, err)
 	}
 
-	response.Status = models.StatusSuccess
-	response.Message = models.MessageDataSuccess
-	response.Data = accToken
+	tkn.response.SetResponse(accToken, &tkn.respErrors)
 
-	return echTx.JSON(getStatusCode(err), response)
-}
-
-func getStatusCode(err error) int {
-	if err == nil {
-		return http.StatusOK
-	}
-
-	if strings.Contains(err.Error(), "400") {
-		return http.StatusBadRequest
-	}
-
-	switch err {
-	case models.ErrInternalServerError:
-		return http.StatusInternalServerError
-	case models.ErrNotFound:
-		return http.StatusNotFound
-	case models.ErrConflict:
-		return http.StatusConflict
-	default:
-		return http.StatusInternalServerError
-	}
+	return tkn.response.Body(c, err)
 }

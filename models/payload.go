@@ -79,3 +79,15 @@ type PayloadPersonalInformation struct {
 	NpwpImageBase64      string `json:"npwpImageBase64" validate:"required"`
 	SelfieImageBase64    string `json:"selfieImageBase64" validate:"required"`
 }
+
+// PayloadGetToken a struct to store all payload for get token
+type PayloadGetToken struct {
+	UserName string `json:"userName" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
+
+// PayloadRefreshToken a struct to store all payload for refresh token
+type PayloadRefreshToken struct {
+	UserName string `json:"userName" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
