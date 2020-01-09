@@ -6,12 +6,6 @@ import (
 	"os"
 )
 
-var (
-	hostPDS      = os.Getenv(`PDS_API_HOST`)
-	pdsBasicUser = os.Getenv(`PDS_API_BASIC_USER`)
-	pdsBasicPass = os.Getenv(`PDS_API_BASIC_PASS`)
-)
-
 // APIpds struct represents a request for API PDS
 type APIpds struct {
 	Host *url.URL
@@ -21,13 +15,13 @@ type APIpds struct {
 // NewPdsAPI is function to initiate a PDS API request
 func NewPdsAPI(contentType string) (APIpds, error) {
 	apiPds := APIpds{}
-	url, err := url.Parse(hostPDS)
+	url, err := url.Parse(os.Getenv(`PDS_API_HOST`))
 
 	if err != nil {
 		return apiPds, err
 	}
 
-	api, err := NewAPI(hostPDS, contentType)
+	api, err := NewAPI(os.Getenv(`PDS_API_HOST`), contentType)
 
 	if err != nil {
 		return apiPds, err
@@ -47,7 +41,7 @@ func (pds *APIpds) Request(endpoint string, method string, body interface{}) (*h
 		return nil, err
 	}
 
-	req.SetBasicAuth(pdsBasicUser, pdsBasicPass)
+	req.SetBasicAuth(os.Getenv(`PDS_API_BASIC_USER`), os.Getenv(`PDS_API_BASIC_PASS`))
 
 	return req, nil
 }

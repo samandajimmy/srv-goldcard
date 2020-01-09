@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"gade/srv-goldcard/logger"
 	"net/http"
 	"net/url"
 	"os"
@@ -13,18 +15,42 @@ import (
 	"github.com/labstack/echo"
 )
 
-var (
-	hostBRI      = os.Getenv(`BRI_HOST`)
-	grantType    = os.Getenv(`BRI_GRANT_TYPE`)
-	clientID     = os.Getenv(`BRI_CLIENT_ID`)
-	clientSecret = os.Getenv(`BRI_CLIENT_SECRET`)
-)
+// BriResponse struct to store response from BRI API
+type BriResponse struct {
+	ResponseCode    string                 `json:"responseCode"`
+	ResponseMessage string                 `json:"responseMessage"`
+	ResponseData    map[string]interface{} `json:"responseData,omitempty"`
+	Status          map[string]interface{} `json:"status,omitempty"`
+}
+
+// SetRC to get bri api response code
+func (br *BriResponse) SetRC() {
+	if br.Status == nil {
+		return
+	}
+
+	code, ok := br.Status["code"].(string)
+	desc, ok := br.Status["desc"].(string)
+
+	if !ok {
+		logger.Make(nil, nil).Fatal(ErrSetVar)
+	}
+
+	br.ResponseCode = code
+	br.ResponseMessage = desc
+}
+
+// BriRequest struct to store request payload BRI API needed
+type BriRequest struct {
+	RequestData interface{} `json:"requestData"`
+}
 
 // APIbri struct represents a request for API BRI
 type APIbri struct {
 	Host         *url.URL
 	API          API
 	Method       string
+	Endpoint     string
 	AccessToken  string
 	BRITimestamp string
 	BRISignature string
@@ -33,13 +59,13 @@ type APIbri struct {
 // NewBriAPI is function to initiate a BRI API request
 func NewBriAPI() (APIbri, error) {
 	apiBri := APIbri{}
-	url, err := url.Parse(hostBRI)
+	url, err := url.Parse(os.Getenv(`BRI_HOST`))
 
 	if err != nil {
 		return apiBri, err
 	}
 
-	api, err := NewAPI(hostBRI, echo.MIMEApplicationJSON)
+	api, err := NewAPI(os.Getenv(`BRI_HOST`), echo.MIMEApplicationJSON)
 
 	if err != nil {
 		return apiBri, err
@@ -57,9 +83,38 @@ func NewBriAPI() (APIbri, error) {
 	return apiBri, nil
 }
 
+// BriPost function to requesr BRI API with post method
+func BriPost(endpoint string, reqBody interface{}, resp interface{}) error {
+	bri, err := NewBriAPI()
+
+	if err != nil {
+		return err
+	}
+
+	req, err := bri.Request(endpoint, echo.POST, reqBody)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = bri.Do(req, resp)
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
 // Request represent BRI API Request
 func (bri *APIbri) Request(endpoint string, method string, body interface{}) (*http.Request, error) {
+	// show request log
+	debugStart := fmt.Sprintf("Start to request BRI API: %s %s", method, endpoint)
+	logger.MakeWithoutReportCaller(nil, body).Info(debugStart)
 	bri.Method = method
+	bri.Endpoint = endpoint
 	req, err := bri.API.Request(endpoint, method, body)
 
 	if err != nil {
@@ -88,6 +143,10 @@ func (bri *APIbri) Do(req *http.Request, v interface{}) (*http.Response, error) 
 		return resp, err
 	}
 
+	// show response log
+	debugEnd := fmt.Sprintf("End of request BRI API: %s %s", bri.Method, bri.Endpoint)
+	logger.MakeWithoutReportCaller(nil, v).Info(debugEnd)
+
 	return resp, err
 }
 
@@ -112,7 +171,7 @@ func (bri *APIbri) setBriSignature(endpoint string, body interface{}) error {
 	queryParams.Set("body", bodyStr)
 	queryParamStr := bri.getUnorderedURLQuery(queryParams)
 
-	key := []byte(clientSecret)
+	key := []byte(os.Getenv(`BRI_CLIENT_SECRET`))
 	h := hmac.New(sha256.New, key)
 	h.Write([]byte(queryParamStr))
 	sEnc := base64.StdEncoding.EncodeToString(h.Sum(nil))
@@ -123,9 +182,9 @@ func (bri *APIbri) setBriSignature(endpoint string, body interface{}) error {
 
 func (bri *APIbri) setAccessToken() error {
 	response := map[string]interface{}{}
-	params := map[string]string{"client_id": clientID, "client_secret": clientSecret}
+	params := map[string]string{"client_id": os.Getenv(`BRI_CLIENT_ID`), "client_secret": os.Getenv(`BRI_CLIENT_SECRET`)}
 	endpoint := "/oauth/client_credential/accesstoken?grant_type=client_credentials"
-	api, err := NewAPI(hostBRI, echo.MIMEApplicationForm)
+	api, err := NewAPI(os.Getenv(`BRI_HOST`), echo.MIMEApplicationForm)
 
 	if err != nil {
 		return err

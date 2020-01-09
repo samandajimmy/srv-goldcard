@@ -7,7 +7,13 @@ import (
 
 var (
 	// ErrInternalServerError to store internal server error message
-	ErrInternalServerError = errors.New("Internal Server Error ")
+	ErrInternalServerError = errors.New("Internal Server Error")
+
+	// ErrExternalAPI to store external api error message
+	ErrExternalAPI = errors.New("External API Errors")
+
+	// ErrSetVar to store setting variable error message
+	ErrSetVar = errors.New("Setting variable error")
 
 	// ErrNotFound to store not found error message
 	ErrNotFound = errors.New("Item tidak ditemukan")
@@ -50,9 +56,27 @@ var (
 
 	// ErrZipcodeNotFound to store zip code not found error message
 	ErrZipcodeNotFound = errors.New("Kode pos tidak ditemukan")
+
+	// ErrBlacklisted to store blacklisted error message
+	ErrBlacklisted = errors.New("Anda tercatat dalam daftar black list kami")
+
+	// ErrUpdateBrixkey to store update brixkey error message
+	ErrUpdateBrixkey = errors.New("Terjadi kesalahan saat update brixkey")
+
+	// ErrUpdateAppDocID to store update application document ID error message
+	ErrUpdateAppDocID = errors.New("Terjadi kesalahan saat update document id")
+
+	// ErrDocIDNotFound to store document id not found error message
+	ErrDocIDNotFound = errors.New("Document id tidak ditemukan")
+
+	// ErrAppIDNotFound to store application id not found error message
+	ErrAppIDNotFound = errors.New("Application id tidak ditemukan")
+
+	// ErrBriAPIRequest to store bri api request error message
+	ErrBriAPIRequest = "BRI API: RC-%s - %s"
 )
 
 // DynamicErr to return parameterize errors
-func DynamicErr(message string, args ...string) error {
-	return fmt.Errorf(message, args[0])
+func DynamicErr(message string, args []interface{}) error {
+	return fmt.Errorf(message, args...)
 }

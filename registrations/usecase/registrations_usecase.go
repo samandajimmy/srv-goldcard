@@ -1,8 +1,10 @@
 package usecase
 
 import (
+	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
+	"reflect"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
@@ -89,6 +91,26 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 }
 
 func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.PayloadPersonalInformation) error {
+	// check duplication/blacklist by BRI
+	resp := models.BriResponse{}
+	requestData := map[string]interface{}{
+		"nik":       pl.Nik,
+		"birthDate": pl.BirthDate,
+	}
+	reqBody := models.BriRequest{RequestData: requestData}
+	err := models.BriPost("/v1/cobranding/deduplication", reqBody, &resp)
+
+	if err != nil {
+		return models.ErrExternalAPI
+	}
+
+	// to set variation of BRI response
+	resp.SetRC()
+
+	if resp.ResponseCode == "00" {
+		return models.ErrBlacklisted
+	}
+
 	// get account by appNumber
 	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
 
@@ -155,6 +177,118 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 
 	if err != nil {
 		return models.ErrPostSavingAccountFailed
+	}
+
+	return nil
+}
+
+func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadRegistrationFinal) error {
+	// get account by appNumber
+	briPl, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
+	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
+
+	if err != nil {
+		return models.ErrAppNumberNotFound
+	}
+
+	resp := models.BriResponse{}
+	reqBody := models.BriRequest{RequestData: briPl}
+	err = models.BriPost("/v1/cobranding/register", reqBody, &resp)
+
+	if err != nil {
+		return models.ErrExternalAPI
+	}
+
+	// to set variation of BRI response
+	resp.SetRC()
+
+	if resp.ResponseCode != "00" {
+		return models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode, resp.ResponseMessage})
+	}
+
+	// update brixkey id
+	brixkey, ok := resp.ResponseData["briXkey"].(string)
+
+	if !ok {
+		logger.Make(c, nil).Debug(models.ErrSetVar)
+
+		return models.ErrSetVar
+	}
+
+	acc.BrixKey = brixkey
+	err = reg.regRepo.UpdateBrixkeyID(c, acc)
+
+	if err != nil {
+		return models.ErrUpdateBrixkey
+	}
+
+	// upload document to BRI API
+	err = reg.uploadAppDoc(c, acc)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, acc models.Account) error {
+	var docs []models.AppDocument
+	docNames := []string{"KtpImageBase64", "NpwpImageBase64", "SelfieImageBase64"}
+	docIDs := []string{"KtpDocID", "NpwpDocID", "SelfieDocID"}
+	app, err := reg.regRepo.GetAppByID(c, acc.ApplicationID)
+
+	if err != nil {
+		return models.ErrAppIDNotFound
+	}
+
+	r := reflect.ValueOf(&app)
+
+	for idx, docName := range docNames {
+		f := reflect.Indirect(r).FieldByName(docName)
+		fDocID := reflect.Indirect(r).FieldByName(docIDs[idx])
+
+		if f.IsZero() {
+			continue
+		}
+
+		doc := models.AppDocument{
+			BriXkey:    acc.BrixKey,
+			DocType:    models.DefAppDocType,
+			FileName:   docName,
+			FileExt:    models.DefAppDocFileExt,
+			Base64file: "data:image/jpeg;base64," + f.String(),
+		}
+
+		docs = append(docs, doc)
+		resp := models.BriResponse{}
+		reqBody := models.BriRequest{RequestData: doc}
+		err = models.BriPost("/v1/cobranding/document", reqBody, &resp)
+
+		if err != nil {
+			return models.ErrExternalAPI
+		}
+
+		// to set variation of BRI response
+		resp.SetRC()
+
+		if resp.ResponseCode != "00" {
+			return models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode,
+				resp.ResponseMessage})
+		}
+
+		if _, ok := resp.ResponseData["documentId"].(string); !ok {
+			return models.ErrDocIDNotFound
+		}
+
+		fDocID.SetString(resp.ResponseData["documentId"].(string))
+	}
+
+	// update document id to application data
+	err = reg.regRepo.UpdateAppDocID(c, app)
+
+	if err != nil {
+		return models.ErrUpdateAppDocID
 	}
 
 	return nil

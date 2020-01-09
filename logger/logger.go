@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"gade/srv-goldcard/models"
 	"runtime"
 	"strings"
 
@@ -13,8 +12,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const timestampFormat = "2006-01-02 15:04:05.000"
+
 type requestLogger struct {
-	RequestID string      `json:"requestID"`
+	RequestID string      `json:"requestID,omitempty"`
 	Payload   interface{} `json:"payload,omitempty"`
 }
 
@@ -23,7 +24,7 @@ func Init() {
 	logrus.SetReportCaller(true)
 	formatter := &logrus.TextFormatter{
 		FullTimestamp:   true,
-		TimestampFormat: models.DateTimeFormatMillisecond + "000",
+		TimestampFormat: timestampFormat,
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 			tmp := strings.Split(f.File, "/")
 			filename := tmp[len(tmp)-1]
@@ -42,11 +43,9 @@ func Make(c echo.Context, payload interface{}) *logrus.Entry {
 	var rl requestLogger
 	logrus.SetReportCaller(true)
 
-	if c == nil {
-		return logrus.WithFields(logrus.Fields{})
+	if c != nil {
+		rl.RequestID = c.Response().Header().Get(echo.HeaderXRequestID)
 	}
-
-	rl.RequestID = c.Response().Header().Get(echo.HeaderXRequestID)
 
 	plStr, ok := payload.(string)
 	pl, err := json.Marshal(payload)
@@ -74,4 +73,20 @@ func MakeWithoutReportCaller(c echo.Context, payload interface{}) *logrus.Entry 
 	logrus.SetReportCaller(false)
 
 	return log
+}
+
+// MakeStructToJSON to get a json string of struct
+// JUST FOR DEBUGGING TOOL
+func MakeStructToJSON(strct interface{}) {
+	b, err := json.Marshal(strct)
+
+	if err != nil {
+		Make(nil, nil).Fatal(err)
+
+		return
+	}
+
+	fmt.Println()
+	MakeWithoutReportCaller(nil, nil).Debug(string(b))
+	fmt.Println()
 }

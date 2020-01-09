@@ -16,6 +16,7 @@ import (
 	_registrationsRepository "gade/srv-goldcard/registrations/repository"
 	_registrationsUseCase "gade/srv-goldcard/registrations/usecase"
 
+	"github.com/go-pg/pg/v9"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -36,7 +37,7 @@ func init() {
 }
 
 func main() {
-	dbConn := getDBConn()
+	dbConn, dbpg := getDBConn()
 	migrate := dataMigrations(dbConn)
 
 	defer dbConn.Close()
@@ -60,7 +61,7 @@ func main() {
 	middleware.InitMiddleware(ech, echoGroup)
 
 	// REGISTRATIONS
-	registrationsRepository := _registrationsRepository.NewPsqlRegistrationsRepository(dbConn)
+	registrationsRepository := _registrationsRepository.NewPsqlRegistrationsRepository(dbConn, dbpg)
 	registrationsUserCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository)
 	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup, registrationsUserCase)
 
@@ -83,7 +84,7 @@ func ping(echTx echo.Context) error {
 	return echTx.JSON(http.StatusOK, response)
 }
 
-func getDBConn() *sql.DB {
+func getDBConn() (*sql.DB, *pg.DB) {
 	dbHost := os.Getenv(`DB_HOST`)
 	dbPort := os.Getenv(`DB_PORT`)
 	dbUser := os.Getenv(`DB_USER`)
@@ -106,7 +107,20 @@ func getDBConn() *sql.DB {
 		os.Exit(1)
 	}
 
-	return dbConn
+	// go-pg connection initiation
+	dbOpt, err := pg.ParseURL(connection)
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+	}
+
+	dbpg := pg.Connect(dbOpt)
+
+	if os.Getenv(`DB_LOGGER`) == "true" {
+		dbpg.AddQueryHook(logger.DbLogger{})
+	}
+
+	return dbConn, dbpg
 }
 
 func dataMigrations(dbConn *sql.DB) *migrate.Migrate {
