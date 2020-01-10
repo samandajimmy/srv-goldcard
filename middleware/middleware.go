@@ -37,8 +37,9 @@ func InitMiddleware(ech *echo.Echo, echoGroup models.EchoGroup) {
 	ech.Use(middleware.Recover())
 	cm.cors()
 	cm.basicAuth()
-	// cm.jwtAuth() // klo gk di tutup gk bisa request.
+	cm.jwtAuth()
 	cm.customValidation()
+
 }
 
 func (cm *customMiddleware) customBodyDump() {
@@ -115,7 +116,6 @@ func (cm customMiddleware) jwtAuth() {
 		SigningMethod: "HS512",
 		SigningKey:    []byte(os.Getenv(`JWT_SECRET`)),
 	}))
-
 }
 
 func (cv *customValidator) isRequiredWith(fl validator.FieldLevel) bool {

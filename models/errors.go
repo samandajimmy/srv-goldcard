@@ -33,6 +33,15 @@ var (
 	// ErrPostAddressFailed to errors post address failed
 	ErrPostAddressFailed = errors.New("Menambahkan alamat gagal")
 
+	// ErrUsername to store username error message
+	ErrUsername = errors.New("Username atau Password yang digunakan tidak valid")
+
+	// ErrPassword to store password error message
+	ErrPassword = errors.New("Username atau Password yang digunakan tidak valid")
+
+	// ErrTokenExpired to store password error message
+	ErrTokenExpired = errors.New("Token Anda telah expire")
+
 	// ErrPostSavingAccountFailed to errors post address failed
 	ErrPostSavingAccountFailed = errors.New("Menambahkan Rekening Tabungan gagal")
 
@@ -74,6 +83,12 @@ var (
 
 	// ErrBriAPIRequest to store bri api request error message
 	ErrBriAPIRequest = "BRI API: RC-%s - %s"
+
+	// ErrCreateToken to create/update token error message
+	ErrCreateToken = errors.New("Terjadi Kesalaahan saat membuat Token")
+
+	// ErrVerifyToken to verify token error message
+	ErrVerifyToken = errors.New("Terjadi Kesalaahan saat verifikasi Token")
 )
 
 // DynamicErr to return parameterize errors

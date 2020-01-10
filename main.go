@@ -15,6 +15,9 @@ import (
 	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
 	_registrationsRepository "gade/srv-goldcard/registrations/repository"
 	_registrationsUseCase "gade/srv-goldcard/registrations/usecase"
+	_tokenHttpDelivery "gade/srv-goldcard/tokens/delivery/http"
+	_tokenRepository "gade/srv-goldcard/tokens/repository"
+	_tokenUseCase "gade/srv-goldcard/tokens/usecase"
 
 	"github.com/go-pg/pg/v9"
 	"github.com/golang-migrate/migrate/v4"
@@ -55,10 +58,15 @@ func main() {
 		logger.Make(nil, nil).Debug(err)
 	}
 
-	_ = time.Duration(contextTimeout) * time.Second
+	timeoutContext := time.Duration(contextTimeout) * time.Second
 
 	// load all middlewares
 	middleware.InitMiddleware(ech, echoGroup)
+
+	// TOKEN
+	tokenRepository := _tokenRepository.NewPsqlTokenRepository(dbConn)
+	tokenUseCase := _tokenUseCase.NewTokenUseCase(tokenRepository, timeoutContext)
+	_tokenHttpDelivery.NewTokensHandler(echoGroup, tokenUseCase)
 
 	// REGISTRATIONS
 	registrationsRepository := _registrationsRepository.NewPsqlRegistrationsRepository(dbConn, dbpg)

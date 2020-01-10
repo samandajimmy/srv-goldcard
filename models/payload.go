@@ -114,3 +114,9 @@ type PayloadPersonalInformation struct {
 	BillingCycle         int64  `json:"billingCycle"`
 	CardDeliver          int64  `json:"cardDeliver"`
 }
+
+// PayloadToken a struct to store all payload for token
+type PayloadToken struct {
+	UserName string `json:"userName" validate:"required"`
+	Password string `json:"password" validate:"required"`
+}
