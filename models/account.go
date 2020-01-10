@@ -13,7 +13,7 @@ type Account struct {
 	ProductRequest        string              `json:"productRequest"`
 	BillingCycle          int64               `json:"billingCycle"`
 	CardDeliver           int64               `json:"cardDeliver"`
-	BrixKey               string              `json:"brixkey"`
+	BrixKey               string              `json:"brixkey" pg:"brixkey"`
 	Status                string              `json:"status"`
 	BankID                int64               `json:"bankId"`
 	CardID                int64               `json:"cardId"`
@@ -66,7 +66,7 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.BirthPlace = pl.BirthPlace
 	acc.PersonalInformation.BirthDate = pl.BirthDate
 	acc.PersonalInformation.Nationality = pl.Nationality
-	acc.PersonalInformation.Sex = pl.Sex
+	acc.PersonalInformation.Sex = acc.PersonalInformation.GetSex(pl.Sex)
 	acc.PersonalInformation.Education = pl.Education
 	acc.PersonalInformation.MaritalStatus = pl.MaritalStatus
 	acc.PersonalInformation.MotherName = pl.MotherName
@@ -111,9 +111,9 @@ type Bank struct {
 // Correspondence is a struct to store correspondence data
 type Correspondence struct {
 	ID           int64     `json:"id"`
-	AddressLine1 string    `json:"addressLine1"`
-	AddressLine2 string    `json:"addressLine2"`
-	AddressLine3 string    `json:"addressLine3"`
+	AddressLine1 string    `json:"addressLine1" pg:"address_line_1"`
+	AddressLine2 string    `json:"addressLine2" pg:"address_line_2"`
+	AddressLine3 string    `json:"addressLine3" pg:"address_line_3"`
 	AddressCity  string    `json:"addressCity"`
 	Zipcode      string    `json:"zipcode"`
 	CreatedAt    time.Time `json:"createdAt"`
@@ -126,11 +126,12 @@ type EmergencyContact struct {
 	Name         string    `json:"name"`
 	Relation     int64     `json:"relation"`
 	PhoneNumber  string    `json:"phoneNumber"`
-	AddressLine1 string    `json:"addressLine1"`
-	AddressLine2 string    `json:"addressLine2"`
-	AddressLine3 string    `json:"addressLine3"`
+	AddressLine1 string    `json:"addressLine1" pg:"address_line_1"`
+	AddressLine2 string    `json:"addressLine2" pg:"address_line_2"`
+	AddressLine3 string    `json:"addressLine3" pg:"address_line_3"`
 	AddressCity  string    `json:"addressCity"`
 	Zipcode      string    `json:"zipcode"`
+	Type         string    `json:"type"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
 }

@@ -30,6 +30,7 @@ func NewRegistrationsHandler(
 	echoGroup.API.POST("/registrations/saving-account", handler.PostSavingAccount)
 	echoGroup.API.POST("/registrations/personal-informations", handler.personalInfomations)
 	echoGroup.API.POST("/registrations/card-limit", handler.cardLimit)
+	echoGroup.API.POST("/registrations/final", handler.final)
 }
 
 // Registrations a handler to create a campaign
@@ -181,6 +182,38 @@ func (reg *RegistrationsHandler) cardLimit(c echo.Context) error {
 	}
 
 	err := reg.registrationsUseCase.PostCardLimit(c, pl)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
+
+	return reg.response.Body(c, err)
+}
+
+func (reg *RegistrationsHandler) final(c echo.Context) error {
+	var pl models.PayloadRegistrationFinal
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.FinalRegistration(c, pl)
 
 	if err != nil {
 		reg.respErrors.SetTitle(err.Error())

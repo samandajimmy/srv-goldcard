@@ -23,6 +23,11 @@ type PayloadRegistration struct {
 	HandPhoneNumber string `json:"handPhoneNumber" validate:"required"`
 }
 
+// PayloadRegistrationFinal a struct to store all payload for final registration
+type PayloadRegistrationFinal struct {
+	ApplicationNumber string `json:"applicationNumber" validate:"required"`
+}
+
 // PayloadSavingAccount a struct to store all payload for saving account
 type PayloadSavingAccount struct {
 	ApplicationNumber string `json:"applicationNumber" validate:"required"`
@@ -50,7 +55,7 @@ type PayloadAddress struct {
 
 // PayloadPersonalInformation a struct to store all payload for a payload personal information
 type PayloadPersonalInformation struct {
-	ApplicationNumber    string `json:"applicationNumber" validate:"required"`
+	ApplicationNumber    string `json:"applicationNumber,omitempty" validate:"required"`
 	FirstName            string `json:"firstName" validate:"required"`
 	LastName             string `json:"lastName" validate:"required"`
 	CardName             string `json:"cardName" validate:"required"`
@@ -58,10 +63,11 @@ type PayloadPersonalInformation struct {
 	Nik                  string `json:"nik" validate:"required"`
 	BirthPlace           string `json:"birthPlace" validate:"required"`
 	BirthDate            string `json:"birthDate" validate:"required"`
-	AddressLine1         string `json:"addressLine1" validate:"required"`
-	AddressLine2         string `json:"addressLine2" validate:"required"`
-	AddressLine3         string `json:"addressLine3" validate:"required"`
-	Sex                  int64  `json:"sex" validate:"required"`
+	AddressLine1         string `json:"addressLine1" validate:"required" pg:"address_line_1"`
+	AddressLine2         string `json:"addressLine2" validate:"required" pg:"address_line_2"`
+	AddressLine3         string `json:"addressLine3" validate:"required" pg:"address_line_3"`
+	Sex                  int64  `json:"sex" validate:"required" pg:"-"`
+	SexString            string `json:"sexString,omitempty" pg:"sex"`
 	HomeStatus           int64  `json:"homeStatus" validate:"required"`
 	AddressCity          string `json:"addressCity" validate:"required"`
 	Nationality          string `json:"nationality" validate:"required"`
@@ -74,38 +80,39 @@ type PayloadPersonalInformation struct {
 	HomePhoneArea        string `json:"homePhoneArea" validate:"required"`
 	HomePhoneNumber      string `json:"homePhoneNumber" validate:"required"`
 	Email                string `json:"email" validate:"required"`
-	JobBidangUsaha       int64  `json:"jobBidangUsaha" validate:"required"`
-	JobSubBidangUsaha    int64  `json:"jobSubBidangUsaha" validate:"required"`
-	JobCategory          int64  `json:"jobCategory" validate:"required"`
-	JobStatus            int64  `json:"jobStatus" validate:"required"`
-	TotalEmployee        int64  `json:"totalEmployee" validate:"required"`
-	Company              string `json:"company" validate:"required"`
-	JobTitle             string `json:"jobTitle" validate:"required"`
-	WorkSince            string `json:"workSince" validate:"required"`
-	OfficeAddress1       string `json:"officeAddress1" validate:"required"`
-	OfficeAddress2       string `json:"officeAddress2" validate:"required"`
-	OfficeAddress3       string `json:"officeAddress3" validate:"required"`
-	OfficeZipcode        string `json:"officeZipcode" validate:"required"`
-	OfficeCity           string `json:"officeCity" validate:"required"`
-	OfficePhone          string `json:"officePhone" validate:"required"`
 	Income               int64  `json:"income" validate:"required"`
-	Child                int64  `json:"child" validate:"required"`
-	EmergencyName        string `json:"emergencyName" validate:"required"`
-	EmergencyRelation    int64  `json:"emergencyRelation" validate:"required"`
-	EmergencyAddress1    string `json:"emergencyAddress1" validate:"required"`
-	EmergencyAddress2    string `json:"emergencyAddress2" validate:"required"`
-	EmergencyAddress3    string `json:"emergencyAddress3" validate:"required"`
-	EmergencyCity        string `json:"emergencyCity" validate:"required"`
-	EmergencyPhoneNumber string `json:"emergencyPhoneNumber" validate:"required"`
-	ProductRequest       string `json:"productRequest" validate:"required"`
-	BillingCycle         int64  `json:"billingCycle" validate:"required"`
-	CardDeliver          int64  `json:"cardDeliver" validate:"required"`
-	KtpImageBase64       string `json:"ktpImageBase64" validate:"required"`
-	NpwpImageBase64      string `json:"npwpImageBase64" validate:"required"`
-	SelfieImageBase64    string `json:"selfieImageBase64" validate:"required"`
-	Province             string `json:"province" validate:"required"`
-	Subdistrict          string `json:"subdistrict" validate:"required"`
-	Village              string `json:"village" validate:"required"`
+	KtpImageBase64       string `json:"ktpImageBase64,omitempty" validate:"required"`
+	NpwpImageBase64      string `json:"npwpImageBase64,omitempty" validate:"required"`
+	SelfieImageBase64    string `json:"selfieImageBase64,omitempty" validate:"required"`
+	Province             string `json:"province,omitempty" validate:"required"`
+	Subdistrict          string `json:"subdistrict,omitempty" validate:"required"`
+	Village              string `json:"village,omitempty" validate:"required"`
+	JobBidangUsaha       int64  `json:"jobBidangUsaha"`
+	JobSubBidangUsaha    int64  `json:"jobSubBidangUsaha"`
+	JobCategory          int64  `json:"jobCategory"`
+	JobStatus            int64  `json:"jobStatus"`
+	TotalEmployee        int64  `json:"totalEmployee"`
+	Company              string `json:"company"`
+	JobTitle             string `json:"jobTitle"`
+	WorkSince            string `json:"workSince"`
+	OfficeAddress1       string `json:"officeAddress1" pg:"office_address_1"`
+	OfficeAddress2       string `json:"officeAddress2" pg:"office_address_2"`
+	OfficeAddress3       string `json:"officeAddress3" pg:"office_address_3"`
+	OfficeZipcode        string `json:"officeZipcode"`
+	OfficeCity           string `json:"officeCity"`
+	OfficePhone          string `json:"officePhone"`
+	Child                int64  `json:"child" validate:"min=0"`
+	EmergencyName        string `json:"emergencyName"`
+	EmergencyRelation    int64  `json:"emergencyRelation"`
+	EmergencyAddress1    string `json:"emergencyAddress1" pg:"emergency_address_1"`
+	EmergencyAddress2    string `json:"emergencyAddress2" pg:"emergency_address_2"`
+	EmergencyAddress3    string `json:"emergencyAddress3" pg:"emergency_address_3"`
+	EmergencyCity        string `json:"emergencyCity"`
+	EmergencyZipcode     string `json:"emergencyZipcode"`
+	EmergencyPhoneNumber string `json:"emergencyPhoneNumber"`
+	ProductRequest       string `json:"productRequest"`
+	BillingCycle         int64  `json:"billingCycle"`
+	CardDeliver          int64  `json:"cardDeliver"`
 }
 
 // PayloadGetToken a struct to store all payload for get token
