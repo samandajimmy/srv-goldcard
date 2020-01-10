@@ -241,7 +241,7 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 		return appStatus, models.ErrAppIDNotFound
 	}
 
-	// Request API BRI 
+	// Request API BRI
 	resp := models.BriResponse{}
 	requestData := map[string]interface{}{
 		"briXkey": acc.BrixKey,
@@ -260,7 +260,6 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 		return appStatus, models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode, resp.ResponseMessage})
 	}
 
-
 	// Update Status Application
 	if _, ok := resp.ResponseData["appStatus"].(string); !ok {
 		return appStatus, models.ErrSetVar
@@ -275,7 +274,7 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 	}
 
 	return appStatus, nil
-} 
+}
 
 func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, acc models.Account) error {
 	var docs []models.AppDocument
