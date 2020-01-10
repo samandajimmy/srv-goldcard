@@ -302,6 +302,32 @@ func (regis *psqlRegistrationsRepository) UpdateBrixkeyID(c echo.Context, acc mo
 	return nil
 }
 
+func (regis *psqlRegistrationsRepository) UpdateAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error) {
+	var appStatus models.AppStatus
+	app.UpdatedAt = time.Now()
+	_, err := regis.DBpg.Model(&app).
+		Set(`status = ?status, updated_at = ?updated_at`).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return appStatus, err
+	}
+
+	query := `select status, application_processed_date, card_processed_date, card_send_date, 
+	card_sent_date, card_received_date from applications where id = ?;`
+
+	_, err = regis.DBpg.Query(&appStatus, query, app.ID)
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return appStatus, err
+	}
+
+	return appStatus, nil
+}
+
 func (regis *psqlRegistrationsRepository) UpdateAppDocID(c echo.Context, app models.Applications) error {
 	app.UpdatedAt = time.Now()
 	_, err := regis.DBpg.Model(&app).

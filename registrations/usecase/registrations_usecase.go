@@ -182,7 +182,7 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 	return nil
 }
 
-func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadRegistrationFinal) error {
+func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber) error {
 	// get account by appNumber
 	briPl, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
 	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
@@ -231,6 +231,51 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 
 	return nil
 }
+
+func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadAppNumber) (models.AppStatus, error) {
+	var appStatus models.AppStatus
+	// Get account by app number
+	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
+
+	if err != nil {
+		return appStatus, models.ErrAppIDNotFound
+	}
+
+	// Request API BRI 
+	resp := models.BriResponse{}
+	requestData := map[string]interface{}{
+		"briXkey": acc.BrixKey,
+	}
+	reqBody := models.BriRequest{RequestData: requestData}
+	err = models.BriPost("/v1/cobranding/card/appstatus", reqBody, &resp)
+
+	if err != nil {
+		return appStatus, models.ErrExternalAPI
+	}
+
+	// to set variation of BRI response
+	resp.SetRC()
+
+	if resp.ResponseCode != "00" {
+		return appStatus, models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode, resp.ResponseMessage})
+	}
+
+
+	// Update Status Application
+	if _, ok := resp.ResponseData["appStatus"].(string); !ok {
+		return appStatus, models.ErrSetVar
+	}
+
+	acc.Application.Status = resp.ResponseData["appStatus"].(string)
+	acc.Application.ID = acc.ApplicationID
+	appStatus, err = reg.regRepo.UpdateAppStatus(c, acc.Application)
+
+	if err != nil {
+		return appStatus, models.ErrUpdateAppStatus
+	}
+
+	return appStatus, nil
+} 
 
 func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, acc models.Account) error {
 	var docs []models.AppDocument

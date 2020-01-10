@@ -23,8 +23,8 @@ type PayloadRegistration struct {
 	HandPhoneNumber string `json:"handPhoneNumber" validate:"required"`
 }
 
-// PayloadRegistrationFinal a struct to store all payload for final registration
-type PayloadRegistrationFinal struct {
+// PayloadAppNumber a struct to store all payload for final registration
+type PayloadAppNumber struct {
 	ApplicationNumber string `json:"applicationNumber" validate:"required"`
 }
 

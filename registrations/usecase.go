@@ -13,5 +13,6 @@ type UseCase interface {
 	PostPersonalInfo(echo.Context, models.PayloadPersonalInformation) error
 	PostRegistration(echo.Context, models.PayloadRegistration) (string, error)
 	PostCardLimit(c echo.Context, pl models.PayloadCardLimit) error
-	FinalRegistration(c echo.Context, pl models.PayloadRegistrationFinal) error
+	FinalRegistration(c echo.Context, pl models.PayloadAppNumber) error
+	GetAppStatus(c echo.Context, pl models.PayloadAppNumber) (models.AppStatus, error)
 }
