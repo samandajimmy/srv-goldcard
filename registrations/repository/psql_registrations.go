@@ -9,16 +9,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-pg/pg/v9"
 	"github.com/labstack/echo"
 )
 
 type psqlRegistrationsRepository struct {
 	Conn *sql.DB
+	DBpg *pg.DB
 }
 
 // NewPsqlRegistrationsRepository will create an object that represent the registrations.Repository interface
-func NewPsqlRegistrationsRepository(Conn *sql.DB) registrations.Repository {
-	return &psqlRegistrationsRepository{Conn}
+func NewPsqlRegistrationsRepository(Conn *sql.DB, dbpg *pg.DB) registrations.Repository {
+	return &psqlRegistrationsRepository{Conn, dbpg}
 }
 
 func (regis *psqlRegistrationsRepository) CreateApplication(c echo.Context, app models.Applications,
@@ -130,27 +132,60 @@ func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc 
 
 func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, appNumber string) (models.Account, error) {
 	var acc models.Account
-	query := `select acc.id, acc.cif, coalesce(acc.brixkey, ''), coalesce(acc.product_request, ''),
-		coalesce(acc.billing_cycle, 0), coalesce(acc.card_deliver, 0), acc.status, acc.bank_id,
-		coalesce(acc.card_id, 0), acc.application_id, acc.personal_information_id,
-		coalesce(acc.occupation_id, 0), coalesce(acc.emergency_contact_id, 0), coalesce(acc.correspondence_id, 0)
+	query := `select acc.id, acc.cif, acc.brixkey, acc.product_request, acc.billing_cycle,
+		acc.card_deliver, acc.status, acc.bank_id, acc.card_id, acc.application_id,
+		acc.personal_information_id, acc.occupation_id, acc.emergency_contact_id,
+		acc.correspondence_id, acc.created_at, acc.updated_at
 		from accounts acc
 		left join applications app on acc.application_id = app.id
-		where app.status = 'inactive' and app.application_number = $1;`
+		where app.status = 'inactive' and app.application_number = ?;`
 
-	err := regis.Conn.QueryRow(query, &appNumber).Scan(
-		&acc.ID, &acc.CIF, &acc.BrixKey, &acc.ProductRequest, &acc.BillingCycle, &acc.CardDeliver,
-		&acc.Status, &acc.BankID, &acc.CardID, &acc.ApplicationID, &acc.PersonalInformationID,
-		&acc.OccupationID, &acc.EmergencyContactID, &acc.CorrespondenceID,
-	)
+	_, err := regis.DBpg.Query(&acc, query, appNumber)
 
-	if err != nil {
+	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
 
 		return acc, err
 	}
 
 	return acc, nil
+}
+
+func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumber string) (models.PayloadPersonalInformation, error) {
+	var plRegister models.PayloadPersonalInformation
+	var pi models.PersonalInformation
+
+	query := `select acc.product_request, acc.billing_cycle, acc.card_deliver, c.card_name,
+		pi.first_name, pi.last_name, pi.hand_phone_number, pi.email, pi.npwp, pi.nik, pi.birth_place,
+		pi.birth_date, pi.nationality, pi.sex, pi.education, pi.marital_status, pi.mother_name,
+		pi.home_phone_area, pi.home_phone_number, pi.home_status, pi.address_line_1, pi.address_line_2,
+		pi.address_line_3, pi.zipcode, pi.address_city, pi.stayed_since, pi.child, o.job_bidang_usaha,
+		o.job_sub_bidang_usaha, o.job_category, o.job_status, o.total_employee, o.company, o.job_title,
+		o.work_since, o.office_address_1, o.office_address_2, o.office_address_3, o.office_zipcode,
+		o.office_city, o.office_phone, o.income, ec.name emergency_name, ec.relation emergency_relation,
+		ec.phone_number emergency_phone_number, ec.address_line_1 emergency_address_1,
+		ec.address_line_2 emergency_address_2, ec.address_line_3 emergency_address_3,
+		ec.address_city emergency_city, ec.zipcode emergency_zipcode, corr.address_line_1,
+		corr.address_line_2, corr.address_line_3, corr.address_city, corr.zipcode
+		from accounts acc
+		left join applications app on acc.application_id = app.id
+		left join cards c on acc.card_id = c.id
+		left join correspondences corr on acc.correspondence_id = corr.id
+		left join emergency_contacts ec on acc.emergency_contact_id = ec.id
+		left join occupations o on acc.occupation_id = o.id
+		left join personal_informations pi on acc.personal_information_id = pi.id
+		where app.status = 'inactive' and app.application_number = ?;`
+
+	_, err := regis.DBpg.Query(&plRegister, query, appNumber)
+
+	if err != nil && err != pg.ErrNoRows {
+		return plRegister, err
+	}
+
+	plRegister.Sex = pi.GetBriSex(plRegister.SexString)
+	plRegister.SexString = ""
+
+	return plRegister, nil
 }
 
 func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Context, acc models.Account) error {
@@ -251,4 +286,49 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 	}
 
 	return nil
+}
+
+func (regis *psqlRegistrationsRepository) UpdateBrixkeyID(c echo.Context, acc models.Account) error {
+	acc.UpdatedAt = time.Now()
+	_, err := regis.DBpg.Model(&acc).
+		Set(`brixkey = ?brixkey, updated_at = ?updated_at`).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (regis *psqlRegistrationsRepository) UpdateAppDocID(c echo.Context, app models.Applications) error {
+	app.UpdatedAt = time.Now()
+	_, err := regis.DBpg.Model(&app).
+		Set(`ktp_doc_id = ?ktp_doc_id, npwp_doc_id = ?npwp_doc_id, selfie_doc_id = ?selfie_doc_id,
+			updated_at = ?updated_at`).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (regis *psqlRegistrationsRepository) GetAppByID(c echo.Context, appID int64) (models.Applications, error) {
+	var app models.Applications
+	query := `select id, application_number, status, ktp_image_base64, npwp_image_base64,
+		selfie_image_base64, saving_account, created_at, updated_at from applications where id = ?;`
+
+	_, err := regis.DBpg.Query(&app, query, appID)
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return app, err
+	}
+
+	return app, nil
 }

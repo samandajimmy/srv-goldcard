@@ -9,12 +9,7 @@ import (
 )
 
 var (
-	switchingHost          = os.Getenv(`SWITCHING_HOST`)
-	switchingClientID      = os.Getenv(`SWITCHING_CLIENT_ID`)
-	switchingChannelID     = os.Getenv(`SWITCHING_CHANNEL_ID`)
-	switchingUserName      = os.Getenv(`SWITCHING_USERNAME`)
-	switchingPassword      = os.Getenv(`SWITCHING_PASSWORD`)
-	switchingPasswordToken = os.Getenv(`SWITCHING_PASSWORD_TOKEN`)
+	switchingChannelID = os.Getenv(`SWITCHING_CHANNEL_ID`)
 )
 
 // APIswitching struct represents a request for API Switching
@@ -28,13 +23,13 @@ type APIswitching struct {
 // NewSwitchingAPI is function to initiate a Switching API request
 func NewSwitchingAPI() (APIswitching, error) {
 	apiSwitching := APIswitching{}
-	url, err := url.Parse(switchingHost)
+	url, err := url.Parse(os.Getenv(`SWITCHING_HOST`))
 
 	if err != nil {
 		return apiSwitching, err
 	}
 
-	api, err := NewAPI(switchingHost, echo.MIMEApplicationJSON)
+	api, err := NewAPI(os.Getenv(`SWITCHING_HOST`), echo.MIMEApplicationJSON)
 
 	if err != nil {
 		return apiSwitching, err
@@ -79,9 +74,9 @@ func (switc *APIswitching) Request(endpoint, method string, body interface{}) (*
 
 func (switc *APIswitching) setAccessTokenSwitching() error {
 	response := map[string]interface{}{}
-	params := map[string]string{"grant_type": "password", "username": switchingClientID, "password": switchingPasswordToken}
+	params := map[string]string{"grant_type": "password", "username": os.Getenv(`SWITCHING_CLIENT_ID`), "password": os.Getenv(`SWITCHING_PASSWORD_TOKEN`)}
 	endpoint := "/oauth/token"
-	api, err := NewAPI(switchingHost, echo.MIMEApplicationForm)
+	api, err := NewAPI(os.Getenv(`SWITCHING_HOST`), echo.MIMEApplicationForm)
 
 	if err != nil {
 		return err
@@ -93,7 +88,7 @@ func (switc *APIswitching) setAccessTokenSwitching() error {
 		return err
 	}
 
-	req.SetBasicAuth(switchingUserName, switchingPassword)
+	req.SetBasicAuth(os.Getenv(`SWITCHING_USERNAME`), os.Getenv(`SWITCHING_PASSWORD`))
 
 	_, err = api.Do(req, &response)
 
