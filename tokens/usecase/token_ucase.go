@@ -28,7 +28,7 @@ func (tkn *tokenUseCase) CreateToken(c echo.Context, accToken *models.AccountTok
 	err := tkn.tokenRepo.Create(c, accToken)
 
 	if err != nil {
-		return err
+		return models.ErrCreateToken
 	}
 
 	return nil
@@ -46,7 +46,7 @@ func (tkn *tokenUseCase) GetToken(c echo.Context, username string, password stri
 	}
 
 	if err = verifyToken(accToken, password, false); err != nil {
-		return nil, err
+		return nil, models.ErrVerifyToken
 	}
 
 	// rearrange accountToken
@@ -76,7 +76,7 @@ func (tkn *tokenUseCase) RefreshToken(c echo.Context, username string, password 
 	err = tkn.tokenRepo.UpdateToken(c, accToken)
 
 	if err != nil {
-		return nil, err
+		return nil, models.ErrCreateToken
 	}
 
 	_ = tkn.tokenRepo.GetByUsername(c, accToken)

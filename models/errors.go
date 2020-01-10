@@ -83,6 +83,12 @@ var (
 
 	// ErrBriAPIRequest to store bri api request error message
 	ErrBriAPIRequest = "BRI API: RC-%s - %s"
+
+	// ErrCreateToken to create/update token error message
+	ErrCreateToken = errors.New("Terjadi Kesalaahan saat membuat Token")
+
+	// ErrVerifyToken to verify token error message
+	ErrVerifyToken = errors.New("Terjadi Kesalaahan saat verifikasi Token")
 )
 
 // DynamicErr to return parameterize errors
