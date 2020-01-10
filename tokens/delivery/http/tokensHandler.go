@@ -55,7 +55,7 @@ func (tkn *TokensHandler) createToken(c echo.Context) error {
 
 func (tkn *TokensHandler) getToken(c echo.Context) error {
 	tkn.response, tkn.respErrors = models.NewResponse()
-	var getToken models.PayloadGetToken
+	var getToken models.PayloadToken
 
 	if err := c.Bind(&getToken); err != nil {
 		tkn.respErrors.SetTitle(models.StatusError)
@@ -80,7 +80,7 @@ func (tkn *TokensHandler) getToken(c echo.Context) error {
 
 func (tkn *TokensHandler) refreshToken(c echo.Context) error {
 	tkn.response, tkn.respErrors = models.NewResponse()
-	var refToken models.PayloadRefreshToken
+	var refToken models.PayloadToken
 	if err := c.Bind(&refToken); err != nil {
 		tkn.respErrors.SetTitle(models.StatusError)
 		tkn.response.SetResponse("", &tkn.respErrors)

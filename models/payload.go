@@ -115,14 +115,8 @@ type PayloadPersonalInformation struct {
 	CardDeliver          int64  `json:"cardDeliver"`
 }
 
-// PayloadGetToken a struct to store all payload for get token
-type PayloadGetToken struct {
-	UserName string `json:"userName" validate:"required"`
-	Password string `json:"password" validate:"required"`
-}
-
-// PayloadRefreshToken a struct to store all payload for refresh token
-type PayloadRefreshToken struct {
+// PayloadToken a struct to store all payload for token
+type PayloadToken struct {
 	UserName string `json:"userName" validate:"required"`
 	Password string `json:"password" validate:"required"`
 }
