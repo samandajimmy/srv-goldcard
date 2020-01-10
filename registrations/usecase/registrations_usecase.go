@@ -207,15 +207,13 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	}
 
 	// update brixkey id
-	brixkey, ok := resp.ResponseData["briXkey"].(string)
-
-	if !ok {
+	if _, ok := resp.DataOne["briXkey"].(string); !ok {
 		logger.Make(c, nil).Debug(models.ErrSetVar)
 
 		return models.ErrSetVar
 	}
 
-	acc.BrixKey = brixkey
+	acc.BrixKey = resp.DataOne["briXkey"].(string)
 	err = reg.regRepo.UpdateBrixkeyID(c, acc)
 
 	if err != nil {
@@ -238,15 +236,13 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
 
 	if err != nil {
-		return appStatus, models.ErrAppIDNotFound
+		return appStatus, models.ErrAppNumberNotFound
 	}
 
-	// Request API BRI
 	resp := models.BriResponse{}
-	requestData := map[string]interface{}{
+	reqBody := map[string]interface{}{
 		"briXkey": acc.BrixKey,
 	}
-	reqBody := models.BriRequest{RequestData: requestData}
 	err = models.BriPost("/v1/cobranding/card/appstatus", reqBody, &resp)
 
 	if err != nil {
@@ -260,14 +256,17 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 		return appStatus, models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode, resp.ResponseMessage})
 	}
 
-	// Update Status Application
-	if _, ok := resp.ResponseData["appStatus"].(string); !ok {
+	// update application status
+	data := resp.Data[0]
+	if _, ok := data["appStatus"].(string); !ok {
+		logger.Make(c, nil).Debug(models.ErrSetVar)
+
 		return appStatus, models.ErrSetVar
 	}
 
-	acc.Application.Status = resp.ResponseData["appStatus"].(string)
 	acc.Application.ID = acc.ApplicationID
-	appStatus, err = reg.regRepo.UpdateAppStatus(c, acc.Application)
+	acc.Application.SetStatus(data["appStatus"].(string))
+	appStatus, err = reg.regRepo.UpdateGetAppStatus(c, acc.Application)
 
 	if err != nil {
 		return appStatus, models.ErrUpdateAppStatus
@@ -321,11 +320,11 @@ func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, acc models.Account
 				resp.ResponseMessage})
 		}
 
-		if _, ok := resp.ResponseData["documentId"].(string); !ok {
+		if _, ok := resp.DataOne["documentId"].(string); !ok {
 			return models.ErrDocIDNotFound
 		}
 
-		fDocID.SetString(resp.ResponseData["documentId"].(string))
+		fDocID.SetString(`resp.DataOne["documentId"].(string)`)
 	}
 
 	// update document id to application data
