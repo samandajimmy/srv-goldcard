@@ -182,7 +182,7 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 	return nil
 }
 
-func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadRegistrationFinal) error {
+func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber) error {
 	// get account by appNumber
 	briPl, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
 	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
@@ -207,15 +207,13 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	}
 
 	// update brixkey id
-	brixkey, ok := resp.ResponseData["briXkey"].(string)
-
-	if !ok {
+	if _, ok := resp.DataOne["briXkey"].(string); !ok {
 		logger.Make(c, nil).Debug(models.ErrSetVar)
 
 		return models.ErrSetVar
 	}
 
-	acc.BrixKey = brixkey
+	acc.BrixKey = resp.DataOne["briXkey"].(string)
 	err = reg.regRepo.UpdateBrixkeyID(c, acc)
 
 	if err != nil {
@@ -230,6 +228,51 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	}
 
 	return nil
+}
+
+func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadAppNumber) (models.AppStatus, error) {
+	var appStatus models.AppStatus
+	// Get account by app number
+	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
+
+	if err != nil {
+		return appStatus, models.ErrAppNumberNotFound
+	}
+
+	resp := models.BriResponse{}
+	reqBody := map[string]interface{}{
+		"briXkey": acc.BrixKey,
+	}
+	err = models.BriPost("/v1/cobranding/card/appstatus", reqBody, &resp)
+
+	if err != nil {
+		return appStatus, models.ErrExternalAPI
+	}
+
+	// to set variation of BRI response
+	resp.SetRC()
+
+	if resp.ResponseCode != "00" {
+		return appStatus, models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode, resp.ResponseMessage})
+	}
+
+	// update application status
+	data := resp.Data[0]
+	if _, ok := data["appStatus"].(string); !ok {
+		logger.Make(c, nil).Debug(models.ErrSetVar)
+
+		return appStatus, models.ErrSetVar
+	}
+
+	acc.Application.ID = acc.ApplicationID
+	acc.Application.SetStatus(data["appStatus"].(string))
+	appStatus, err = reg.regRepo.UpdateGetAppStatus(c, acc.Application)
+
+	if err != nil {
+		return appStatus, models.ErrUpdateAppStatus
+	}
+
+	return appStatus, nil
 }
 
 func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, acc models.Account) error {
@@ -277,11 +320,11 @@ func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, acc models.Account
 				resp.ResponseMessage})
 		}
 
-		if _, ok := resp.ResponseData["documentId"].(string); !ok {
+		if _, ok := resp.DataOne["documentId"].(string); !ok {
 			return models.ErrDocIDNotFound
 		}
 
-		fDocID.SetString(resp.ResponseData["documentId"].(string))
+		fDocID.SetString(`resp.DataOne["documentId"].(string)`)
 	}
 
 	// update document id to application data

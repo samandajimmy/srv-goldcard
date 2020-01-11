@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"fmt"
 	gcdb "gade/srv-goldcard/database"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -138,11 +139,11 @@ func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, 
 		acc.correspondence_id, acc.created_at, acc.updated_at
 		from accounts acc
 		left join applications app on acc.application_id = app.id
-		where app.status = 'inactive' and app.application_number = ?;`
+		where app.application_number = ?;`
 
-	_, err := regis.DBpg.Query(&acc, query, appNumber)
+	_, err := regis.DBpg.QueryOne(&acc, query, appNumber)
 
-	if err != nil && err != pg.ErrNoRows {
+	if err != nil || (acc == models.Account{}) {
 		logger.Make(c, nil).Debug(err)
 
 		return acc, err
@@ -176,9 +177,9 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 		left join personal_informations pi on acc.personal_information_id = pi.id
 		where app.status = 'inactive' and app.application_number = ?;`
 
-	_, err := regis.DBpg.Query(&plRegister, query, appNumber)
+	_, err := regis.DBpg.QueryOne(&plRegister, query, appNumber)
 
-	if err != nil && err != pg.ErrNoRows {
+	if err != nil || (plRegister == models.PayloadPersonalInformation{}) {
 		return plRegister, err
 	}
 
@@ -302,6 +303,35 @@ func (regis *psqlRegistrationsRepository) UpdateBrixkeyID(c echo.Context, acc mo
 	return nil
 }
 
+func (regis *psqlRegistrationsRepository) UpdateGetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error) {
+	var appStatus models.AppStatus
+	app.UpdatedAt = time.Now()
+	key := app.GetStatusDateKey()
+
+	_, err := regis.DBpg.Model(&app).
+		Set(fmt.Sprintf(`status = ?status, %s = ?%s, updated_at = ?updated_at`, key, key)).
+		WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return appStatus, err
+	}
+
+	query := `select status, application_processed_date, card_processed_date, card_send_date,
+		card_sent_date, failed_date from applications where id = ?;`
+
+	_, err = regis.DBpg.Query(&appStatus, query, app.ID)
+
+	if err != nil || (appStatus == models.AppStatus{}) {
+		logger.Make(c, nil).Debug(err)
+
+		return appStatus, err
+	}
+
+	return appStatus, nil
+}
+
 func (regis *psqlRegistrationsRepository) UpdateAppDocID(c echo.Context, app models.Applications) error {
 	app.UpdatedAt = time.Now()
 	_, err := regis.DBpg.Model(&app).
@@ -324,7 +354,7 @@ func (regis *psqlRegistrationsRepository) GetAppByID(c echo.Context, appID int64
 
 	_, err := regis.DBpg.Query(&app, query, appID)
 
-	if err != nil && err != pg.ErrNoRows {
+	if err != nil || (app == models.Applications{}) {
 		logger.Make(c, nil).Debug(err)
 
 		return app, err

@@ -21,4 +21,5 @@ type Repository interface {
 	UpdateBrixkeyID(c echo.Context, acc models.Account) error
 	UpdateAppDocID(c echo.Context, acc models.Applications) error
 	GetAppByID(c echo.Context, appID int64) (models.Applications, error)
+	UpdateGetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error)
 }

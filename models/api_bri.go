@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"reflect"
 	"time"
 
 	"github.com/labstack/echo"
@@ -17,10 +18,12 @@ import (
 
 // BriResponse struct to store response from BRI API
 type BriResponse struct {
-	ResponseCode    string                 `json:"responseCode"`
-	ResponseMessage string                 `json:"responseMessage"`
-	ResponseData    map[string]interface{} `json:"responseData,omitempty"`
-	Status          map[string]interface{} `json:"status,omitempty"`
+	ResponseCode    string                   `json:"responseCode"`
+	ResponseMessage string                   `json:"responseMessage"`
+	ResponseData    interface{}              `json:"responseData,omitempty"`
+	Data            []map[string]interface{} `json:"data,omitempty"`
+	DataOne         map[string]interface{}   `json:"dataOne,omitempty"`
+	Status          map[string]interface{}   `json:"status,omitempty"`
 }
 
 // SetRC to get bri api response code
@@ -143,11 +146,38 @@ func (bri *APIbri) Do(req *http.Request, v interface{}) (*http.Response, error) 
 		return resp, err
 	}
 
+	// remapping response struct
+	bri.remappingBriResponseData(v)
+
 	// show response log
 	debugEnd := fmt.Sprintf("End of request BRI API: %s %s", bri.Method, bri.Endpoint)
 	logger.MakeWithoutReportCaller(nil, v).Info(debugEnd)
 
 	return resp, err
+}
+
+func (bri *APIbri) remappingBriResponseData(v interface{}) {
+	rr := reflect.ValueOf(v)
+	rrdi := rr.Elem().FieldByName("ResponseData")
+	rrd := reflect.ValueOf(rrdi.Interface())
+
+	if rrdi.IsZero() {
+		return
+	}
+
+	if rrd.Kind() == reflect.Slice {
+		rd := rr.Elem().FieldByName("Data")
+		destType := reflect.TypeOf([]map[string]interface{}{})
+		slc := reflect.MakeSlice(destType, rrd.Len(), rrd.Len())
+		rd.Set(slc)
+
+		for i := 0; i < slc.Len(); i++ {
+			dt := rrd.Index(i).Interface().(map[string]interface{})
+			rd.Index(i).Set(reflect.ValueOf(dt))
+		}
+	} else {
+		rr.Elem().FieldByName("DataOne").Set(rrd)
+	}
 }
 
 func (bri *APIbri) setBriSignature(endpoint string, body interface{}) error {
