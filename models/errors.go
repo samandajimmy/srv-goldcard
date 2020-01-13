@@ -40,7 +40,7 @@ var (
 	ErrPassword = errors.New("Username atau Password yang digunakan tidak valid")
 
 	// ErrTokenExpired to store password error message
-	ErrTokenExpired = errors.New("Token Anda telah expire")
+	ErrTokenExpired = errors.New("Token Anda telah kadarluarsa")
 
 	// ErrPostSavingAccountFailed to errors post address failed
 	ErrPostSavingAccountFailed = errors.New("Menambahkan Rekening Tabungan gagal")
