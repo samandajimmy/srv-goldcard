@@ -37,9 +37,7 @@ func InitMiddleware(ech *echo.Echo, echoGroup models.EchoGroup) {
 	ech.Use(middleware.Recover())
 	cm.cors()
 	cm.basicAuth()
-	if os.Getenv(`WITH_JWT`) == "true" {
-		cm.jwtAuth()
-	}
+	cm.jwtAuth()
 	cm.customValidation()
 
 }
