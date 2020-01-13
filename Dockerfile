@@ -34,7 +34,7 @@ COPY --from=build-env /srv-goldcard/entrypoint.sh /srv-goldcard/entrypoint.sh
 COPY --from=build-env /srv-goldcard/migrations /migrations
 
 # add apk ca certificate
-RUN apk add --no-cache ca-certificates
+RUN apk add ca-certificates
 
 # set timezone
 RUN apk add tzdata
