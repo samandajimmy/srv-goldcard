@@ -46,7 +46,7 @@ func (tkn *tokenUseCase) GetToken(c echo.Context, username string, password stri
 	}
 
 	if err = verifyToken(accToken, password, false); err != nil {
-		return nil, models.ErrVerifyToken
+		return nil, err
 	}
 
 	// rearrange accountToken

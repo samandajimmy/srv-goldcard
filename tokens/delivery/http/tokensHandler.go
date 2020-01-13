@@ -33,7 +33,7 @@ func (tkn *TokensHandler) createToken(c echo.Context) error {
 	err := c.Bind(&accountToken)
 
 	if err != nil {
-		tkn.respErrors.SetTitle(models.StatusError)
+		tkn.respErrors.SetTitle(models.MessageUnprocessableEntity)
 		tkn.response.SetResponse("", &tkn.respErrors)
 
 		return tkn.response.Body(c, err)
@@ -58,7 +58,7 @@ func (tkn *TokensHandler) getToken(c echo.Context) error {
 	var getToken models.PayloadToken
 
 	if err := c.Bind(&getToken); err != nil {
-		tkn.respErrors.SetTitle(models.StatusError)
+		tkn.respErrors.SetTitle(models.MessageUnprocessableEntity)
 		tkn.response.SetResponse("", &tkn.respErrors)
 
 		return tkn.response.Body(c, err)
@@ -67,7 +67,7 @@ func (tkn *TokensHandler) getToken(c echo.Context) error {
 	accToken, err := tkn.TokenUseCase.GetToken(c, getToken.UserName, getToken.Password)
 
 	if err != nil {
-		tkn.respErrors.SetTitle(models.StatusError)
+		tkn.respErrors.SetTitle(err.Error())
 		tkn.response.SetResponse("", &tkn.respErrors)
 
 		return tkn.response.Body(c, err)
@@ -82,7 +82,7 @@ func (tkn *TokensHandler) refreshToken(c echo.Context) error {
 	tkn.response, tkn.respErrors = models.NewResponse()
 	var refToken models.PayloadToken
 	if err := c.Bind(&refToken); err != nil {
-		tkn.respErrors.SetTitle(models.StatusError)
+		tkn.respErrors.SetTitle(models.MessageUnprocessableEntity)
 		tkn.response.SetResponse("", &tkn.respErrors)
 
 		return tkn.response.Body(c, err)
@@ -91,7 +91,7 @@ func (tkn *TokensHandler) refreshToken(c echo.Context) error {
 	accToken, err := tkn.TokenUseCase.RefreshToken(c, refToken.UserName, refToken.Password)
 
 	if err != nil {
-		tkn.respErrors.SetTitle(models.StatusError)
+		tkn.respErrors.SetTitle(err.Error())
 		tkn.response.SetResponse("", &tkn.respErrors)
 
 		return tkn.response.Body(c, err)
