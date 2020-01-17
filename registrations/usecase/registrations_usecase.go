@@ -60,7 +60,7 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAd
 
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepAddress
-	_ = reg.regRepo.UpdateAppStep(c, acc.Application)
+	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
@@ -163,7 +163,7 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepPersonalInfo
-	_ = reg.regRepo.UpdateAppStep(c, acc.Application)
+	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
@@ -185,7 +185,7 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepCardLimit
-	_ = reg.regRepo.UpdateAppStep(c, acc.Application)
+	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
@@ -209,60 +209,27 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepSavingAcc
-	_ = reg.regRepo.UpdateAppStep(c, acc.Application)
+	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
 
 func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber) error {
 	// get account by appNumber
-	briPl, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
+	_, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
 	acc, err := reg.checkApplication(c, pl)
-
-	if err != nil {
-		return models.ErrAppNumberNotFound
-	}
-
-	resp := models.BriResponse{}
-	reqBody := models.BriRequest{RequestData: briPl}
-	err = models.BriPost("/v1/cobranding/register", reqBody, &resp)
-
-	if err != nil {
-		return models.ErrExternalAPI
-	}
-
-	// to set variation of BRI response
-	resp.SetRC()
-
-	if resp.ResponseCode != "00" {
-		return models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode, resp.ResponseMessage})
-	}
-
-	// update brixkey id
-	if _, ok := resp.DataOne["briXkey"].(string); !ok {
-		logger.Make(c, nil).Debug(models.ErrSetVar)
-
-		return models.ErrSetVar
-	}
-
-	acc.BrixKey = resp.DataOne["briXkey"].(string)
-	acc.Application.Status = models.AppStatusProccesed
-	err = reg.regRepo.UpdateBrixkeyID(c, acc)
-
-	if err != nil {
-		return models.ErrUpdateBrixkey
-	}
-
-	// upload document to BRI API
-	err = reg.uploadAppDoc(c, acc)
 
 	if err != nil {
 		return err
 	}
 
-	// update app current step
-	acc.Application.CurrentStep = models.AppStepSavingAcc
-	_ = reg.regRepo.UpdateAppStep(c, acc.Application)
+	// TODO: will fix this on ISG-1135 - improve proses lebih dari 1 menit loading time saat pengajuan final.
+	// go reg.briRegister(c, acc, briPl)
+
+	// update application
+	acc.Application.Status = models.AppStatusProcessed
+	acc.Application.CurrentStep = models.AppStepCompleted
+	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
 
 	return nil
 }
@@ -311,6 +278,47 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 	}
 
 	return appStatus, nil
+}
+
+// TODO: will fix this on ISG-1135 - improve proses lebih dari 1 menit loading time saat pengajuan final.
+func (reg *registrationsUseCase) briRegister(c echo.Context, acc models.Account, pl models.PayloadPersonalInformation) error {
+	resp := models.BriResponse{}
+	reqBody := models.BriRequest{RequestData: pl}
+	err := models.BriPost("/v1/cobranding/register", reqBody, &resp)
+
+	if err != nil {
+		return models.ErrExternalAPI
+	}
+
+	// to set variation of BRI response
+	resp.SetRC()
+
+	if resp.ResponseCode != "00" {
+		return models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode, resp.ResponseMessage})
+	}
+
+	// update brixkey id
+	if _, ok := resp.DataOne["briXkey"].(string); !ok {
+		logger.Make(c, nil).Debug(models.ErrSetVar)
+
+		return models.ErrSetVar
+	}
+
+	acc.BrixKey = resp.DataOne["briXkey"].(string)
+	err = reg.regRepo.UpdateBrixkeyID(c, acc)
+
+	if err != nil {
+		return models.ErrUpdateBrixkey
+	}
+
+	// upload document to BRI API
+	err = reg.uploadAppDoc(c, acc)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (reg *registrationsUseCase) checkApplication(c echo.Context, pl interface{}) (models.Account, error) {

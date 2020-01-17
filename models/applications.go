@@ -18,8 +18,8 @@ var (
 	// AppStatusOngoing is to store var application status ongoing
 	AppStatusOngoing = "application_ongoing"
 
-	// AppStatusProccesed is to store var application status proccesed
-	AppStatusProccesed = "application_ongoing"
+	// AppStatusProcessed is to store var application status proccesed
+	AppStatusProcessed = "application_processed"
 
 	// AppStepSavingAcc is to store var application step saving account
 	AppStepSavingAcc int64 = 1

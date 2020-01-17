@@ -361,10 +361,10 @@ func (regis *psqlRegistrationsRepository) GetAppByID(c echo.Context, appID int64
 	return app, nil
 }
 
-func (regis *psqlRegistrationsRepository) UpdateAppStep(c echo.Context, app models.Applications) error {
+func (regis *psqlRegistrationsRepository) UpdateApplication(c echo.Context, app models.Applications, col []string) error {
 	app.UpdatedAt = time.Now()
-	_, err := regis.DBpg.Model(&app).
-		Set(`current_step = ?current_step, updated_at = ?updated_at`).WherePK().Update()
+	col = append(col, "updated_at")
+	_, err := regis.DBpg.Model(&app).Column(col...).WherePK().Update()
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
