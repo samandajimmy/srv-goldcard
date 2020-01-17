@@ -169,6 +169,8 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 }
 
 func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.PayloadCardLimit) error {
+	response := map[string]interface{}{}
+
 	// get account by appNumber
 	acc, err := reg.checkApplication(c, pl)
 
@@ -176,7 +178,34 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 		return err
 	}
 
+	body := map[string]interface{}{
+		"noRek": acc.Application.SavingAccount,
+	}
+
+	switc, err := models.NewSwitchingAPI()
+
+	if err != nil {
+		return err
+	}
+
+	req, err := switc.Request("/goldcard/inquiry", echo.POST, body)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = switc.Do(req, &response)
+
+	if err != nil {
+		return err
+	}
+
+	if response["responseCode"] != "14" {
+		return models.ErrInquiryReg
+	}
+
 	acc.Card.CardLimit = pl.CardLimit
+	acc.Card.GoldLimit = pl.GoldLimit
 	err = reg.regRepo.UpdateCardLimit(c, acc)
 
 	if err != nil {

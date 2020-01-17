@@ -1,0 +1,2 @@
+ALTER TABLE cards
+ADD COLUMN gold_limit FLOAT;

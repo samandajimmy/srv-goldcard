@@ -59,8 +59,12 @@ func (switc *APIswitching) Do(req *http.Request, v interface{}) (*http.Response,
 }
 
 // Request represent global API Request
-func (switc *APIswitching) Request(endpoint, method string, body interface{}) (*http.Request, error) {
+func (switc *APIswitching) Request(endpoint, method string, body map[string]interface{}) (*http.Request, error) {
 	switc.Method = method
+	body["channelId"] = os.Getenv(`SWITCHING_CHANNEL_ID`)
+	body["clientId"] = os.Getenv(`SWITCHING_CLIENT_ID`)
+	body["flag"] = "K"
+
 	req, err := switc.API.Request(endpoint, method, body)
 
 	if err != nil {
