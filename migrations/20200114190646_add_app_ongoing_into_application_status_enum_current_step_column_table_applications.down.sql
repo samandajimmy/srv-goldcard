@@ -25,3 +25,6 @@ DROP TYPE application_status_enum_old;
 
 ALTER TABLE applications
 DROP COLUMN current_step;
+
+ALTER TABLE accounts
+DROP COLUMN branch_code;

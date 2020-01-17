@@ -99,7 +99,7 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 	}
 
 	app := models.Applications{ApplicationNumber: appNumber.String(), Status: models.AppStatusOngoing}
-	acc = models.Account{CIF: payload.CIF, BankID: bankID, EmergencyContactID: ecID}
+	acc = models.Account{CIF: payload.CIF, BranchCode: payload.BranchCode, BankID: bankID, EmergencyContactID: ecID}
 	pi := models.PersonalInformation{HandPhoneNumber: payload.HandPhoneNumber}
 	err = reg.regRepo.CreateApplication(c, app, acc, pi)
 
