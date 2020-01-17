@@ -143,3 +143,21 @@ type AddressData struct {
 	Subdistrict string `json:"subdistrict"`
 	Village     string `json:"village"`
 }
+
+// AccountRel is a struct to store account relation data
+type AccountRel struct {
+	// nolint
+	tableName struct{} `pg:"accounts"`
+
+	ID             string       `json:"id"`
+	CIF            string       `json:"cif"`
+	ProductRequest string       `json:"productRequest"`
+	BillingCycle   int64        `json:"billingCycle"`
+	CardDeliver    int64        `json:"cardDeliver"`
+	BrixKey        string       `json:"brixkey" pg:"brixkey"`
+	Status         string       `json:"status"`
+	CreatedAt      time.Time    `json:"createdAt"`
+	UpdatedAt      time.Time    `json:"updatedAt"`
+	ApplicationID  int64        `json:"applicationId"`
+	Application    Applications `json:"application"`
+}

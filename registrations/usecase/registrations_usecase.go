@@ -25,10 +25,10 @@ func RegistrationsUseCase(
 
 func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAddress) error {
 	// get account by appNumber
-	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
+	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
-		return models.ErrAppNumberNotFound
+		return err
 	}
 
 	// validate new data address or not
@@ -58,36 +58,56 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAd
 		return models.ErrPostAddressFailed
 	}
 
+	// update app current step
+	acc.Application.CurrentStep = models.AppStepAddress
+	_ = reg.regRepo.UpdateAppStep(c, acc.Application)
+
 	return nil
 }
 
-func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models.PayloadRegistration) (string, error) {
+func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models.PayloadRegistration) (models.RespRegistration, error) {
+	var respRegNil models.RespRegistration
+	acc, err := reg.checkApplication(c, payload)
+
+	if err != nil && err != models.ErrAppNumberNotFound {
+		return respRegNil, err
+	}
+
+	// if application exist, return app status
+	if (acc != models.Account{}) {
+		return models.RespRegistration{
+			ApplicationNumber: acc.Application.ApplicationNumber,
+			ApplicationStatus: acc.Application.Status,
+			CurrentStep:       acc.Application.CurrentStep,
+		}, nil
+	}
+
 	appNumber, _ := uuid.NewRandom()
 
 	// get BRI bank_id
 	bankID, err := reg.regRepo.GetBankIDByCode(c, models.BriBankCode)
 
 	if err != nil {
-		return "", models.ErrBankNotFound
+		return respRegNil, models.ErrBankNotFound
 	}
 
 	// get pegadaian emergency_contact_id
 	ecID, err := reg.regRepo.GetEmergencyContactIDByType(c, models.EmergencyContactDef)
 
 	if err != nil {
-		return "", models.ErrEmergecyContactNotFound
+		return respRegNil, models.ErrEmergecyContactNotFound
 	}
 
-	app := models.Applications{ApplicationNumber: appNumber.String()}
-	acc := models.Account{CIF: payload.CIF, BankID: bankID, EmergencyContactID: ecID}
+	app := models.Applications{ApplicationNumber: appNumber.String(), Status: models.AppStatusOngoing}
+	acc = models.Account{CIF: payload.CIF, BankID: bankID, EmergencyContactID: ecID}
 	pi := models.PersonalInformation{HandPhoneNumber: payload.HandPhoneNumber}
 	err = reg.regRepo.CreateApplication(c, app, acc, pi)
 
 	if err != nil {
-		return "", models.ErrCreateApplication
+		return respRegNil, models.ErrCreateApplication
 	}
 
-	return appNumber.String(), nil
+	return models.RespRegistration{ApplicationNumber: app.ApplicationNumber}, nil
 }
 
 func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.PayloadPersonalInformation) error {
@@ -112,10 +132,10 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 	}
 
 	// get account by appNumber
-	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
+	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
-		return models.ErrAppNumberNotFound
+		return err
 	}
 
 	err = acc.MappingRegistrationData(c, pl)
@@ -141,15 +161,19 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 		return models.ErrUpdateRegData
 	}
 
+	// update app current step
+	acc.Application.CurrentStep = models.AppStepPersonalInfo
+	_ = reg.regRepo.UpdateAppStep(c, acc.Application)
+
 	return nil
 }
 
 func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.PayloadCardLimit) error {
 	// get account by appNumber
-	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
+	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
-		return models.ErrAppNumberNotFound
+		return err
 	}
 
 	acc.Card.CardLimit = pl.CardLimit
@@ -159,16 +183,20 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 		return models.ErrUpdateRegData
 	}
 
+	// update app current step
+	acc.Application.CurrentStep = models.AppStepCardLimit
+	_ = reg.regRepo.UpdateAppStep(c, acc.Application)
+
 	return nil
 }
 
 // PostAddress representation update address to database
 func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.PayloadSavingAccount) error {
 	// get account by appNumber
-	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
+	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
-		return models.ErrAppNumberNotFound
+		return err
 	}
 
 	acc.Application.SavingAccount = pl.AccountNumber
@@ -179,13 +207,17 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 		return models.ErrPostSavingAccountFailed
 	}
 
+	// update app current step
+	acc.Application.CurrentStep = models.AppStepSavingAcc
+	_ = reg.regRepo.UpdateAppStep(c, acc.Application)
+
 	return nil
 }
 
 func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber) error {
 	// get account by appNumber
 	briPl, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
-	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
+	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
 		return models.ErrAppNumberNotFound
@@ -214,6 +246,7 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	}
 
 	acc.BrixKey = resp.DataOne["briXkey"].(string)
+	acc.Application.Status = models.AppStatusProccesed
 	err = reg.regRepo.UpdateBrixkeyID(c, acc)
 
 	if err != nil {
@@ -227,16 +260,20 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		return err
 	}
 
+	// update app current step
+	acc.Application.CurrentStep = models.AppStepSavingAcc
+	_ = reg.regRepo.UpdateAppStep(c, acc.Application)
+
 	return nil
 }
 
 func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadAppNumber) (models.AppStatus, error) {
 	var appStatus models.AppStatus
 	// Get account by app number
-	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
+	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
-		return appStatus, models.ErrAppNumberNotFound
+		return appStatus, err
 	}
 
 	resp := models.BriResponse{}
@@ -266,6 +303,7 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 
 	acc.Application.ID = acc.ApplicationID
 	acc.Application.SetStatus(data["appStatus"].(string))
+	logger.MakeStructToJSON(acc.Application)
 	appStatus, err = reg.regRepo.UpdateGetAppStatus(c, acc.Application)
 
 	if err != nil {
@@ -273,6 +311,28 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 	}
 
 	return appStatus, nil
+}
+
+func (reg *registrationsUseCase) checkApplication(c echo.Context, pl interface{}) (models.Account, error) {
+	r := reflect.ValueOf(pl)
+	appNumber := r.FieldByName("ApplicationNumber")
+
+	if appNumber.IsZero() {
+		return models.Account{}, nil
+	}
+
+	acc := models.Account{Application: models.Applications{ApplicationNumber: appNumber.String()}}
+	err := reg.regRepo.GetAccountByAppNumber(c, &acc)
+
+	if err != nil {
+		return models.Account{}, models.ErrAppNumberNotFound
+	}
+
+	if acc.BrixKey != "" {
+		return models.Account{}, models.ErrAppNumberCompleted
+	}
+
+	return acc, nil
 }
 
 func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, acc models.Account) error {
@@ -324,7 +384,7 @@ func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, acc models.Account
 			return models.ErrDocIDNotFound
 		}
 
-		fDocID.SetString(`resp.DataOne["documentId"].(string)`)
+		fDocID.SetString(resp.DataOne["documentId"].(string))
 	}
 
 	// update document id to application data

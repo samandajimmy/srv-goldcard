@@ -1,10 +1,13 @@
 package middleware
 
 import (
+	"encoding/json"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
+	"net/url"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -39,18 +42,19 @@ func InitMiddleware(ech *echo.Echo, echoGroup models.EchoGroup) {
 	cm.basicAuth()
 	cm.jwtAuth()
 	cm.customValidation()
-
 }
 
 func (cm *customMiddleware) customBodyDump() {
 	cm.e.Use(middleware.BodyDumpWithConfig(middleware.BodyDumpConfig{
 		Handler: func(c echo.Context, req, resp []byte) {
+			bodyParser(c, &req)
+			bodyParser(c, &resp)
 			reqBody := c.Request()
 			reqStr := string(req)
 			respStr := string(resp)
 
-			logger.MakeWithoutReportCaller(c, reqStr).Info("Request payload for endpoint " + reqBody.Method + " " + reqBody.URL.String())
-			logger.MakeWithoutReportCaller(c, respStr).Info("Response payload for endpoint " + reqBody.Method + " " + reqBody.URL.String())
+			logger.MakeWithoutReportCaller(c, reqStr).Info("Request payload for endpoint " + reqBody.Method + " " + reqBody.URL.Path)
+			logger.MakeWithoutReportCaller(c, respStr).Info("Response payload for endpoint " + reqBody.Method + " " + reqBody.URL.Path)
 		},
 	}))
 }
@@ -129,4 +133,56 @@ func (cv *customValidator) isRequiredWith(fl validator.FieldLevel) bool {
 	}
 
 	return true
+}
+
+func bodyParser(c echo.Context, pl *[]byte) {
+	if string(*pl) == "" {
+		rawQuery := c.Request().URL.RawQuery
+		m, err := url.ParseQuery(rawQuery)
+
+		if err != nil {
+			logger.Make(nil, nil).Fatal(err)
+		}
+
+		*pl, err = json.Marshal(m)
+
+		if err != nil {
+			logger.Make(nil, nil).Fatal(err)
+		}
+	}
+
+	payloadExcluder(pl)
+}
+
+func payloadExcluder(pl *[]byte) {
+	plMap := map[string]interface{}{}
+	strExclude := []string{"password", "base64", "npwp", "handPhone", "nik"}
+	err := json.Unmarshal(*pl, &plMap)
+
+	if err != nil {
+		logger.Make(nil, nil).Fatal(err)
+	}
+
+	for k, v := range plMap {
+		if contains(strExclude, k) {
+			v = models.StarString
+		}
+		plMap[k] = v
+	}
+
+	*pl, err = json.Marshal(plMap)
+
+	if err != nil {
+		logger.Make(nil, nil).Fatal(err)
+	}
+}
+
+func contains(strIncluder []string, str string) bool {
+	for _, include := range strIncluder {
+		if strings.Contains(str, include) {
+			return true
+		}
+	}
+
+	return false
 }

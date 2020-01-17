@@ -15,6 +15,27 @@ var (
 	// DefAppDocType is to store var default application document type
 	DefAppDocType = "D"
 
+	// AppStatusOngoing is to store var application status ongoing
+	AppStatusOngoing = "application_ongoing"
+
+	// AppStatusProccesed is to store var application status proccesed
+	AppStatusProccesed = "application_ongoing"
+
+	// AppStepSavingAcc is to store var application step saving account
+	AppStepSavingAcc int64 = 1
+
+	// AppStepCardLimit is to store var application step card limit
+	AppStepCardLimit int64 = 2
+
+	// AppStepPersonalInfo is to store var application step personal info
+	AppStepPersonalInfo int64 = 3
+
+	// AppStepAddress is to store var application step post address
+	AppStepAddress int64 = 4
+
+	// AppStepCompleted is to store var application step completed
+	AppStepCompleted int64 = 99
+
 	matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 	matchAllCap   = regexp.MustCompile("([a-z0-9])([A-Z])")
 	mapStatusDate = map[string]string{
@@ -28,6 +49,9 @@ var (
 
 // Applications is a struct to store application data
 type Applications struct {
+	// nolint
+	tableName struct{} `pg:"applications"`
+
 	ID                       int64     `json:"id"`
 	ApplicationNumber        string    `json:"applicationNumber" validate:"required"`
 	Status                   string    `json:"status"`
@@ -38,6 +62,7 @@ type Applications struct {
 	NpwpDocID                string    `json:"npwpDocId"`
 	SelfieDocID              string    `json:"selfieDocId"`
 	SavingAccount            string    `json:"savingAccount" validate:"required"`
+	CurrentStep              int64     `json:"currentStep"`
 	ApplicationProcessedDate time.Time `json:"applicationProcessedDate,omitempty"`
 	CardProcessedDate        time.Time `json:"cardProcessedDate,omitempty"`
 	CardSendDate             time.Time `json:"cardSendDate,omitempty"`
