@@ -1,4 +1,4 @@
-package models
+package api
 
 import (
 	"crypto/hmac"
@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"gade/srv-goldcard/logger"
+	"gade/srv-goldcard/models"
 	"net/http"
 	"net/url"
 	"os"
@@ -36,7 +37,7 @@ func (br *BriResponse) SetRC() {
 	desc, ok := br.Status["desc"].(string)
 
 	if !ok {
-		logger.Make(nil, nil).Fatal(ErrSetVar)
+		logger.Make(nil, nil).Fatal(models.ErrSetVar)
 	}
 
 	br.ResponseCode = code
@@ -124,7 +125,7 @@ func (bri *APIbri) Request(endpoint string, method string, body interface{}) (*h
 		return nil, err
 	}
 
-	bri.BRITimestamp = time.Now().UTC().Format(DateTimeFormatZone)
+	bri.BRITimestamp = time.Now().UTC().Format(models.DateTimeFormatZone)
 	err = bri.setBriSignature(endpoint, body)
 
 	if err != nil {
