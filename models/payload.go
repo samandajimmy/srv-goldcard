@@ -21,6 +21,7 @@ type PayloadList struct {
 type PayloadRegistration struct {
 	CIF               string `json:"cif" validate:"required"`
 	HandPhoneNumber   string `json:"handPhoneNumber" validate:"required"`
+	BranchCode        string `json:"branchCode" validate:"required"`
 	ApplicationNumber string `json:"applicationNumber"`
 }
 

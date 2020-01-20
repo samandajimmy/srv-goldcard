@@ -24,3 +24,6 @@ DROP TYPE application_status_enum_old;
 
 ALTER TABLE applications
 ADD COLUMN current_step SMALLINT DEFAULT 0;
+
+ALTER TABLE accounts
+ADD COLUMN branch_code VARCHAR(10);

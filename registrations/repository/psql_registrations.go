@@ -35,9 +35,9 @@ func (regis *psqlRegistrationsRepository) CreateApplication(c echo.Context, app 
 		gcdb.NewPipelineStmt(`INSERT INTO personal_informations (hand_phone_number, created_at)
 			VALUES ($1, $2) RETURNING id;`,
 			[]string{"piID"}, pi.HandPhoneNumber, time.Now()),
-		gcdb.NewPipelineStmt(`INSERT INTO accounts (cif, bank_id, emergency_contact_id, created_at, application_id,
-			personal_information_id) VALUES ($1, $2, $3, $4, {appID}, {piID});`,
-			nilFilters, acc.CIF, acc.BankID, acc.EmergencyContactID, time.Now()),
+		gcdb.NewPipelineStmt(`INSERT INTO accounts (cif, branch_code, bank_id, emergency_contact_id,
+			created_at, application_id, personal_information_id) VALUES ($1, $2, $3, $4, $5, {appID}, {piID});`,
+			nilFilters, acc.CIF, acc.BranchCode, acc.BankID, acc.EmergencyContactID, time.Now()),
 	}
 
 	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
@@ -361,10 +361,10 @@ func (regis *psqlRegistrationsRepository) GetAppByID(c echo.Context, appID int64
 	return app, nil
 }
 
-func (regis *psqlRegistrationsRepository) UpdateAppStep(c echo.Context, app models.Applications) error {
+func (regis *psqlRegistrationsRepository) UpdateApplication(c echo.Context, app models.Applications, col []string) error {
 	app.UpdatedAt = time.Now()
-	_, err := regis.DBpg.Model(&app).
-		Set(`current_step = ?current_step, updated_at = ?updated_at`).WherePK().Update()
+	col = append(col, "updated_at")
+	_, err := regis.DBpg.Model(&app).Column(col...).WherePK().Update()
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
