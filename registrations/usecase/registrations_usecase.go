@@ -162,6 +162,41 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 	return nil
 }
 
+func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.PayloadOccupation) error {
+	// get account by appNumber
+	acc, err := reg.regRepo.GetAccountByAppNumber(c, pl.ApplicationNumber)
+
+	if err != nil {
+		return models.ErrAppNumberNotFound
+	}
+
+	acc.Occupation = models.Occupation{
+		JobBidangUsaha:pl.JobBidangUsaha,
+		JobSubBidangUsaha:pl.JobSubBidangUsaha,
+		JobCategory:pl.JobCategory,
+		JobStatus:pl.JobStatus,
+		TotalEmployee:pl.TotalEmployee,
+		Company:pl.Company,
+		JobTitle:pl.JobTitle,
+		WorkSince:pl.WorkSince,
+		OfficeAddress1:pl.OfficeAddress1,
+		OfficeAddress2:pl.OfficeAddress2,
+		OfficeAddress3:pl.OfficeAddress3,
+		OfficeZipcode:pl.OfficeZipcode,
+		OfficeCity:pl.OfficeCity,
+		OfficePhone:pl.OfficePhone,
+		Income:pl.Income,
+	}
+
+	err = reg.regRepo.PostOccupation(c, acc)
+
+	if err != nil {
+		return models.ErrUpdateOccData
+	}
+
+	return nil
+}
+
 // PostAddress representation update address to database
 func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.PayloadSavingAccount) error {
 	// get account by appNumber

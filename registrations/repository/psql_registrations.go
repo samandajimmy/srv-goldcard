@@ -245,6 +245,39 @@ func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Conte
 	return nil
 }
 
+func (regis *psqlRegistrationsRepository) PostOccupation(c echo.Context, acc models.Account) error {
+	var nilFilters []string
+	occ := acc.Occupation
+	
+	stmts := []*gcdb.PipelineStmt{
+		// insert occupation
+		gcdb.NewPipelineStmt(`INSERT INTO occupations (job_bidang_usaha, job_sub_bidang_usaha,
+			job_category, job_status, total_employee, company, job_title, work_since,
+			office_address_1, office_address_2, office_address_3, office_zipcode, office_city,
+			office_phone, income, created_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id;`,
+			[]string{"occID"}, occ.JobBidangUsaha, occ.JobSubBidangUsaha, occ.JobCategory,
+			occ.JobStatus, occ.TotalEmployee, occ.Company, occ.JobTitle, occ.WorkSince,
+			occ.OfficeAddress1, occ.OfficeAddress2, occ.OfficeAddress3, occ.OfficeZipcode,
+			occ.OfficeCity, occ.OfficePhone, occ.Income, time.Now()),
+		// update account
+		gcdb.NewPipelineStmt(`UPDATE accounts set occupation_id = {occID}, updated_at = $1 WHERE id = $2`,
+			nilFilters, time.Now(), acc.ID),
+	}
+
+	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
+		return gcdb.RunPipelineQueryRow(tx, stmts...)
+	})
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
 func (regis *psqlRegistrationsRepository) GetZipcode(c echo.Context, addrData models.AddressData) (string, error) {
 	var zipcode string
 	query := `SELECT postal_code FROM ref_postal_codes pc

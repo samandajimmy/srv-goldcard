@@ -22,4 +22,5 @@ type Repository interface {
 	UpdateAppDocID(c echo.Context, acc models.Applications) error
 	GetAppByID(c echo.Context, appID int64) (models.Applications, error)
 	UpdateGetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error)
+	PostOccupation(echo.Context, models.Account) error
 }
