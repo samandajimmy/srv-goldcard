@@ -51,6 +51,9 @@ var (
 	// ErrAppNumberNotFound to store error find application number
 	ErrAppNumberNotFound = errors.New("Nomor pengajuan tidak ditemukan")
 
+	// ErrAppNumberCompleted to store error application number applied
+	ErrAppNumberCompleted = errors.New("Nomor pengajuan telah diajukan")
+
 	// ErrBankNotFound to store error find bank id
 	ErrBankNotFound = errors.New("Kode bank tidak ditemukan")
 

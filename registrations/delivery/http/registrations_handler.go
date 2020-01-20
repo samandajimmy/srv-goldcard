@@ -54,7 +54,7 @@ func (reg *RegistrationsHandler) Registrations(c echo.Context) error {
 		return reg.response.Body(c, err)
 	}
 
-	appNumber, err := reg.registrationsUseCase.PostRegistration(c, pr)
+	resp, err := reg.registrationsUseCase.PostRegistration(c, pr)
 
 	if err != nil {
 		reg.respErrors.SetTitle(err.Error())
@@ -63,7 +63,7 @@ func (reg *RegistrationsHandler) Registrations(c echo.Context) error {
 		return reg.response.Body(c, err)
 	}
 
-	reg.response.SetResponse(map[string]string{"applicationNumber": appNumber}, &reg.respErrors)
+	reg.response.SetResponse(resp, &reg.respErrors)
 
 	return reg.response.Body(c, err)
 }

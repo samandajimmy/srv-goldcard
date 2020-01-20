@@ -14,6 +14,7 @@ type Account struct {
 	BillingCycle          int64               `json:"billingCycle"`
 	CardDeliver           int64               `json:"cardDeliver"`
 	BrixKey               string              `json:"brixkey" pg:"brixkey"`
+	BranchCode            string              `json:"branchCode"`
 	Status                string              `json:"status"`
 	BankID                int64               `json:"bankId"`
 	CardID                int64               `json:"cardId"`
