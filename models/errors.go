@@ -97,7 +97,7 @@ var (
 	ErrUpdateAppStatus = errors.New("Terjadi Kesalahan saat update Status")
 
 	// ErrInquiryReg to inquiry registrations to switching/core
-	ErrInquiryReg = errors.New("Data Pengajuan sudah pernah terdaftar di core atau terjadi kesalahan di server")
+	ErrInquiryReg = errors.New("Data Pengajuan sudah pernah terdaftar atau terjadi kesalahan di server")
 )
 
 // DynamicErr to return parameterize errors

@@ -169,7 +169,6 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 }
 
 func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.PayloadCardLimit) error {
-	response := map[string]interface{}{}
 
 	// get account by appNumber
 	acc, err := reg.checkApplication(c, pl)
@@ -178,29 +177,15 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 		return err
 	}
 
-	body := map[string]interface{}{
-		"noRek": acc.Application.SavingAccount,
-	}
-
-	switc, err := models.NewSwitchingAPI()
+	// Inquiry to core
+	res, err := reg.sendDataToSwitching(c, acc, "/goldcard/inquiry")
 
 	if err != nil {
 		return err
 	}
 
-	req, err := switc.Request("/goldcard/inquiry", echo.POST, body)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = switc.Do(req, &response)
-
-	if err != nil {
-		return err
-	}
-
-	if response["responseCode"] != "14" {
+	// Validation response
+	if res["responseCode"] != "14" {
 		return models.ErrInquiryReg
 	}
 
@@ -455,4 +440,33 @@ func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string)
 	}
 
 	return nil
+}
+
+func (reg *registrationsUseCase) sendDataToSwitching(c echo.Context, acc models.Account, path string) (map[string]interface{}, error) {
+	response := map[string]interface{}{}
+
+	body := map[string]interface{}{
+		"noRek": acc.Application.SavingAccount,
+	}
+
+	switc, err := models.NewSwitchingAPI()
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := switc.Request(path, echo.POST, body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = switc.Do(req, &response)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+
 }
