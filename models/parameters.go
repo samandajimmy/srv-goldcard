@@ -66,4 +66,7 @@ var (
 
 	// EmergencyContactDef a string to store default emergency contact
 	EmergencyContactDef = "pegadaian"
+
+	// StarString a string with stars
+	StarString = "**********"
 )

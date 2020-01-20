@@ -19,8 +19,10 @@ type PayloadList struct {
 
 // PayloadRegistration a struct to store all payload for registration
 type PayloadRegistration struct {
-	CIF             string `json:"cif" validate:"required"`
-	HandPhoneNumber string `json:"handPhoneNumber" validate:"required"`
+	CIF               string `json:"cif" validate:"required"`
+	HandPhoneNumber   string `json:"handPhoneNumber" validate:"required"`
+	BranchCode        string `json:"branchCode" validate:"required"`
+	ApplicationNumber string `json:"applicationNumber"`
 }
 
 // PayloadAppNumber a struct to store all payload for final registration
@@ -119,4 +121,11 @@ type PayloadPersonalInformation struct {
 type PayloadToken struct {
 	UserName string `json:"userName" validate:"required"`
 	Password string `json:"password" validate:"required"`
+}
+
+// RespRegistration to store response registration
+type RespRegistration struct {
+	ApplicationNumber string `json:"applicationNumber"`
+	ApplicationStatus string `json:"applicationStatus,omitempty"`
+	CurrentStep       int64  `json:"currentStep"`
 }
