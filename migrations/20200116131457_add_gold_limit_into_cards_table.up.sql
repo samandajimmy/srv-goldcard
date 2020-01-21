@@ -1,2 +1,5 @@
 ALTER TABLE cards
 ADD COLUMN gold_limit FLOAT;
+
+ALTER TABLE cards
+ADD COLUMN current_stl INTEGER;

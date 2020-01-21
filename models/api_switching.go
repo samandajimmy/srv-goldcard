@@ -1,6 +1,8 @@
 package models
 
 import (
+	"encoding/json"
+	"gade/srv-goldcard/logger"
 	"net/http"
 	"net/url"
 	"os"
@@ -9,7 +11,8 @@ import (
 )
 
 var (
-	switchingChannelID = os.Getenv(`SWITCHING_CHANNEL_ID`)
+	// SwitchingRCInquiryAllow RC 14
+	SwitchingRCInquiryAllow = "14"
 )
 
 // APIswitching struct represents a request for API Switching
@@ -61,9 +64,6 @@ func (switc *APIswitching) Do(req *http.Request, v interface{}) (*http.Response,
 // Request represent global API Request
 func (switc *APIswitching) Request(endpoint, method string, body map[string]interface{}) (*http.Request, error) {
 	switc.Method = method
-	body["channelId"] = os.Getenv(`SWITCHING_CHANNEL_ID`)
-	body["clientId"] = os.Getenv(`SWITCHING_CLIENT_ID`)
-	body["flag"] = "K"
 
 	req, err := switc.API.Request(endpoint, method, body)
 
@@ -103,4 +103,35 @@ func (switc *APIswitching) setAccessTokenSwitching() error {
 	switc.AccessToken = response["access_token"].(string)
 
 	return nil
+}
+
+//SwitchingPost represent Post Switching API Request
+func SwitchingPost(body map[string]interface{}, path string) (map[string]json.RawMessage, error) {
+	var response map[string]json.RawMessage
+	body["channelId"] = os.Getenv(`SWITCHING_CHANNEL_ID`)
+	body["clientId"] = os.Getenv(`SWITCHING_CLIENT_ID`)
+	body["flag"] = "K"
+
+	switc, err := NewSwitchingAPI()
+
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := switc.Request(path, echo.POST, body)
+
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = switc.Do(req, &response)
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return nil, err
+	}
+
+	return response, nil
+
 }

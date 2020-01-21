@@ -1,10 +1,12 @@
 package usecase
 
 import (
+	"encoding/json"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
 	"reflect"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
@@ -169,7 +171,6 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 }
 
 func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.PayloadCardLimit) error {
-
 	// get account by appNumber
 	acc, err := reg.checkApplication(c, pl)
 
@@ -177,20 +178,55 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 		return err
 	}
 
-	// Inquiry to core
-	res, err := reg.sendDataToSwitching(c, acc, "/goldcard/inquiry")
+	body := map[string]interface{}{
+		"noRek": acc.Application.SavingAccount,
+	}
+
+	// Gold Card inquiry Registrations to core
+	res, err := models.SwitchingPost(body, "/goldcard/inquiry")
+	var responseCode interface{}
+	json.Unmarshal(res["responseCode"], &responseCode)
 
 	if err != nil {
 		return err
 	}
 
 	// Validation response
-	if res["responseCode"] != "14" {
+	if responseCode != models.SwitchingRCInquiryAllow {
 		return models.ErrInquiryReg
+	}
+
+	// Get STL Price
+	stlRes, err := models.SwitchingPost(map[string]interface{}{}, "/param/stl")
+	var stringData string
+	var responseCodeSTL string
+	var data map[string]string
+
+	if err != nil {
+		return err
+	}
+
+	json.Unmarshal(stlRes["data"], &stringData)
+	json.Unmarshal(stlRes["responseCode"], &responseCodeSTL)
+	err = json.Unmarshal([]byte(stringData), &data)
+
+	if err != nil {
+		return err
+	}
+
+	if responseCodeSTL != models.RCSuccess {
+		return models.ErrGetSTL
+	}
+
+	hargaEmas, err := strconv.ParseInt(data["hargaEmas"], 10, 64)
+
+	if err != nil {
+		return err
 	}
 
 	acc.Card.CardLimit = pl.CardLimit
 	acc.Card.GoldLimit = pl.GoldLimit
+	acc.Card.CurrentSTL = hargaEmas
 	err = reg.regRepo.UpdateCardLimit(c, acc)
 
 	if err != nil {
@@ -440,33 +476,4 @@ func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string)
 	}
 
 	return nil
-}
-
-func (reg *registrationsUseCase) sendDataToSwitching(c echo.Context, acc models.Account, path string) (map[string]interface{}, error) {
-	response := map[string]interface{}{}
-
-	body := map[string]interface{}{
-		"noRek": acc.Application.SavingAccount,
-	}
-
-	switc, err := models.NewSwitchingAPI()
-
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := switc.Request(path, echo.POST, body)
-
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = switc.Do(req, &response)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
-
 }

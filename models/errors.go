@@ -98,6 +98,9 @@ var (
 
 	// ErrInquiryReg to inquiry registrations to switching/core
 	ErrInquiryReg = errors.New("Data Pengajuan sudah pernah terdaftar atau terjadi kesalahan di server")
+
+	// ErrGetSTL to get STL Price
+	ErrGetSTL = errors.New("Terjadi Kesalahan saat mengambil harga STL")
 )
 
 // DynamicErr to return parameterize errors

@@ -17,6 +17,11 @@ type API struct {
 	ContentType string
 }
 
+var (
+	// RCSuccess represents response code success
+	RCSuccess = "00"
+)
+
 // NewAPI for create new client request
 func NewAPI(baseURL string, contentType string) (API, error) {
 	url, err := url.Parse(baseURL)
