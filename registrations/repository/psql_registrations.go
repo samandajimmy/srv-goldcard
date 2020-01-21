@@ -133,7 +133,7 @@ func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc 
 
 func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, acc *models.Account) error {
 	newAcc := models.Account{}
-	err := regis.DBpg.Model(&newAcc).Relation("Application").
+	err := regis.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
 		Where("application_number = ?", acc.Application.ApplicationNumber).Select()
 
 	if err != nil && err != pg.ErrNoRows {
@@ -246,7 +246,7 @@ func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Conte
 func (regis *psqlRegistrationsRepository) PostOccupation(c echo.Context, acc models.Account) error {
 	var nilFilters []string
 	occ := acc.Occupation
-	
+
 	stmts := []*gcdb.PipelineStmt{
 		// insert occupation
 		gcdb.NewPipelineStmt(`INSERT INTO occupations (job_bidang_usaha, job_sub_bidang_usaha,
@@ -293,6 +293,23 @@ func (regis *psqlRegistrationsRepository) GetZipcode(c echo.Context, addrData mo
 	}
 
 	return zipcode, nil
+}
+
+func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, acc models.Account) (string, string) {
+	var city string
+	zipcode := acc.Occupation.OfficeZipcode
+
+	query := `SELECT city FROM ref_postal_codes pc
+		WHERE pc.postal_code = $1 LIMIT 1`
+
+	err := regis.Conn.QueryRow(query, acc.Occupation.OfficeZipcode).Scan(&city)
+
+	if err != nil || acc.Occupation.OfficeZipcode == "" {
+		city = acc.PersonalInformation.AddressCity
+		zipcode = acc.PersonalInformation.Zipcode
+	}
+
+	return city, zipcode
 }
 
 func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account) error {

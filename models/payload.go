@@ -130,21 +130,22 @@ type RespRegistration struct {
 	CurrentStep       int64  `json:"currentStep"`
 }
 
+// PayloadOccupation to store response occupation
 type PayloadOccupation struct {
-	ApplicationNumber string 	`json:"applicationNumber,omitempty" validate:"required"`
-	JobBidangUsaha    int64     `json:"jobBidangUsaha" validate:"required"`
-	JobSubBidangUsaha int64     `json:"jobSubBidangUsaha" validate:"required"`
-	JobCategory       int64     `json:"jobCategory" validate:"required"`
-	JobStatus         int64     `json:"jobStatus" validate:"required"`
-	TotalEmployee     int64     `json:"totalEmployee" validate:"required"`
-	Company           string    `json:"company" validate:"required"`
-	JobTitle          string    `json:"jobTitle"`
-	WorkSince         string    `json:"workSince" validate:"required"`
-	OfficeAddress1    string    `json:"officeAddress1" validate:"required"`
-	OfficeAddress2    string    `json:"officeAddress2"`
-	OfficeAddress3    string    `json:"officeAddress3"`
-	OfficeZipcode     string    `json:"officeZipcode"`
-	OfficeCity        string    `json:"officeCity"`
-	OfficePhone       string    `json:"officePhone" validate:"required"`
-	Income            int64     `json:"income" validate:"required"`
+	ApplicationNumber string `json:"applicationNumber,omitempty" validate:"required"`
+	JobBidangUsaha    int64  `json:"jobBidangUsaha" validate:"required"`
+	JobSubBidangUsaha int64  `json:"jobSubBidangUsaha" validate:"required"`
+	JobCategory       int64  `json:"jobCategory" validate:"required"`
+	JobStatus         int64  `json:"jobStatus" validate:"required"`
+	TotalEmployee     int64  `json:"totalEmployee" validate:"required"`
+	Company           string `json:"company" validate:"required"`
+	JobTitle          string `json:"jobTitle" validate:"required"`
+	WorkSince         string `json:"workSince" validate:"required"`
+	OfficeAddress1    string `json:"officeAddress1" validate:"required"`
+	OfficeAddress2    string `json:"officeAddress2"`
+	OfficeAddress3    string `json:"officeAddress3"`
+	OfficeZipcode     string `json:"officeZipcode"`
+	OfficeCity        string `json:"officeCity"`
+	OfficePhone       string `json:"officePhone" validate:"required"`
+	Income            int64  `json:"income" validate:"required"`
 }

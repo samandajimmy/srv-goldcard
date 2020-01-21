@@ -190,38 +190,36 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 	return nil
 }
 
+// PostOccupation representation update occupation to database
 func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.PayloadOccupation) error {
-	// get account by appNumber
-	acc := models.Account{Application: models.Applications{ApplicationNumber: pl.ApplicationNumber}}
-	err := reg.regRepo.GetAccountByAppNumber(c, &acc)
+	var city string
+	var zipcode string
+	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
-		return models.ErrAppNumberNotFound
+		return err
 	}
 
-	acc.Occupation = models.Occupation{
-		JobBidangUsaha:pl.JobBidangUsaha,
-		JobSubBidangUsaha:pl.JobSubBidangUsaha,
-		JobCategory:pl.JobCategory,
-		JobStatus:pl.JobStatus,
-		TotalEmployee:pl.TotalEmployee,
-		Company:pl.Company,
-		JobTitle:pl.JobTitle,
-		WorkSince:pl.WorkSince,
-		OfficeAddress1:pl.OfficeAddress1,
-		OfficeAddress2:pl.OfficeAddress2,
-		OfficeAddress3:pl.OfficeAddress3,
-		OfficeZipcode:pl.OfficeZipcode,
-		OfficeCity:pl.OfficeCity,
-		OfficePhone:pl.OfficePhone,
-		Income:pl.Income,
+	err = acc.Occupation.MappingOccupation(pl)
+
+	if err != nil {
+		return models.ErrMappingData
 	}
+
+	city, zipcode = reg.regRepo.GetCityFromZipcode(c, acc)
+
+	acc.Occupation.OfficeCity = city
+	acc.Occupation.OfficeZipcode = zipcode
 
 	err = reg.regRepo.PostOccupation(c, acc)
 
 	if err != nil {
 		return models.ErrUpdateOccData
 	}
+
+	// update app current step
+	acc.Application.CurrentStep = models.AppStepOccupation
+	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
