@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-// Repository represent the campaigntrx's repository contract
+// Repository represent the registration's repository contract
 type Repository interface {
 	PostAddress(echo.Context, models.Account) error
 	PostSavingAccount(echo.Context, models.Account) error

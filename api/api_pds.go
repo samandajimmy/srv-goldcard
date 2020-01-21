@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/labstack/echo"
 	"net/http"
 	"net/url"
 	"os"
@@ -10,18 +11,21 @@ import (
 type APIpds struct {
 	Host *url.URL
 	API  API
+	ctx  echo.Context
 }
 
 // NewPdsAPI is function to initiate a PDS API request
-func NewPdsAPI(contentType string) (APIpds, error) {
+func NewPdsAPI(c echo.Context, contentType string) (APIpds, error) {
 	apiPds := APIpds{}
+	apiPds.ctx = c
+
 	url, err := url.Parse(os.Getenv(`PDS_API_HOST`))
 
 	if err != nil {
 		return apiPds, err
 	}
 
-	api, err := NewAPI(os.Getenv(`PDS_API_HOST`), contentType)
+	api, err := NewAPI(apiPds.ctx, os.Getenv(`PDS_API_HOST`), contentType)
 
 	if err != nil {
 		return apiPds, err
