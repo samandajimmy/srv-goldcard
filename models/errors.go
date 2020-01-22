@@ -93,8 +93,11 @@ var (
 	// ErrVerifyToken to verify token error message
 	ErrVerifyToken = errors.New("Terjadi Kesalaahan saat verifikasi Token")
 
-	// ErrUpdateAppStatus to update application status error message
+	// ErrUpdateAppStatus to strore update application status error message
 	ErrUpdateAppStatus = errors.New("Terjadi Kesalahan saat update Status")
+
+	// ErrAppData to store get application data error message
+	ErrAppData = errors.New("Terjadi Kesalahan saat mengambil data aplikasi")
 )
 
 // DynamicErr to return parameterize errors

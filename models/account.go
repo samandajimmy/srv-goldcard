@@ -78,10 +78,6 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.StayedSince = pl.StayedSince
 	acc.PersonalInformation.Child = pl.Child
 
-	acc.ProductRequest = pl.ProductRequest
-	acc.BillingCycle = pl.BillingCycle
-	acc.CardDeliver = pl.CardDeliver
-
 	// application documents
 	acc.Application.SetDocument(pl)
 

@@ -14,6 +14,11 @@ import (
 
 const timestampFormat = "2006-01-02 15:04:05.000"
 
+var (
+	errReqLogger      = errors.New("Error during creating a request logger")
+	errEchoContextNil = errors.New("Echo context tidak boleh nil")
+)
+
 type requestLogger struct {
 	RequestID string      `json:"requestID,omitempty"`
 	Payload   interface{} `json:"payload,omitempty"`
@@ -35,8 +40,6 @@ func Init() {
 	logrus.SetFormatter(formatter)
 	logrus.SetLevel(logrus.DebugLevel)
 }
-
-var errReqLogger = errors.New("Error during creating a request logger")
 
 // Make is to get a log parameter
 func Make(c echo.Context, payload interface{}) *logrus.Entry {
@@ -73,6 +76,15 @@ func MakeWithoutReportCaller(c echo.Context, payload interface{}) *logrus.Entry 
 	logrus.SetReportCaller(false)
 
 	return log
+}
+
+// GetEchoRID to get echo request ID
+func GetEchoRID(c echo.Context) string {
+	if c == nil {
+		Make(nil, nil).Fatal(errEchoContextNil)
+	}
+
+	return c.Response().Header().Get(echo.HeaderXRequestID)
 }
 
 // MakeStructToJSON to get a json string of struct

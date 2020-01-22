@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS api_requests (
     created_at TIMESTAMP DEFAULT NULL
 );
 
-CREATE INDEX index_api_requests ON api_requests (id, request_id, created_at);
+CREATE INDEX index_api_requests ON api_requests (id, created_at);
 
 -- add documents table one to many with applications
 DO $$
@@ -44,14 +44,13 @@ CREATE TABLE IF NOT EXISTS documents (
     file_base64 text,
     file_extension varchar(10),
     doc_id VARCHAR(255),
-    last_request_id varchar(255),
     type doc_type_enum NOT NULL DEFAULT 'undefined',
     application_id INTEGER REFERENCES applications(id),
     updated_at TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP DEFAULT NULL
 );
 
-CREATE INDEX index_documents ON documents (id, last_request_id, created_at);
+CREATE INDEX index_documents ON documents (id, created_at);
 
 alter table applications
 drop column ktp_image_base64;
@@ -70,7 +69,3 @@ drop column npwp_doc_id;
 
 alter table applications
 drop column selfie_doc_id;
-
--- add column last_request_id on table accounts
-alter table accounts
-add column last_request_id varchar(255);

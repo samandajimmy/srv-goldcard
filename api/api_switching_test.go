@@ -18,7 +18,7 @@ func TestNewSwitchingAPI(t *testing.T) {
 	response := map[string]interface{}{}
 	body := stlRequest
 
-	switc, _ := api.NewSwitchingAPI()
+	switc, _ := api.NewSwitchingAPI(nil)
 	req, _ := switc.Request("/param/stl", echo.POST, body)
 	resp, _ := switc.Do(req, &response)
 
