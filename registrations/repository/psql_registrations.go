@@ -295,7 +295,7 @@ func (regis *psqlRegistrationsRepository) GetZipcode(c echo.Context, addrData mo
 	return zipcode, nil
 }
 
-func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, acc models.Account) (string, string) {
+func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, acc models.Account) (string, string, error) {
 	var city string
 	zipcode := acc.Occupation.OfficeZipcode
 
@@ -304,12 +304,18 @@ func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, acc
 
 	err := regis.Conn.QueryRow(query, acc.Occupation.OfficeZipcode).Scan(&city)
 
-	if err != nil || acc.Occupation.OfficeZipcode == "" {
+	if err != nil && err != sql.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", "", err
+	}
+
+	if err == sql.ErrNoRows || acc.Occupation.OfficeZipcode == "" {
 		city = acc.PersonalInformation.AddressCity
 		zipcode = acc.PersonalInformation.Zipcode
 	}
 
-	return city, zipcode
+	return city, zipcode, nil
 }
 
 func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account) error {

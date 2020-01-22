@@ -206,7 +206,11 @@ func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.Payloa
 		return models.ErrMappingData
 	}
 
-	city, zipcode = reg.regRepo.GetCityFromZipcode(c, acc)
+	city, zipcode, err = reg.regRepo.GetCityFromZipcode(c, acc)
+
+	if err != nil {
+		return models.ErrMappingData
+	}
 
 	acc.Occupation.OfficeCity = city
 	acc.Occupation.OfficeZipcode = zipcode
