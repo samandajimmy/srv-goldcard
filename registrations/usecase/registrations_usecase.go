@@ -2,9 +2,11 @@ package usecase
 
 import (
 	"encoding/json"
+	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
+	"gade/srv-goldcard/retry"
 	"reflect"
 	"strconv"
 
@@ -76,7 +78,7 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 	}
 
 	// if application exist, return app status
-	if (acc != models.Account{}) {
+	if acc.ID != 0 {
 		return models.RespRegistration{
 			ApplicationNumber: acc.Application.ApplicationNumber,
 			ApplicationStatus: acc.Application.Status,
@@ -114,23 +116,16 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 
 func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.PayloadPersonalInformation) error {
 	// check duplication/blacklist by BRI
-	resp := models.BriResponse{}
+	resp := api.BriResponse{}
 	requestData := map[string]interface{}{
 		"nik":       pl.Nik,
 		"birthDate": pl.BirthDate,
 	}
-	reqBody := models.BriRequest{RequestData: requestData}
-	err := models.BriPost("/v1/cobranding/deduplication", reqBody, &resp)
+	reqBody := api.BriRequest{RequestData: requestData}
+	err := api.RetryableBriPost(c, "/v1/cobranding/deduplication", reqBody, &resp)
 
 	if err != nil {
-		return models.ErrExternalAPI
-	}
-
-	// to set variation of BRI response
-	resp.SetRC()
-
-	if resp.ResponseCode == "00" {
-		return models.ErrBlacklisted
+		return err
 	}
 
 	// get account by appNumber
@@ -162,6 +157,10 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 	if err != nil {
 		return models.ErrUpdateRegData
 	}
+
+	go retry.Do(c, "upsertDocument", func() error {
+		return reg.upsertDocument(c, acc.Application)
+	})
 
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepPersonalInfo
@@ -293,11 +292,11 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 		return appStatus, err
 	}
 
-	resp := models.BriResponse{}
+	resp := api.BriResponse{}
 	reqBody := map[string]interface{}{
 		"briXkey": acc.BrixKey,
 	}
-	err = models.BriPost("/v1/cobranding/card/appstatus", reqBody, &resp)
+	err = api.BriPost(c, "", "/v1/cobranding/card/appstatus", reqBody, &resp)
 
 	if err != nil {
 		return appStatus, models.ErrExternalAPI
@@ -332,9 +331,9 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 
 // TODO: will fix this on ISG-1135 - improve proses lebih dari 1 menit loading time saat pengajuan final.
 func (reg *registrationsUseCase) briRegister(c echo.Context, acc models.Account, pl models.PayloadPersonalInformation) error {
-	resp := models.BriResponse{}
-	reqBody := models.BriRequest{RequestData: pl}
-	err := models.BriPost("/v1/cobranding/register", reqBody, &resp)
+	resp := api.BriResponse{}
+	reqBody := api.BriRequest{RequestData: pl}
+	err := api.BriPost(c, "", "/v1/cobranding/register", reqBody, &resp)
 
 	if err != nil {
 		return models.ErrExternalAPI
@@ -422,9 +421,9 @@ func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, acc models.Account
 		}
 
 		docs = append(docs, doc)
-		resp := models.BriResponse{}
-		reqBody := models.BriRequest{RequestData: doc}
-		err = models.BriPost("/v1/cobranding/document", reqBody, &resp)
+		resp := api.BriResponse{}
+		reqBody := api.BriRequest{RequestData: doc}
+		err = api.BriPost(c, "", "/v1/cobranding/document", reqBody, &resp)
 
 		if err != nil {
 			return models.ErrExternalAPI
@@ -455,9 +454,9 @@ func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, acc models.Account
 	return nil
 }
 
-func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string) error {
+func (reg *registrationsUseCase) sendApplicationNotif(c echo.Context, payload map[string]string) error {
 	response := map[string]interface{}{}
-	pds, err := models.NewPdsAPI(echo.MIMEApplicationForm)
+	pds, err := api.NewPdsAPI(c, echo.MIMEApplicationForm)
 
 	if err != nil {
 		return err
@@ -473,6 +472,22 @@ func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string)
 
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (reg *registrationsUseCase) upsertDocument(c echo.Context, app models.Applications) error {
+	if len(app.Documents) == 0 {
+		return nil
+	}
+
+	for _, doc := range app.Documents {
+		err := reg.regRepo.UpsertAppDocument(c, doc)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

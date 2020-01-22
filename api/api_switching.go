@@ -1,4 +1,4 @@
-package models
+package api
 
 import (
 	"encoding/json"
@@ -21,18 +21,20 @@ type APIswitching struct {
 	API         API
 	Method      string
 	AccessToken string
+	ctx         echo.Context
 }
 
 // NewSwitchingAPI is function to initiate a Switching API request
-func NewSwitchingAPI() (APIswitching, error) {
+func NewSwitchingAPI(c echo.Context) (APIswitching, error) {
 	apiSwitching := APIswitching{}
+	apiSwitching.ctx = c
 	url, err := url.Parse(os.Getenv(`SWITCHING_HOST`))
 
 	if err != nil {
 		return apiSwitching, err
 	}
 
-	api, err := NewAPI(os.Getenv(`SWITCHING_HOST`), echo.MIMEApplicationJSON)
+	api, err := NewAPI(apiSwitching.ctx, os.Getenv(`SWITCHING_HOST`), echo.MIMEApplicationJSON)
 
 	if err != nil {
 		return apiSwitching, err
@@ -80,7 +82,7 @@ func (switc *APIswitching) setAccessTokenSwitching() error {
 	response := map[string]interface{}{}
 	params := map[string]string{"grant_type": "password", "username": os.Getenv(`SWITCHING_CLIENT_ID`), "password": os.Getenv(`SWITCHING_PASSWORD_TOKEN`)}
 	endpoint := "/oauth/token"
-	api, err := NewAPI(os.Getenv(`SWITCHING_HOST`), echo.MIMEApplicationForm)
+	api, err := NewAPI(switc.ctx, os.Getenv(`SWITCHING_HOST`), echo.MIMEApplicationForm)
 
 	if err != nil {
 		return err

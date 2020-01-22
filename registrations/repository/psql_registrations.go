@@ -133,6 +133,7 @@ func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc 
 
 func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, acc *models.Account) error {
 	newAcc := models.Account{}
+	docs := []models.Document{}
 	err := regis.DBpg.Model(&newAcc).Relation("Application").
 		Where("application_number = ?", acc.Application.ApplicationNumber).Select()
 
@@ -145,6 +146,16 @@ func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, 
 	if err == pg.ErrNoRows {
 		return models.ErrAppNumberNotFound
 	}
+
+	err = regis.DBpg.Model(&docs).Where("application_id = ?", newAcc.ApplicationID).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	newAcc.Application.Documents = docs
 
 	*acc = newAcc
 	return nil
@@ -190,7 +201,6 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Context, acc models.Account) error {
 	var nilFilters []string
 	occ := acc.Occupation
-	app := acc.Application
 	pi := acc.PersonalInformation
 
 	stmts := []*gcdb.PipelineStmt{
@@ -207,11 +217,6 @@ func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Conte
 			occ.JobStatus, occ.TotalEmployee, occ.Company, occ.JobTitle, occ.WorkSince,
 			occ.OfficeAddress1, occ.OfficeAddress2, occ.OfficeAddress3, occ.OfficeZipcode,
 			occ.OfficeCity, occ.OfficePhone, occ.Income, time.Now()),
-		// update application
-		gcdb.NewPipelineStmt(`UPDATE applications set ktp_image_base64 = $1, npwp_image_base64 = $2,
-			selfie_image_base64 = $3, updated_at = $4 WHERE id = $5`,
-			nilFilters, app.KtpImageBase64, app.NpwpImageBase64, app.SelfieImageBase64, time.Now(),
-			acc.ApplicationID),
 		// update personal_infomation
 		gcdb.NewPipelineStmt(`UPDATE personal_informations set first_name = $1, last_name = $2,
 			email = $3, npwp = $4, nik = $5, birth_place = $6, birth_date = $7, nationality = $8,
@@ -352,7 +357,7 @@ func (regis *psqlRegistrationsRepository) GetAppByID(c echo.Context, appID int64
 
 	_, err := regis.DBpg.Query(&app, query, appID)
 
-	if err != nil || (app == models.Applications{}) {
+	if err != nil || (app.ID == 0) {
 		logger.Make(c, nil).Debug(err)
 
 		return app, err
@@ -369,6 +374,36 @@ func (regis *psqlRegistrationsRepository) UpdateApplication(c echo.Context, app 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
+		return err
+	}
+
+	return nil
+}
+
+func (regis *psqlRegistrationsRepository) UpsertAppDocument(c echo.Context, doc models.Document) error {
+	var err error
+
+	if doc.ID == 0 {
+		err = regis.insertAppDocument(c, doc)
+	} else {
+		doc.UpdatedAt = time.Now()
+		err = regis.DBpg.Update(&doc)
+	}
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (regis *psqlRegistrationsRepository) insertAppDocument(c echo.Context, doc models.Document) error {
+	doc.CreatedAt = time.Now()
+	err := regis.DBpg.Insert(&doc)
+
+	if err != nil {
 		return err
 	}
 

@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-// Repository represent the campaigntrx's repository contract
+// Repository represent the registration's repository contract
 type Repository interface {
 	PostAddress(echo.Context, models.Account) error
 	PostSavingAccount(echo.Context, models.Account) error
@@ -23,4 +23,5 @@ type Repository interface {
 	GetAppByID(c echo.Context, appID int64) (models.Applications, error)
 	UpdateGetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error)
 	UpdateApplication(c echo.Context, app models.Applications, col []string) error
+	UpsertAppDocument(c echo.Context, app models.Document) error
 }

@@ -1,7 +1,8 @@
-package models
+package api
 
 import (
 	"encoding/json"
+	"gade/srv-goldcard/retry"
 	"net/http"
 	"net/url"
 	"strings"
@@ -15,6 +16,9 @@ type API struct {
 	UserAgent   string
 	HTTPClient  *http.Client
 	ContentType string
+	Method      string
+	Endpoint    string
+	ctx         echo.Context
 }
 
 var (
@@ -23,7 +27,7 @@ var (
 )
 
 // NewAPI for create new client request
-func NewAPI(baseURL string, contentType string) (API, error) {
+func NewAPI(c echo.Context, baseURL string, contentType string) (API, error) {
 	url, err := url.Parse(baseURL)
 
 	if err != nil {
@@ -34,11 +38,25 @@ func NewAPI(baseURL string, contentType string) (API, error) {
 		Host:        url,
 		HTTPClient:  &http.Client{},
 		ContentType: contentType,
+		ctx:         c,
 	}, nil
+}
+
+// RetryablePost function to retryable request API with post method
+func RetryablePost(c echo.Context, fnName string, fn func() error) error {
+	err := retry.Do(c, fnName, fn)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Request represent global API Request
 func (api *API) Request(pathName string, method string, body interface{}) (*http.Request, error) {
+	api.Method = method
+	api.Endpoint = pathName
 	api.Host.Path += pathName
 	switch ct := api.ContentType; ct {
 	case echo.MIMEApplicationForm:

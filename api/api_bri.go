@@ -1,19 +1,28 @@
-package models
+package api
 
 import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"gade/srv-goldcard/logger"
+	"gade/srv-goldcard/models"
 	"net/http"
 	"net/url"
 	"os"
 	"reflect"
 	"time"
 
+	_apiRequestsUseCase "gade/srv-goldcard/apirequests/usecase"
+
+	"github.com/google/uuid"
 	"github.com/labstack/echo"
+)
+
+var (
+	whitelistedEndpoints = []string{"/v1/cobranding/deduplication"}
 )
 
 // BriResponse struct to store response from BRI API
@@ -36,7 +45,7 @@ func (br *BriResponse) SetRC() {
 	desc, ok := br.Status["desc"].(string)
 
 	if !ok {
-		logger.Make(nil, nil).Fatal(ErrSetVar)
+		logger.Make(nil, nil).Fatal(models.ErrSetVar)
 	}
 
 	br.ResponseCode = code
@@ -57,18 +66,20 @@ type APIbri struct {
 	AccessToken  string
 	BRITimestamp string
 	BRISignature string
+	ctx          echo.Context
 }
 
 // NewBriAPI is function to initiate a BRI API request
-func NewBriAPI() (APIbri, error) {
+func NewBriAPI(c echo.Context) (APIbri, error) {
 	apiBri := APIbri{}
+	apiBri.ctx = c
 	url, err := url.Parse(os.Getenv(`BRI_HOST`))
 
 	if err != nil {
 		return apiBri, err
 	}
 
-	api, err := NewAPI(os.Getenv(`BRI_HOST`), echo.MIMEApplicationJSON)
+	api, err := NewAPI(apiBri.ctx, os.Getenv(`BRI_HOST`), echo.MIMEApplicationJSON)
 
 	if err != nil {
 		return apiBri, err
@@ -86,9 +97,9 @@ func NewBriAPI() (APIbri, error) {
 	return apiBri, nil
 }
 
-// BriPost function to requesr BRI API with post method
-func BriPost(endpoint string, reqBody interface{}, resp interface{}) error {
-	bri, err := NewBriAPI()
+// BriPost function to request BRI API with post method
+func BriPost(c echo.Context, reqID, endpoint string, reqBody, resp interface{}) error {
+	bri, err := NewBriAPI(c)
 
 	if err != nil {
 		return err
@@ -100,13 +111,38 @@ func BriPost(endpoint string, reqBody interface{}, resp interface{}) error {
 		return err
 	}
 
-	_, err = bri.Do(req, resp)
+	r, err := bri.Do(req, resp)
 
 	if err != nil {
-		logger.Make(nil, nil).Debug(err)
+		logger.Make(c, nil).Debug(err)
 
-		return err
+		return models.ErrExternalAPI
 	}
+
+	res := resp.(*BriResponse)
+	res.SetRC()
+
+	go _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, reqID, r.StatusCode, bri.API, reqBody, resp)
+
+	if r.StatusCode != http.StatusOK {
+		return errors.New(res.ResponseMessage)
+	}
+
+	if res.ResponseCode != "00" && !isWhitelisted(endpoint) {
+		return errors.New(res.ResponseMessage)
+	}
+
+	return nil
+}
+
+// RetryableBriPost function to retryable request BRI API with post method
+func RetryableBriPost(c echo.Context, endpoint string, reqBody interface{}, resp interface{}) error {
+	fn := func() error {
+		reqID, _ := uuid.NewRandom()
+		return BriPost(c, reqID.String(), endpoint, reqBody, resp)
+	}
+
+	RetryablePost(c, "BRI API: POST "+endpoint, fn)
 
 	return nil
 }
@@ -115,7 +151,7 @@ func BriPost(endpoint string, reqBody interface{}, resp interface{}) error {
 func (bri *APIbri) Request(endpoint string, method string, body interface{}) (*http.Request, error) {
 	// show request log
 	debugStart := fmt.Sprintf("Start to request BRI API: %s %s", method, endpoint)
-	logger.MakeWithoutReportCaller(nil, body).Info(debugStart)
+	logger.MakeWithoutReportCaller(bri.ctx, body).Info(debugStart)
 	bri.Method = method
 	bri.Endpoint = endpoint
 	req, err := bri.API.Request(endpoint, method, body)
@@ -124,7 +160,7 @@ func (bri *APIbri) Request(endpoint string, method string, body interface{}) (*h
 		return nil, err
 	}
 
-	bri.BRITimestamp = time.Now().UTC().Format(DateTimeFormatZone)
+	bri.BRITimestamp = time.Now().UTC().Format(models.DateTimeFormatZone)
 	err = bri.setBriSignature(endpoint, body)
 
 	if err != nil {
@@ -151,7 +187,7 @@ func (bri *APIbri) Do(req *http.Request, v interface{}) (*http.Response, error) 
 
 	// show response log
 	debugEnd := fmt.Sprintf("End of request BRI API: %s %s", bri.Method, bri.Endpoint)
-	logger.MakeWithoutReportCaller(nil, v).Info(debugEnd)
+	logger.MakeWithoutReportCaller(bri.ctx, v).Info(debugEnd)
 
 	return resp, err
 }
@@ -214,7 +250,7 @@ func (bri *APIbri) setAccessToken() error {
 	response := map[string]interface{}{}
 	params := map[string]string{"client_id": os.Getenv(`BRI_CLIENT_ID`), "client_secret": os.Getenv(`BRI_CLIENT_SECRET`)}
 	endpoint := "/oauth/client_credential/accesstoken?grant_type=client_credentials"
-	api, err := NewAPI(os.Getenv(`BRI_HOST`), echo.MIMEApplicationForm)
+	api, err := NewAPI(bri.ctx, os.Getenv(`BRI_HOST`), echo.MIMEApplicationForm)
 
 	if err != nil {
 		return err
@@ -241,4 +277,14 @@ func (bri APIbri) getUnorderedURLQuery(queryParams url.Values) string {
 	return "path=" + queryParams.Get("path") + "&verb=" + queryParams.Get("verb") +
 		"&token=" + queryParams.Get("token") + "&timestamp=" + queryParams.Get("timestamp") +
 		"&body=" + queryParams.Get("body")
+}
+
+func isWhitelisted(str string) bool {
+	for _, ep := range whitelistedEndpoints {
+		if str == ep {
+			return true
+		}
+	}
+
+	return false
 }
