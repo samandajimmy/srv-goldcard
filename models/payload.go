@@ -89,20 +89,6 @@ type PayloadPersonalInformation struct {
 	Province             string `json:"province,omitempty" validate:"required"`
 	Subdistrict          string `json:"subdistrict,omitempty" validate:"required"`
 	Village              string `json:"village,omitempty" validate:"required"`
-	JobBidangUsaha       int64  `json:"jobBidangUsaha"`
-	JobSubBidangUsaha    int64  `json:"jobSubBidangUsaha"`
-	JobCategory          int64  `json:"jobCategory"`
-	JobStatus            int64  `json:"jobStatus"`
-	TotalEmployee        int64  `json:"totalEmployee"`
-	Company              string `json:"company"`
-	JobTitle             string `json:"jobTitle"`
-	WorkSince            string `json:"workSince"`
-	OfficeAddress1       string `json:"officeAddress1" pg:"office_address_1"`
-	OfficeAddress2       string `json:"officeAddress2" pg:"office_address_2"`
-	OfficeAddress3       string `json:"officeAddress3" pg:"office_address_3"`
-	OfficeZipcode        string `json:"officeZipcode"`
-	OfficeCity           string `json:"officeCity"`
-	OfficePhone          string `json:"officePhone"`
 	Child                int64  `json:"child" validate:"min=0"`
 	EmergencyName        string `json:"emergencyName"`
 	EmergencyRelation    int64  `json:"emergencyRelation"`
