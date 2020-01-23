@@ -63,6 +63,9 @@ var (
 	// ErrUpdateRegData to store updating registration data error message
 	ErrUpdateRegData = errors.New("Terjadi kesalahan saat update data pengajuan")
 
+	// ErrUpdateOccData to store updating occupation data error message
+	ErrUpdateOccData = errors.New("Terjadi kesalahan saat update data pekerjaan")
+
 	// ErrUpdateCardLimit to store updating card limit data error message
 	ErrUpdateCardLimit = errors.New("Terjadi kesalahan saat update card limit")
 
