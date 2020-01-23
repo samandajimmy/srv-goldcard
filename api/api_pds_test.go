@@ -1,8 +1,8 @@
-package models_test
+package api_test
 
 import (
 	"fmt"
-	"gade/srv-goldcard/models"
+	"gade/srv-goldcard/api"
 	"testing"
 
 	"github.com/labstack/echo"
@@ -15,7 +15,7 @@ func TestNewPdsAPI(t *testing.T) {
 		"noHp":    "081511150290",
 	}
 
-	pds, _ := models.NewPdsAPI(echo.MIMEApplicationForm)
+	pds, _ := api.NewPdsAPI(nil, echo.MIMEApplicationForm)
 	req, _ := pds.Request("/notification/send_sms_promo", echo.POST, body)
 	resp, _ := pds.Do(req, &response)
 

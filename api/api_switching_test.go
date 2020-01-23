@@ -1,8 +1,8 @@
-package models_test
+package api_test
 
 import (
 	"fmt"
-	"gade/srv-goldcard/models"
+	"gade/srv-goldcard/api"
 	"testing"
 
 	"github.com/labstack/echo"
@@ -18,7 +18,7 @@ func TestNewSwitchingAPI(t *testing.T) {
 	response := map[string]interface{}{}
 	body := stlRequest
 
-	switc, _ := models.NewSwitchingAPI()
+	switc, _ := api.NewSwitchingAPI(nil)
 	req, _ := switc.Request("/param/stl", echo.POST, body)
 	resp, _ := switc.Do(req, &response)
 

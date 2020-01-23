@@ -8,13 +8,24 @@ import (
 	"time"
 )
 
-var (
+const (
+	// DefBriProductRequest is to store default bri application product request
+	DefBriProductRequest = "PAYLATER"
+
+	// DefBriBillingCycle is to store default bri application billing cycle
+	DefBriBillingCycle = 3
+
+	// DefBriCardDeliver is to store default bri application card deliver
+	DefBriCardDeliver = 1
+
 	// DefAppDocFileExt is to store var default application document file ext
 	DefAppDocFileExt = "jpg"
 
 	// DefAppDocType is to store var default application document type
 	DefAppDocType = "D"
+)
 
+var (
 	// AppStatusOngoing is to store var application status ongoing
 	AppStatusOngoing = "application_ongoing"
 
@@ -48,6 +59,11 @@ var (
 		"card_sent":             "CardSentDate",
 		"failed":                "FailedDate",
 	}
+	mapDocType = map[string]string{
+		"KtpImageBase64":    "ktp",
+		"NpwpImageBase64":   "npwp",
+		"SelfieImageBase64": "selfie",
+	}
 )
 
 // Applications is a struct to store application data
@@ -55,24 +71,19 @@ type Applications struct {
 	// nolint
 	tableName struct{} `pg:"applications"`
 
-	ID                       int64     `json:"id"`
-	ApplicationNumber        string    `json:"applicationNumber" validate:"required"`
-	Status                   string    `json:"status"`
-	KtpImageBase64           string    `json:"ktpImageBase64"`
-	NpwpImageBase64          string    `json:"npwpImageBase64"`
-	SelfieImageBase64        string    `json:"selfieImageBase64"`
-	KtpDocID                 string    `json:"ktpDocId"`
-	NpwpDocID                string    `json:"npwpDocId"`
-	SelfieDocID              string    `json:"selfieDocId"`
-	SavingAccount            string    `json:"savingAccount" validate:"required"`
-	CurrentStep              int64     `json:"currentStep"`
-	ApplicationProcessedDate time.Time `json:"applicationProcessedDate,omitempty"`
-	CardProcessedDate        time.Time `json:"cardProcessedDate,omitempty"`
-	CardSendDate             time.Time `json:"cardSendDate,omitempty"`
-	CardSentDate             time.Time `json:"cardSentDate,omitempty"`
-	FailedDate               time.Time `json:"failedDate,omitempty"`
-	CreatedAt                time.Time `json:"createdAt"`
-	UpdatedAt                time.Time `json:"updatedAt"`
+	ID                       int64      `json:"id"`
+	ApplicationNumber        string     `json:"applicationNumber" validate:"required"`
+	Status                   string     `json:"status"`
+	SavingAccount            string     `json:"savingAccount" validate:"required"`
+	CurrentStep              int64      `json:"currentStep"`
+	ApplicationProcessedDate time.Time  `json:"applicationProcessedDate,omitempty"`
+	CardProcessedDate        time.Time  `json:"cardProcessedDate,omitempty"`
+	CardSendDate             time.Time  `json:"cardSendDate,omitempty"`
+	CardSentDate             time.Time  `json:"cardSentDate,omitempty"`
+	FailedDate               time.Time  `json:"failedDate,omitempty"`
+	Documents                []Document `json:"documents" pg:"-"`
+	CreatedAt                time.Time  `json:"createdAt"`
+	UpdatedAt                time.Time  `json:"updatedAt"`
 }
 
 // SetStatus as a setter for application status
@@ -96,11 +107,65 @@ func (app *Applications) GetStatusDateKey() string {
 	return strings.ToLower(snake)
 }
 
+// SetDocument to set application document array
+func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
+	var emptyDocs []Document
+	docNames := []string{"KtpImageBase64", "NpwpImageBase64", "SelfieImageBase64"}
+	r := reflect.ValueOf(pl)
+	currDoc := app.Documents
+	app.Documents = emptyDocs
+
+	for _, docName := range docNames {
+		base64 := reflect.Indirect(r).FieldByName(docName)
+
+		if base64.IsZero() {
+			continue
+		}
+
+		doc := app.getCurrentDoc(currDoc, mapDocType[docName])
+
+		if doc.ID == 0 {
+			doc = Document{
+				FileName:      pl.Nik + "-" + mapDocType[docName],
+				FileExtension: DefAppDocFileExt,
+				Type:          mapDocType[docName],
+				ApplicationID: app.ID,
+			}
+		}
+
+		doc.FileBase64 = base64.String()
+		app.Documents = append(app.Documents, doc)
+	}
+}
+
+func (app *Applications) getCurrentDoc(currDocs []Document, docType string) Document {
+	for _, appDoc := range currDocs {
+		if appDoc.Type == docType {
+			return appDoc
+		}
+	}
+
+	return Document{}
+}
+
 func (app *Applications) getStatus(msg string) string {
 	switch msg {
 	default:
 		return "application_processed"
 	}
+}
+
+// Document is a struct to store document data
+type Document struct {
+	ID            int64     `json:"id"`
+	FileName      string    `json:"fileName"`
+	FileBase64    string    `json:"fileBase64"`
+	FileExtension string    `json:"fileExtension"`
+	Type          string    `json:"type"`
+	DocID         string    `json:"docId"`
+	ApplicationID int64     `json:"applicationId"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+	CreatedAt     time.Time `json:"createdAt"`
 }
 
 // AppDocument is a struct to store application document data

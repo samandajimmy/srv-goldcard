@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"time"
 
+	_apiRequestsRepository "gade/srv-goldcard/apirequests/repository"
+	_apiRequestsUseCase "gade/srv-goldcard/apirequests/usecase"
 	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
 	_productreqsUseCase "gade/srv-goldcard/productreqs/usecase"
 	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
@@ -76,6 +78,10 @@ func main() {
 	// PRODUCT REQUIREMENTS
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
+
+	// API_REQUESTS
+	apiRequestsRepository := _apiRequestsRepository.NewPsqlAPIRequestsRepository(dbConn, dbpg)
+	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
 
 	// PING
 	ech.GET("/ping", ping)

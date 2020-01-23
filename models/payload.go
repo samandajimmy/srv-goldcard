@@ -38,8 +38,9 @@ type PayloadSavingAccount struct {
 
 // PayloadCardLimit a struct to store all payload for card limit
 type PayloadCardLimit struct {
-	ApplicationNumber string `json:"applicationNumber" validate:"required"`
-	CardLimit         int64  `json:"cardLimit" validate:"required"`
+	ApplicationNumber string  `json:"applicationNumber" validate:"required"`
+	CardLimit         int64   `json:"cardLimit" validate:"required"`
+	GoldLimit         float64 `json:"goldLimit" validate:"required"`
 }
 
 // PayloadAddress a struct to store all payload for user address
@@ -115,6 +116,61 @@ type RespRegistration struct {
 	ApplicationNumber string `json:"applicationNumber"`
 	ApplicationStatus string `json:"applicationStatus,omitempty"`
 	CurrentStep       int64  `json:"currentStep"`
+}
+
+// PayloadBriRegister a struct to store all payload for a payload bri register
+type PayloadBriRegister struct {
+	FirstName            string `json:"firstName" validate:"required"`
+	LastName             string `json:"lastName" validate:"required"`
+	CardName             string `json:"cardName" validate:"required"`
+	Npwp                 string `json:"npwp" validate:"required"`
+	Nik                  string `json:"nik" validate:"required"`
+	BirthPlace           string `json:"birthPlace" validate:"required"`
+	BirthDate            string `json:"birthDate" validate:"required"`
+	AddressLine1         string `json:"addressLine1" validate:"required" pg:"address_line_1"`
+	AddressLine2         string `json:"addressLine2" pg:"address_line_2"`
+	AddressLine3         string `json:"addressLine3" pg:"address_line_3"`
+	Sex                  int64  `json:"sex" validate:"required" pg:"-"`
+	SexString            string `json:"sexString,omitempty" pg:"sex"`
+	HomeStatus           int64  `json:"homeStatus" validate:"required"`
+	AddressCity          string `json:"addressCity" validate:"required"`
+	Nationality          string `json:"nationality" validate:"required"`
+	StayedSince          string `json:"stayedSince" validate:"required"`
+	Education            int64  `json:"education" validate:"required"`
+	Zipcode              string `json:"zipcode" validate:"required"`
+	MaritalStatus        int64  `json:"maritalStatus" validate:"required"`
+	MotherName           string `json:"motherName" validate:"required"`
+	HandPhoneNumber      string `json:"handPhoneNumber" validate:"required"`
+	HomePhoneArea        string `json:"homePhoneArea" validate:"required"`
+	HomePhoneNumber      string `json:"homePhoneNumber" validate:"required"`
+	Email                string `json:"email" validate:"required"`
+	Income               int64  `json:"income" validate:"required"`
+	JobBidangUsaha       int64  `json:"jobBidangUsaha" validate:"required"`
+	JobSubBidangUsaha    int64  `json:"jobSubBidangUsaha" validate:"required"`
+	JobCategory          int64  `json:"jobCategory" validate:"required"`
+	JobStatus            int64  `json:"jobStatus" validate:"required"`
+	TotalEmployee        int64  `json:"totalEmployee" validate:"required"`
+	Company              string `json:"company" validate:"required"`
+	JobTitle             string `json:"jobTitle" validate:"required"`
+	WorkSince            string `json:"workSince" validate:"required"`
+	OfficeAddress1       string `json:"officeAddress1" validate:"required" pg:"office_address_1"`
+	OfficeAddress2       string `json:"officeAddress2" pg:"office_address_2"`
+	OfficeAddress3       string `json:"officeAddress3" pg:"office_address_3"`
+	OfficeZipcode        string `json:"officeZipcode" validate:"required"`
+	OfficeCity           string `json:"officeCity" validate:"required"`
+	OfficePhone          string `json:"officePhone" validate:"required"`
+	Child                int64  `json:"child" validate:"required" validate:"min=0"`
+	EmergencyName        string `json:"emergencyName" validate:"required"`
+	EmergencyRelation    int64  `json:"emergencyRelation" validate:"required"`
+	EmergencyAddress1    string `json:"emergencyAddress1" validate:"required" pg:"emergency_address_1"`
+	EmergencyAddress2    string `json:"emergencyAddress2" pg:"emergency_address_2"`
+	EmergencyAddress3    string `json:"emergencyAddress3" pg:"emergency_address_3"`
+	EmergencyCity        string `json:"emergencyCity" validate:"required"`
+	EmergencyZipcode     string `json:"emergencyZipcode" validate:"required"`
+	EmergencyPhoneNumber string `json:"emergencyPhoneNumber" validate:"required"`
+	ProductRequest       string `json:"productRequest" validate:"required"`
+	BillingCycle         int64  `json:"billingCycle" validate:"required"`
+	CardDeliver          int64  `json:"cardDeliver" validate:"required"`
 }
 
 // PayloadOccupation to store response occupation
