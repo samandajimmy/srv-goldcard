@@ -99,6 +99,12 @@ var (
 	// ErrUpdateAppStatus to strore update application status error message
 	ErrUpdateAppStatus = errors.New("Terjadi Kesalahan saat update Status")
 
+	// ErrInquiryReg to inquiry registrations to switching/core
+	ErrInquiryReg = errors.New("Data Pengajuan sudah pernah terdaftar")
+
+	// ErrSwitchingAPIRequest to store switching api request error message
+	ErrSwitchingAPIRequest = "SWITCHING API: RC-%s - %s"
+
 	// ErrAppData to store get application data error message
 	ErrAppData = errors.New("Terjadi Kesalahan saat mengambil data aplikasi")
 )

@@ -21,6 +21,11 @@ type API struct {
 	ctx         echo.Context
 }
 
+var (
+	// RCSuccess represents response code success
+	apiRCSuccess = "00"
+)
+
 // NewAPI for create new client request
 func NewAPI(c echo.Context, baseURL string, contentType string) (API, error) {
 	url, err := url.Parse(baseURL)

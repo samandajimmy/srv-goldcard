@@ -8,6 +8,8 @@ type Card struct {
 	CardName    string    `json:"cardName"`
 	CardNumber  string    `json:"cardNumber"`
 	CardLimit   int64     `json:"cardLimit"`
+	GoldLimit   float64   `json:"goldLimit"`
+	CurrentSTL  int64     `json:"currentStl"`
 	ValidUntil  string    `json:"validUntil"`
 	PinNumber   string    `json:"pinNumber"`
 	Description string    `json:"description"`

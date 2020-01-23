@@ -1,6 +1,9 @@
 package api
 
 import (
+	"encoding/json"
+	_apiRequestsUseCase "gade/srv-goldcard/apirequests/usecase"
+	"gade/srv-goldcard/logger"
 	"net/http"
 	"net/url"
 	"os"
@@ -9,8 +12,17 @@ import (
 )
 
 var (
-	switchingChannelID = os.Getenv(`SWITCHING_CHANNEL_ID`)
+	// SwitchingRCInquiryAllow RC 14
+	SwitchingRCInquiryAllow = "14"
 )
+
+// SwitchingResponse struct represents a response for API Switching
+type SwitchingResponse struct {
+	ResponseCode string            `json:"responseCode"`
+	ResponseDesc string            `json:"responseDesc"`
+	Data         string            `json:"data"`
+	ResponseData map[string]string `json:"responseData,omitempty"`
+}
 
 // APIswitching struct represents a request for API Switching
 type APIswitching struct {
@@ -19,6 +31,15 @@ type APIswitching struct {
 	Method      string
 	AccessToken string
 	ctx         echo.Context
+}
+
+// MappingRequestSwitching mapping request switching
+func MappingRequestSwitching(req map[string]interface{}) interface{} {
+	req["channelId"] = os.Getenv(`SWITCHING_CHANNEL_ID`)
+	req["clientId"] = os.Getenv(`SWITCHING_CLIENT_ID`)
+	req["flag"] = os.Getenv(`SWITCHING_FLAG`)
+
+	return req
 }
 
 // NewSwitchingAPI is function to initiate a Switching API request
@@ -54,15 +75,38 @@ func (switc *APIswitching) Do(req *http.Request, v interface{}) (*http.Response,
 	resp, err := switc.API.Do(req, v)
 
 	if err != nil {
-		return resp, err
+		return nil, err
 	}
 
+	switc.mappingDataResponseSwitching(v)
+	logger.MakeStructToJSON(v)
+
 	return resp, err
+}
+
+// MappingResponseSwitching test
+func (switc *APIswitching) mappingDataResponseSwitching(v interface{}) error {
+	resp := v.(*SwitchingResponse)
+
+	if resp.Data == "" {
+		return nil
+	}
+
+	// var responseData interface{}
+	var err error
+	err = json.Unmarshal([]byte(resp.Data), &resp.ResponseData)
+
+	if err != nil {
+		logger.Make(switc.ctx, nil).Fatal("Response Data Error Unmarshal")
+	}
+
+	return nil
 }
 
 // Request represent global API Request
 func (switc *APIswitching) Request(endpoint, method string, body interface{}) (*http.Request, error) {
 	switc.Method = method
+
 	req, err := switc.API.Request(endpoint, method, body)
 
 	if err != nil {
@@ -99,6 +143,45 @@ func (switc *APIswitching) setAccessTokenSwitching() error {
 	}
 
 	switc.AccessToken = response["access_token"].(string)
+
+	return nil
+}
+
+// SwitchingPost represent Post Switching API Request
+func SwitchingPost(c echo.Context, body interface{}, path string, response interface{}) error {
+	switching, err := NewSwitchingAPI(c)
+
+	if err != nil {
+		return err
+	}
+
+	req, err := switching.Request(path, echo.POST, body)
+
+	if err != nil {
+		return err
+	}
+
+	r, err := switching.Do(req, response)
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return err
+	}
+
+	go _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, switching.API, body, response)
+
+	return nil
+
+}
+
+// RetryableSwitchingPost function to retryable request Switching API with post method
+func RetryableSwitchingPost(c echo.Context, body interface{}, path string, response interface{}) error {
+	fn := func() error {
+		return SwitchingPost(c, body, path, response)
+	}
+
+	RetryablePost(c, "SWITCHING API: POST "+path, fn)
 
 	return nil
 }
