@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-// UseCase represent the rewards usecases
+// UseCase represent the registrations usecases
 type UseCase interface {
 	PostAddress(echo.Context, models.PayloadAddress) error
 	PostSavingAccount(echo.Context, models.PayloadSavingAccount) error

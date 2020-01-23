@@ -3,6 +3,7 @@ module gade/srv-goldcard
 go 1.13
 
 require (
+	github.com/avast/retry-go v2.4.3+incompatible
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/structs v1.1.0
 	github.com/go-pg/pg/v9 v9.1.1

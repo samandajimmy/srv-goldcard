@@ -1,8 +1,8 @@
-package models_test
+package api_test
 
 import (
 	"fmt"
-	"gade/srv-goldcard/models"
+	"gade/srv-goldcard/api"
 	"testing"
 
 	"github.com/labstack/echo"
@@ -65,7 +65,7 @@ func TestNewBriAPI(t *testing.T) {
 		"requestData": registerRequest,
 	}
 
-	bri, _ := models.NewBriAPI()
+	bri, _ := api.NewBriAPI(nil)
 	req, _ := bri.Request("/v1/cobranding/register", echo.POST, body)
 	resp, _ := bri.Do(req, &response)
 

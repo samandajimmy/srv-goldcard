@@ -35,9 +35,11 @@ func (regis *psqlRegistrationsRepository) CreateApplication(c echo.Context, app 
 		gcdb.NewPipelineStmt(`INSERT INTO personal_informations (hand_phone_number, created_at)
 			VALUES ($1, $2) RETURNING id;`,
 			[]string{"piID"}, pi.HandPhoneNumber, time.Now()),
-		gcdb.NewPipelineStmt(`INSERT INTO accounts (cif, branch_code, bank_id, emergency_contact_id,
-			created_at, application_id, personal_information_id) VALUES ($1, $2, $3, $4, $5, {appID}, {piID});`,
-			nilFilters, acc.CIF, acc.BranchCode, acc.BankID, acc.EmergencyContactID, time.Now()),
+		gcdb.NewPipelineStmt(`INSERT INTO accounts (cif, branch_code, product_request, billing_cycle,
+			card_deliver, bank_id, emergency_contact_id, created_at, application_id, personal_information_id)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, {appID}, {piID});`,
+			nilFilters, acc.CIF, acc.BranchCode, acc.ProductRequest, acc.BillingCycle, acc.CardDeliver,
+			acc.BankID, acc.EmergencyContactID, time.Now()),
 	}
 
 	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
@@ -133,6 +135,7 @@ func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc 
 
 func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, acc *models.Account) error {
 	newAcc := models.Account{}
+	docs := []models.Document{}
 	err := regis.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
 		Where("application_number = ?", acc.Application.ApplicationNumber).Select()
 
@@ -146,12 +149,22 @@ func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, 
 		return models.ErrAppNumberNotFound
 	}
 
+	err = regis.DBpg.Model(&docs).Where("application_id = ?", newAcc.ApplicationID).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	newAcc.Application.Documents = docs
+
 	*acc = newAcc
 	return nil
 }
 
-func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumber string) (models.PayloadPersonalInformation, error) {
-	var plRegister models.PayloadPersonalInformation
+func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumber string) (models.PayloadBriRegister, error) {
+	var plRegister models.PayloadBriRegister
 	var pi models.PersonalInformation
 
 	query := `select acc.product_request, acc.billing_cycle, acc.card_deliver, c.card_name,
@@ -173,11 +186,11 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 		left join emergency_contacts ec on acc.emergency_contact_id = ec.id
 		left join occupations o on acc.occupation_id = o.id
 		left join personal_informations pi on acc.personal_information_id = pi.id
-		where app.status = ? and app.application_number = ?;`
+		where app.application_number = ?;`
 
-	_, err := regis.DBpg.QueryOne(&plRegister, query, models.AppStatusOngoing, appNumber)
+	_, err := regis.DBpg.QueryOne(&plRegister, query, appNumber)
 
-	if err != nil || (plRegister == models.PayloadPersonalInformation{}) {
+	if err != nil || (plRegister == models.PayloadBriRegister{}) {
 		return plRegister, err
 	}
 
@@ -189,18 +202,12 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 
 func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Context, acc models.Account) error {
 	var nilFilters []string
-	app := acc.Application
 	pi := acc.PersonalInformation
 
 	stmts := []*gcdb.PipelineStmt{
 		// update card
 		gcdb.NewPipelineStmt("UPDATE cards SET card_name = $1, updated_at = $2 WHERE id = $3;",
 			nilFilters, acc.Card.CardName, time.Now(), acc.CardID),
-		// update application
-		gcdb.NewPipelineStmt(`UPDATE applications set ktp_image_base64 = $1, npwp_image_base64 = $2,
-			selfie_image_base64 = $3, updated_at = $4 WHERE id = $5`,
-			nilFilters, app.KtpImageBase64, app.NpwpImageBase64, app.SelfieImageBase64, time.Now(),
-			acc.ApplicationID),
 		// update personal_infomation
 		gcdb.NewPipelineStmt(`UPDATE personal_informations set first_name = $1, last_name = $2,
 			email = $3, npwp = $4, nik = $5, birth_place = $6, birth_date = $7, nationality = $8,
@@ -390,22 +397,6 @@ func (regis *psqlRegistrationsRepository) UpdateAppDocID(c echo.Context, app mod
 	return nil
 }
 
-func (regis *psqlRegistrationsRepository) GetAppByID(c echo.Context, appID int64) (models.Applications, error) {
-	var app models.Applications
-	query := `select id, application_number, status, ktp_image_base64, npwp_image_base64,
-		selfie_image_base64, saving_account, created_at, updated_at from applications where id = ?;`
-
-	_, err := regis.DBpg.Query(&app, query, appID)
-
-	if err != nil || (app == models.Applications{}) {
-		logger.Make(c, nil).Debug(err)
-
-		return app, err
-	}
-
-	return app, nil
-}
-
 func (regis *psqlRegistrationsRepository) UpdateApplication(c echo.Context, app models.Applications, col []string) error {
 	app.UpdatedAt = time.Now()
 	col = append(col, "updated_at")
@@ -414,6 +405,36 @@ func (regis *psqlRegistrationsRepository) UpdateApplication(c echo.Context, app 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
+		return err
+	}
+
+	return nil
+}
+
+func (regis *psqlRegistrationsRepository) UpsertAppDocument(c echo.Context, doc models.Document) error {
+	var err error
+
+	if doc.ID == 0 {
+		err = regis.insertAppDocument(c, doc)
+	} else {
+		doc.UpdatedAt = time.Now()
+		err = regis.DBpg.Update(&doc)
+	}
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (regis *psqlRegistrationsRepository) insertAppDocument(c echo.Context, doc models.Document) error {
+	doc.CreatedAt = time.Now()
+	err := regis.DBpg.Insert(&doc)
+
+	if err != nil {
 		return err
 	}
 

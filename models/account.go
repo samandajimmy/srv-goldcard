@@ -8,7 +8,7 @@ import (
 
 // Account is a struct to store account data
 type Account struct {
-	ID                    string              `json:"id"`
+	ID                    int64               `json:"id"`
 	CIF                   string              `json:"cif"`
 	ProductRequest        string              `json:"productRequest"`
 	BillingCycle          int64               `json:"billingCycle"`
@@ -38,10 +38,6 @@ type Account struct {
 func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalInformation) error {
 	acc.Card.CardName = pl.CardName
 
-	acc.Application.KtpImageBase64 = pl.KtpImageBase64
-	acc.Application.NpwpImageBase64 = pl.NpwpImageBase64
-	acc.Application.SelfieImageBase64 = pl.SelfieImageBase64
-
 	acc.PersonalInformation.FirstName = pl.FirstName
 	acc.PersonalInformation.LastName = pl.LastName
 	acc.PersonalInformation.HandPhoneNumber = pl.HandPhoneNumber
@@ -66,9 +62,8 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.StayedSince = pl.StayedSince
 	acc.PersonalInformation.Child = pl.Child
 
-	acc.ProductRequest = pl.ProductRequest
-	acc.BillingCycle = pl.BillingCycle
-	acc.CardDeliver = pl.CardDeliver
+	// application documents
+	acc.Application.SetDocument(pl)
 
 	return nil
 }

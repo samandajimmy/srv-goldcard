@@ -1,9 +1,11 @@
 package usecase
 
 import (
+	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
+	"gade/srv-goldcard/retry"
 	"reflect"
 
 	"github.com/google/uuid"
@@ -15,12 +17,8 @@ type registrationsUseCase struct {
 }
 
 // RegistrationsUseCase represent Registrations Use Case
-func RegistrationsUseCase(
-	regRepository registrations.Repository,
-) registrations.UseCase {
-	return &registrationsUseCase{
-		regRepo: regRepository,
-	}
+func RegistrationsUseCase(regRepository registrations.Repository) registrations.UseCase {
+	return &registrationsUseCase{regRepo: regRepository}
 }
 
 func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAddress) error {
@@ -74,7 +72,7 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 	}
 
 	// if application exist, return app status
-	if (acc != models.Account{}) {
+	if acc.ID != 0 {
 		return models.RespRegistration{
 			ApplicationNumber: acc.Application.ApplicationNumber,
 			ApplicationStatus: acc.Application.Status,
@@ -99,7 +97,8 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 	}
 
 	app := models.Applications{ApplicationNumber: appNumber.String(), Status: models.AppStatusOngoing}
-	acc = models.Account{CIF: payload.CIF, BranchCode: payload.BranchCode, BankID: bankID, EmergencyContactID: ecID}
+	acc = models.Account{CIF: payload.CIF, BranchCode: payload.BranchCode, ProductRequest: models.DefBriProductRequest,
+		BillingCycle: models.DefBriBillingCycle, CardDeliver: models.DefBriCardDeliver, BankID: bankID, EmergencyContactID: ecID}
 	pi := models.PersonalInformation{HandPhoneNumber: payload.HandPhoneNumber}
 	err = reg.regRepo.CreateApplication(c, app, acc, pi)
 
@@ -112,23 +111,16 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 
 func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.PayloadPersonalInformation) error {
 	// check duplication/blacklist by BRI
-	resp := models.BriResponse{}
+	resp := api.BriResponse{}
 	requestData := map[string]interface{}{
 		"nik":       pl.Nik,
 		"birthDate": pl.BirthDate,
 	}
-	reqBody := models.BriRequest{RequestData: requestData}
-	err := models.BriPost("/v1/cobranding/deduplication", reqBody, &resp)
+	reqBody := api.BriRequest{RequestData: requestData}
+	err := api.RetryableBriPost(c, "/v1/cobranding/deduplication", reqBody, &resp)
 
 	if err != nil {
-		return models.ErrExternalAPI
-	}
-
-	// to set variation of BRI response
-	resp.SetRC()
-
-	if resp.ResponseCode == "00" {
-		return models.ErrBlacklisted
+		return err
 	}
 
 	// get account by appNumber
@@ -161,9 +153,15 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 		return models.ErrUpdateRegData
 	}
 
+	// concurrently insert or update all possible documents
+	go retry.Do(c, "upsertDocument", func() error {
+		return reg.upsertDocument(c, acc.Application)
+	})
+
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepPersonalInfo
-	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
+	// concurrently update current_step
+	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
@@ -185,7 +183,8 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepCardLimit
-	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
+	// concurrently update current_step
+	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
@@ -247,27 +246,39 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepSavingAcc
-	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
+	// concurrently update current_step
+	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
 
 func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber) error {
-	// get account by appNumber
-	_, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
 	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
 		return err
 	}
 
-	// TODO: will fix this on ISG-1135 - improve proses lebih dari 1 menit loading time saat pengajuan final.
-	// go reg.briRegister(c, acc, briPl)
+	// get account by appNumber
+	briPl, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
+
+	if err != nil {
+		return models.ErrAppData
+	}
+
+	// validasi bri register payload
+	if err := c.Validate(briPl); err != nil {
+		return err
+	}
+
+	// concurrently apply the goldcard application to BRI
+	go reg.briApply(c, &acc, briPl)
 
 	// update application
 	acc.Application.Status = models.AppStatusProcessed
 	acc.Application.CurrentStep = models.AppStepCompleted
-	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
+	// concurrently update status and current_step
+	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
 
 	return nil
 }
@@ -281,11 +292,11 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 		return appStatus, err
 	}
 
-	resp := models.BriResponse{}
+	resp := api.BriResponse{}
 	reqBody := map[string]interface{}{
 		"briXkey": acc.BrixKey,
 	}
-	err = models.BriPost("/v1/cobranding/card/appstatus", reqBody, &resp)
+	err = api.BriPost(c, "/v1/cobranding/card/appstatus", reqBody, &resp)
 
 	if err != nil {
 		return appStatus, models.ErrExternalAPI
@@ -318,21 +329,34 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 	return appStatus, nil
 }
 
-// TODO: will fix this on ISG-1135 - improve proses lebih dari 1 menit loading time saat pengajuan final.
-func (reg *registrationsUseCase) briRegister(c echo.Context, acc models.Account, pl models.PayloadPersonalInformation) error {
-	resp := models.BriResponse{}
-	reqBody := models.BriRequest{RequestData: pl}
-	err := models.BriPost("/v1/cobranding/register", reqBody, &resp)
+func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, pl models.PayloadBriRegister) error {
+	err := reg.briRegister(c, acc, pl)
 
 	if err != nil {
-		return models.ErrExternalAPI
+		return err
 	}
 
-	// to set variation of BRI response
-	resp.SetRC()
+	// upload document to BRI API
+	err = reg.uploadAppDocs(c, acc)
 
-	if resp.ResponseCode != "00" {
-		return models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode, resp.ResponseMessage})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account, pl models.PayloadBriRegister) error {
+	if acc.BrixKey != "" {
+		return nil
+	}
+
+	resp := api.BriResponse{}
+	reqBody := api.BriRequest{RequestData: pl}
+	err := api.RetryableBriPost(c, "/v1/cobranding/register", reqBody, &resp)
+
+	if err != nil {
+		return err
 	}
 
 	// update brixkey id
@@ -343,18 +367,49 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc models.Account,
 	}
 
 	acc.BrixKey = resp.DataOne["briXkey"].(string)
-	err = reg.regRepo.UpdateBrixkeyID(c, acc)
+	// concurrently update brixkey from BRI API
+	go reg.regRepo.UpdateBrixkeyID(c, *acc)
 
-	if err != nil {
-		return models.ErrUpdateBrixkey
+	return nil
+}
+
+func (reg *registrationsUseCase) uploadAppDocs(c echo.Context, acc *models.Account) error {
+	for _, doc := range acc.Application.Documents {
+		// concurrently upload application documents to BRI
+		go reg.uploadAppDoc(c, acc.BrixKey, doc)
 	}
 
-	// upload document to BRI API
-	err = reg.uploadAppDoc(c, acc)
+	return nil
+}
+
+func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, brixkey string, doc models.Document) error {
+	if doc.DocID != "" {
+		return nil
+	}
+
+	briReq := models.AppDocument{
+		BriXkey:    brixkey,
+		DocType:    models.DefAppDocType,
+		FileName:   doc.FileName,
+		FileExt:    doc.FileExtension,
+		Base64file: "data:image/jpeg;base64," + doc.FileBase64,
+	}
+
+	resp := api.BriResponse{}
+	reqBody := api.BriRequest{RequestData: briReq}
+	err := api.RetryableBriPost(c, "/v1/cobranding/document", reqBody, &resp)
 
 	if err != nil {
 		return err
 	}
+
+	if _, ok := resp.DataOne["documentId"].(string); !ok {
+		return models.ErrDocIDNotFound
+	}
+
+	doc.DocID = resp.DataOne["documentId"].(string)
+	// concurrently insert or update application document
+	go reg.regRepo.UpsertAppDocument(c, doc)
 
 	return nil
 }
@@ -381,71 +436,9 @@ func (reg *registrationsUseCase) checkApplication(c echo.Context, pl interface{}
 	return acc, nil
 }
 
-func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, acc models.Account) error {
-	var docs []models.AppDocument
-	docNames := []string{"KtpImageBase64", "NpwpImageBase64", "SelfieImageBase64"}
-	docIDs := []string{"KtpDocID", "NpwpDocID", "SelfieDocID"}
-	app, err := reg.regRepo.GetAppByID(c, acc.ApplicationID)
-
-	if err != nil {
-		return models.ErrAppIDNotFound
-	}
-
-	r := reflect.ValueOf(&app)
-
-	for idx, docName := range docNames {
-		f := reflect.Indirect(r).FieldByName(docName)
-		fDocID := reflect.Indirect(r).FieldByName(docIDs[idx])
-
-		if f.IsZero() {
-			continue
-		}
-
-		doc := models.AppDocument{
-			BriXkey:    acc.BrixKey,
-			DocType:    models.DefAppDocType,
-			FileName:   docName,
-			FileExt:    models.DefAppDocFileExt,
-			Base64file: "data:image/jpeg;base64," + f.String(),
-		}
-
-		docs = append(docs, doc)
-		resp := models.BriResponse{}
-		reqBody := models.BriRequest{RequestData: doc}
-		err = models.BriPost("/v1/cobranding/document", reqBody, &resp)
-
-		if err != nil {
-			return models.ErrExternalAPI
-		}
-
-		// to set variation of BRI response
-		resp.SetRC()
-
-		if resp.ResponseCode != "00" {
-			return models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode,
-				resp.ResponseMessage})
-		}
-
-		if _, ok := resp.DataOne["documentId"].(string); !ok {
-			return models.ErrDocIDNotFound
-		}
-
-		fDocID.SetString(resp.DataOne["documentId"].(string))
-	}
-
-	// update document id to application data
-	err = reg.regRepo.UpdateAppDocID(c, app)
-
-	if err != nil {
-		return models.ErrUpdateAppDocID
-	}
-
-	return nil
-}
-
-func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string) error {
+func (reg *registrationsUseCase) sendApplicationNotif(c echo.Context, payload map[string]string) error {
 	response := map[string]interface{}{}
-	pds, err := models.NewPdsAPI(echo.MIMEApplicationForm)
+	pds, err := api.NewPdsAPI(c, echo.MIMEApplicationForm)
 
 	if err != nil {
 		return err
@@ -461,6 +454,22 @@ func (reg *registrationsUseCase) sendApplicationNotif(payload map[string]string)
 
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (reg *registrationsUseCase) upsertDocument(c echo.Context, app models.Applications) error {
+	if len(app.Documents) == 0 {
+		return nil
+	}
+
+	for _, doc := range app.Documents {
+		err := reg.regRepo.UpsertAppDocument(c, doc)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
