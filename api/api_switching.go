@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -149,7 +148,7 @@ func (switc *APIswitching) setAccessTokenSwitching() error {
 }
 
 //SwitchingPost represent Post Switching API Request
-func SwitchingPost(c echo.Context, reqID, body interface{}, path string, response interface{}) error {
+func SwitchingPost(c echo.Context, body interface{}, path string, response interface{}) error {
 	switching, err := NewSwitchingAPI(c)
 
 	if err != nil {
@@ -179,8 +178,7 @@ func SwitchingPost(c echo.Context, reqID, body interface{}, path string, respons
 // RetryableSwitchingPost function to retryable request Switching API with post method
 func RetryableSwitchingPost(c echo.Context, body interface{}, path string, response interface{}) error {
 	fn := func() error {
-		reqID, _ := uuid.NewRandom()
-		return SwitchingPost(c, reqID.String(), body, path, response)
+		return SwitchingPost(c, body, path, response)
 	}
 
 	RetryablePost(c, "SWITCHING API: POST "+path, fn)
