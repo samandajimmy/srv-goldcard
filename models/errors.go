@@ -63,6 +63,9 @@ var (
 	// ErrUpdateRegData to store updating registration data error message
 	ErrUpdateRegData = errors.New("Terjadi kesalahan saat update data pengajuan")
 
+	// ErrUpdateOccData to store updating occupation data error message
+	ErrUpdateOccData = errors.New("Terjadi kesalahan saat update data pekerjaan")
+
 	// ErrUpdateCardLimit to store updating card limit data error message
 	ErrUpdateCardLimit = errors.New("Terjadi kesalahan saat update card limit")
 
@@ -93,7 +96,7 @@ var (
 	// ErrVerifyToken to verify token error message
 	ErrVerifyToken = errors.New("Terjadi Kesalaahan saat verifikasi Token")
 
-	// ErrUpdateAppStatus to update application status error message
+	// ErrUpdateAppStatus to strore update application status error message
 	ErrUpdateAppStatus = errors.New("Terjadi Kesalahan saat update Status")
 
 	// ErrInquiryReg to inquiry registrations to switching/core
@@ -101,6 +104,9 @@ var (
 
 	// ErrSwitchingAPIRequest to store switching api request error message
 	ErrSwitchingAPIRequest = "SWITCHING API: RC-%s - %s"
+
+	// ErrAppData to store get application data error message
+	ErrAppData = errors.New("Terjadi Kesalahan saat mengambil data aplikasi")
 )
 
 // DynamicErr to return parameterize errors

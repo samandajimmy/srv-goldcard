@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -17,7 +16,6 @@ import (
 
 	_apiRequestsUseCase "gade/srv-goldcard/apirequests/usecase"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -98,7 +96,7 @@ func NewBriAPI(c echo.Context) (APIbri, error) {
 }
 
 // BriPost function to request BRI API with post method
-func BriPost(c echo.Context, reqID, endpoint string, reqBody, resp interface{}) error {
+func BriPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
 	bri, err := NewBriAPI(c)
 
 	if err != nil {
@@ -122,14 +120,16 @@ func BriPost(c echo.Context, reqID, endpoint string, reqBody, resp interface{}) 
 	res := resp.(*BriResponse)
 	res.SetRC()
 
-	go _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, reqID, r.StatusCode, bri.API, reqBody, resp)
+	go _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, bri.API, reqBody, resp)
 
 	if r.StatusCode != http.StatusOK {
-		return errors.New(res.ResponseMessage)
+		return models.DynamicErr(models.ErrBriAPIRequest, []interface{}{res.ResponseCode,
+			res.ResponseMessage})
 	}
 
 	if res.ResponseCode != "00" && !isWhitelisted(endpoint) {
-		return errors.New(res.ResponseMessage)
+		return models.DynamicErr(models.ErrBriAPIRequest, []interface{}{res.ResponseCode,
+			res.ResponseMessage})
 	}
 
 	return nil
@@ -138,11 +138,14 @@ func BriPost(c echo.Context, reqID, endpoint string, reqBody, resp interface{}) 
 // RetryableBriPost function to retryable request BRI API with post method
 func RetryableBriPost(c echo.Context, endpoint string, reqBody interface{}, resp interface{}) error {
 	fn := func() error {
-		reqID, _ := uuid.NewRandom()
-		return BriPost(c, reqID.String(), endpoint, reqBody, resp)
+		return BriPost(c, endpoint, reqBody, resp)
 	}
 
-	RetryablePost(c, "BRI API: POST "+endpoint, fn)
+	err := RetryablePost(c, "BRI API: POST "+endpoint, fn)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -25,7 +25,3 @@ add column npwp_doc_id varchar(100);
 
 alter table applications
 add column selfie_doc_id varchar(100);
-
--- add column last_request_id on table accounts
-alter table accounts
-drop column last_request_id;

@@ -13,15 +13,16 @@ type Repository interface {
 	CreateApplication(echo.Context, models.Applications, models.Account, models.PersonalInformation) error
 	GetBankIDByCode(c echo.Context, bankCode string) (int64, error)
 	GetAccountByAppNumber(c echo.Context, acc *models.Account) error
-	GetAllRegData(c echo.Context, appNumber string) (models.PayloadPersonalInformation, error)
+	GetAllRegData(c echo.Context, appNumber string) (models.PayloadBriRegister, error)
 	UpdateAllRegistrationData(c echo.Context, acc models.Account) error
 	GetEmergencyContactIDByType(c echo.Context, typeDef string) (int64, error)
 	GetZipcode(c echo.Context, addrData models.AddressData) (string, error)
+	GetCityFromZipcode(c echo.Context, acc models.Account) (string, string, error)
 	UpdateCardLimit(c echo.Context, acc models.Account) error
 	UpdateBrixkeyID(c echo.Context, acc models.Account) error
 	UpdateAppDocID(c echo.Context, acc models.Applications) error
-	GetAppByID(c echo.Context, appID int64) (models.Applications, error)
 	UpdateGetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error)
 	UpdateApplication(c echo.Context, app models.Applications, col []string) error
 	UpsertAppDocument(c echo.Context, app models.Document) error
+	PostOccupation(echo.Context, models.Account) error
 }

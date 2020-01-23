@@ -149,7 +149,7 @@ func (switc *APIswitching) setAccessTokenSwitching() error {
 }
 
 //SwitchingPost represent Post Switching API Request
-func SwitchingPost(c echo.Context, reqID string, body interface{}, path string, response interface{}) error {
+func SwitchingPost(c echo.Context, reqID, body interface{}, path string, response interface{}) error {
 	switching, err := NewSwitchingAPI(c)
 
 	if err != nil {
@@ -170,7 +170,7 @@ func SwitchingPost(c echo.Context, reqID string, body interface{}, path string, 
 		return err
 	}
 
-	go _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, reqID, r.StatusCode, switching.API, body, response)
+	go _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, switching.API, body, response)
 
 	return nil
 

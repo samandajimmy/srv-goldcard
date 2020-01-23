@@ -8,13 +8,24 @@ import (
 	"time"
 )
 
-var (
+const (
+	// DefBriProductRequest is to store default bri application product request
+	DefBriProductRequest = "PAYLATER"
+
+	// DefBriBillingCycle is to store default bri application billing cycle
+	DefBriBillingCycle = 3
+
+	// DefBriCardDeliver is to store default bri application card deliver
+	DefBriCardDeliver = 1
+
 	// DefAppDocFileExt is to store var default application document file ext
 	DefAppDocFileExt = "jpg"
 
 	// DefAppDocType is to store var default application document type
 	DefAppDocType = "D"
+)
 
+var (
 	// AppStatusOngoing is to store var application status ongoing
 	AppStatusOngoing = "application_ongoing"
 
@@ -30,8 +41,11 @@ var (
 	// AppStepPersonalInfo is to store var application step personal info
 	AppStepPersonalInfo int64 = 3
 
+	// AppStepOccupation is to store var application step post occupation
+	AppStepOccupation int64 = 4
+
 	// AppStepAddress is to store var application step post address
-	AppStepAddress int64 = 4
+	AppStepAddress int64 = 5
 
 	// AppStepCompleted is to store var application step completed
 	AppStepCompleted int64 = 99
@@ -147,8 +161,8 @@ type Document struct {
 	FileName      string    `json:"fileName"`
 	FileBase64    string    `json:"fileBase64"`
 	FileExtension string    `json:"fileExtension"`
-	LastRequestID string    `json:"lastRequestId"`
 	Type          string    `json:"type"`
+	DocID         string    `json:"docId"`
 	ApplicationID int64     `json:"applicationId"`
 	UpdatedAt     time.Time `json:"updatedAt"`
 	CreatedAt     time.Time `json:"createdAt"`

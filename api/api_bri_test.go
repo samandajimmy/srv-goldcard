@@ -65,7 +65,7 @@ func TestNewBriAPI(t *testing.T) {
 		"requestData": registerRequest,
 	}
 
-	bri, _ := api.NewBriAPI()
+	bri, _ := api.NewBriAPI(nil)
 	req, _ := bri.Request("/v1/cobranding/register", echo.POST, body)
 	resp, _ := bri.Do(req, &response)
 

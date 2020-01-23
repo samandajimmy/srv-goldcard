@@ -26,7 +26,7 @@ func APIRequestsUseCase(arRepo apirequests.Repository) apirequests.UseCase {
 	}
 }
 
-func (arus *apirequestsUseCase) PostAPIRequest(c echo.Context, reqID string, statusCode int, api, req, resp interface{}) error {
+func (arus *apirequestsUseCase) PostAPIRequest(c echo.Context, statusCode int, api, req, resp interface{}) error {
 	rapi := reflect.ValueOf(api)
 	host := reflect.Indirect(rapi).FieldByName("Host").Interface().(*url.URL)
 	status := "success"
@@ -52,7 +52,7 @@ func (arus *apirequestsUseCase) PostAPIRequest(c echo.Context, reqID string, sta
 	}
 
 	apiRequest := models.APIRequest{
-		RequestID:    reqID,
+		RequestID:    logger.GetEchoRID(c),
 		HostName:     host.Host,
 		Endpoint:     reflect.Indirect(rapi).FieldByName("Endpoint").String(),
 		Status:       status,
