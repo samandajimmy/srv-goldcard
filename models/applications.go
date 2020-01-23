@@ -41,8 +41,11 @@ var (
 	// AppStepPersonalInfo is to store var application step personal info
 	AppStepPersonalInfo int64 = 3
 
+	// AppStepOccupation is to store var application step post occupation
+	AppStepOccupation int64 = 4
+
 	// AppStepAddress is to store var application step post address
-	AppStepAddress int64 = 4
+	AppStepAddress int64 = 5
 
 	// AppStepCompleted is to store var application step completed
 	AppStepCompleted int64 = 99

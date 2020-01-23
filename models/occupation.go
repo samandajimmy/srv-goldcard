@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 // Occupation is a struct to store occupation data
 type Occupation struct {
@@ -22,4 +24,25 @@ type Occupation struct {
 	Income            int64     `json:"income"`
 	CreatedAt         time.Time `json:"createdAt"`
 	UpdatedAt         time.Time `json:"updatedAt"`
+}
+
+// MappingOccupation a function to map all data occupation
+func (occ *Occupation) MappingOccupation(pl PayloadOccupation) error {
+	occ.JobBidangUsaha = pl.JobBidangUsaha
+	occ.JobSubBidangUsaha = pl.JobSubBidangUsaha
+	occ.JobCategory = pl.JobCategory
+	occ.JobStatus = pl.JobStatus
+	occ.TotalEmployee = pl.TotalEmployee
+	occ.Company = pl.Company
+	occ.JobTitle = pl.JobTitle
+	occ.WorkSince = pl.WorkSince
+	occ.OfficeAddress1 = pl.OfficeAddress1
+	occ.OfficeAddress2 = pl.OfficeAddress2
+	occ.OfficeAddress3 = pl.OfficeAddress3
+	occ.OfficeZipcode = pl.OfficeZipcode
+	occ.OfficeCity = pl.OfficeCity
+	occ.OfficePhone = pl.OfficePhone
+	occ.Income = pl.Income
+
+	return nil
 }

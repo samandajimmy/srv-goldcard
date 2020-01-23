@@ -38,22 +38,6 @@ type Account struct {
 func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalInformation) error {
 	acc.Card.CardName = pl.CardName
 
-	acc.Occupation.JobBidangUsaha = pl.JobBidangUsaha
-	acc.Occupation.JobSubBidangUsaha = pl.JobSubBidangUsaha
-	acc.Occupation.JobCategory = pl.JobCategory
-	acc.Occupation.JobStatus = pl.JobStatus
-	acc.Occupation.TotalEmployee = pl.TotalEmployee
-	acc.Occupation.Company = pl.Company
-	acc.Occupation.JobTitle = pl.JobTitle
-	acc.Occupation.WorkSince = pl.WorkSince
-	acc.Occupation.OfficeAddress1 = pl.OfficeAddress1
-	acc.Occupation.OfficeAddress2 = pl.OfficeAddress2
-	acc.Occupation.OfficeAddress3 = pl.OfficeAddress3
-	acc.Occupation.OfficeZipcode = pl.OfficeZipcode
-	acc.Occupation.OfficeCity = pl.OfficeCity
-	acc.Occupation.OfficePhone = pl.OfficePhone
-	acc.Occupation.Income = pl.Income
-
 	acc.PersonalInformation.FirstName = pl.FirstName
 	acc.PersonalInformation.LastName = pl.LastName
 	acc.PersonalInformation.HandPhoneNumber = pl.HandPhoneNumber

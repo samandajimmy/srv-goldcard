@@ -32,6 +32,7 @@ func NewRegistrationsHandler(
 	echoGroup.API.POST("/registrations/card-limit", handler.cardLimit)
 	echoGroup.API.POST("/registrations/final", handler.final)
 	echoGroup.API.POST("/registrations/application-status", handler.applicationStatus)
+	echoGroup.API.POST("/registrations/occupation", handler.PostOccupation)
 }
 
 // Registrations a handler to create a campaign
@@ -257,5 +258,37 @@ func (reg *RegistrationsHandler) applicationStatus(c echo.Context) error {
 
 	reg.response.SetResponse(resp, &reg.respErrors)
 
+	return reg.response.Body(c, err)
+}
+
+// PostOccupation a handler to update occipation in table occupations
+func (reg *RegistrationsHandler) PostOccupation(c echo.Context) error {
+	var pl models.PayloadOccupation
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.PostOccupation(c, pl)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
 	return reg.response.Body(c, err)
 }

@@ -89,20 +89,6 @@ type PayloadPersonalInformation struct {
 	Province             string `json:"province,omitempty" validate:"required"`
 	Subdistrict          string `json:"subdistrict,omitempty" validate:"required"`
 	Village              string `json:"village,omitempty" validate:"required"`
-	JobBidangUsaha       int64  `json:"jobBidangUsaha"`
-	JobSubBidangUsaha    int64  `json:"jobSubBidangUsaha"`
-	JobCategory          int64  `json:"jobCategory"`
-	JobStatus            int64  `json:"jobStatus"`
-	TotalEmployee        int64  `json:"totalEmployee"`
-	Company              string `json:"company"`
-	JobTitle             string `json:"jobTitle"`
-	WorkSince            string `json:"workSince"`
-	OfficeAddress1       string `json:"officeAddress1" pg:"office_address_1"`
-	OfficeAddress2       string `json:"officeAddress2" pg:"office_address_2"`
-	OfficeAddress3       string `json:"officeAddress3" pg:"office_address_3"`
-	OfficeZipcode        string `json:"officeZipcode"`
-	OfficeCity           string `json:"officeCity"`
-	OfficePhone          string `json:"officePhone"`
 	Child                int64  `json:"child" validate:"min=0"`
 	EmergencyName        string `json:"emergencyName"`
 	EmergencyRelation    int64  `json:"emergencyRelation"`
@@ -180,4 +166,24 @@ type PayloadBriRegister struct {
 	ProductRequest       string `json:"productRequest" validate:"required"`
 	BillingCycle         int64  `json:"billingCycle" validate:"required"`
 	CardDeliver          int64  `json:"cardDeliver" validate:"required"`
+}
+
+// PayloadOccupation to store response occupation
+type PayloadOccupation struct {
+	ApplicationNumber string `json:"applicationNumber,omitempty" validate:"required"`
+	JobBidangUsaha    int64  `json:"jobBidangUsaha" validate:"required"`
+	JobSubBidangUsaha int64  `json:"jobSubBidangUsaha" validate:"required"`
+	JobCategory       int64  `json:"jobCategory" validate:"required"`
+	JobStatus         int64  `json:"jobStatus" validate:"required"`
+	TotalEmployee     int64  `json:"totalEmployee" validate:"required"`
+	Company           string `json:"company" validate:"required"`
+	JobTitle          string `json:"jobTitle"`
+	WorkSince         string `json:"workSince" validate:"required"`
+	OfficeAddress1    string `json:"officeAddress1" validate:"required"`
+	OfficeAddress2    string `json:"officeAddress2"`
+	OfficeAddress3    string `json:"officeAddress3"`
+	OfficeZipcode     string `json:"officeZipcode"`
+	OfficeCity        string `json:"officeCity"`
+	OfficePhone       string `json:"officePhone" validate:"required"`
+	Income            int64  `json:"income" validate:"required"`
 }
