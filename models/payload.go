@@ -112,6 +112,7 @@ type PayloadPersonalInformation struct {
 	EmergencyCity        string `json:"emergencyCity"`
 	EmergencyZipcode     string `json:"emergencyZipcode"`
 	EmergencyPhoneNumber string `json:"emergencyPhoneNumber"`
+	RelativePhoneNumber  string `json:"relativePhoneNumber" validate:"required"`
 	ProductRequest       string `json:"productRequest"`
 	BillingCycle         int64  `json:"billingCycle"`
 	CardDeliver          int64  `json:"cardDeliver"`

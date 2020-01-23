@@ -81,6 +81,7 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.AddressCity = pl.AddressCity
 	acc.PersonalInformation.StayedSince = pl.StayedSince
 	acc.PersonalInformation.Child = pl.Child
+	acc.PersonalInformation.RelativePhoneNumber = pl.RelativePhoneNumber
 
 	acc.ProductRequest = pl.ProductRequest
 	acc.BillingCycle = pl.BillingCycle
