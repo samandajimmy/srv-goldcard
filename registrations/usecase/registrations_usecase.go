@@ -17,20 +17,20 @@ type registrationsUseCase struct {
 	regRepo registrations.Repository
 }
 
-//RegistrationsUseCase represent Registrations Use Case
+// RegistrationsUseCase represent Registrations Use Case
 func RegistrationsUseCase(regRepository registrations.Repository) registrations.UseCase {
 	return &registrationsUseCase{regRepo: regRepository}
 }
 
 func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAddress) error {
-	//get account by appNumber
+	// get account by appNumber
 	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
 		return err
 	}
 
-	//validate new data address or not
+	// validate new data address or not
 	if pl.IsNew == models.UseExistingAddress {
 		return nil
 	}
@@ -41,7 +41,7 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAd
 		return models.ErrMappingData
 	}
 
-	//get zipcode
+	// get zipcode
 	addrData := models.AddressData{City: pl.AddressCity, Province: pl.Province,
 		Subdistrict: pl.Subdistrict, Village: pl.Village}
 	zipcode, err := reg.regRepo.GetZipcode(c, addrData)
@@ -57,7 +57,7 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAd
 		return models.ErrPostAddressFailed
 	}
 
-	//update app current step
+	// update app current step
 	acc.Application.CurrentStep = models.AppStepAddress
 	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
@@ -72,7 +72,7 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 		return respRegNil, err
 	}
 
-	//if application exist, return app status
+	// if application exist, return app status
 	if acc.ID != 0 {
 		return models.RespRegistration{
 			ApplicationNumber: acc.Application.ApplicationNumber,
@@ -83,14 +83,14 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 
 	appNumber, _ := uuid.NewRandom()
 
-	//get BRI bank_id
+	// get BRI bank_id
 	bankID, err := reg.regRepo.GetBankIDByCode(c, models.BriBankCode)
 
 	if err != nil {
 		return respRegNil, models.ErrBankNotFound
 	}
 
-	//get pegadaian emergency_contact_id
+	// get pegadaian emergency_contact_id
 	ecID, err := reg.regRepo.GetEmergencyContactIDByType(c, models.EmergencyContactDef)
 
 	if err != nil {
@@ -111,7 +111,7 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 }
 
 func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.PayloadPersonalInformation) error {
-	//check duplication/blacklist by BRI
+	// check duplication/blacklist by BRI
 	resp := api.BriResponse{}
 	requestData := map[string]interface{}{
 		"nik":       pl.Nik,
@@ -124,7 +124,7 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 		return err
 	}
 
-	//get account by appNumber
+	// get account by appNumber
 	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
@@ -137,7 +137,7 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 		return models.ErrMappingData
 	}
 
-	//get zipcode
+	// get zipcode
 	addrData := models.AddressData{City: pl.AddressCity, Province: pl.Province,
 		Subdistrict: pl.Subdistrict, Village: pl.Village}
 	zipcode, err := reg.regRepo.GetZipcode(c, addrData)
@@ -146,7 +146,7 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 		return models.ErrZipcodeNotFound
 	}
 
-	//update account data
+	// update account data
 	acc.PersonalInformation.Zipcode = zipcode
 	err = reg.regRepo.UpdateAllRegistrationData(c, acc)
 
@@ -154,21 +154,21 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 		return models.ErrUpdateRegData
 	}
 
-	//concurrently insert or update all possible documents
+	// concurrently insert or update all possible documents
 	go retry.Do(c, "upsertDocument", func() error {
 		return reg.upsertDocument(c, acc.Application)
 	})
 
-	//update app current step
+	// update app current step
 	acc.Application.CurrentStep = models.AppStepPersonalInfo
-	//concurrently update current_step
+	// concurrently update current_step
 	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
 
 func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.PayloadCardLimit) error {
-	//get account by appNumber
+	// get account by appNumber
 	acc, err := reg.checkApplication(c, pl)
 	r := api.SwitchingResponse{}
 
@@ -176,7 +176,7 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 		return err
 	}
 
-	//Gold Card inquiry Registrations to core
+	// Gold Card inquiry Registrations to core
 	body := map[string]interface{}{
 		"noRek": acc.Application.SavingAccount,
 	}
@@ -187,7 +187,7 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 		return err
 	}
 
-	//Validation response
+	// Validation response
 	if r.ResponseCode != api.SwitchingRCInquiryAllow {
 		return models.ErrInquiryReg
 	}
@@ -200,18 +200,18 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 		return models.ErrUpdateCardLimit
 	}
 
-	//Get STL Price
+	// Get STL Price
 	go reg.updateSTLPrice(c, acc)
 
-	//update app current step
+	// update app current step
 	acc.Application.CurrentStep = models.AppStepCardLimit
-	//concurrently update current_step
+	// concurrently update current_step
 	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
 
-//PostOccupation representation update occupation to database
+// PostOccupation representation update occupation to database
 func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.PayloadOccupation) error {
 	var city string
 	var zipcode string
@@ -242,16 +242,16 @@ func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.Payloa
 		return models.ErrUpdateOccData
 	}
 
-	//update app current step
+	// update app current step
 	acc.Application.CurrentStep = models.AppStepOccupation
 	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
 
-//PostAddress representation update address to database
+// PostAddress representation update address to database
 func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.PayloadSavingAccount) error {
-	//get account by appNumber
+	// get account by appNumber
 	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
@@ -266,9 +266,9 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 		return models.ErrPostSavingAccountFailed
 	}
 
-	//update app current step
+	// update app current step
 	acc.Application.CurrentStep = models.AppStepSavingAcc
-	//concurrently update current_step
+	// concurrently update current_step
 	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
@@ -281,25 +281,25 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		return err
 	}
 
-	//get account by appNumber
+	// get account by appNumber
 	briPl, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
 
 	if err != nil {
 		return models.ErrAppData
 	}
 
-	//validasi bri register payload
+	// validasi bri register payload
 	if err := c.Validate(briPl); err != nil {
 		return err
 	}
 
-	//concurrently apply the goldcard application to BRI
+	// concurrently apply the goldcard application to BRI
 	go reg.briApply(c, &acc, briPl)
 
-	//update application
+	// update application
 	acc.Application.Status = models.AppStatusProcessed
 	acc.Application.CurrentStep = models.AppStepCompleted
-	//concurrently update status and current_step
+	// concurrently update status and current_step
 	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
 
 	return nil
@@ -307,7 +307,7 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 
 func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadAppNumber) (models.AppStatus, error) {
 	var appStatus models.AppStatus
-	//Get account by app number
+	// Get account by app number
 	acc, err := reg.checkApplication(c, pl)
 
 	if err != nil {
@@ -324,14 +324,14 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 		return appStatus, models.ErrExternalAPI
 	}
 
-	//to set variation of BRI response
+	// to set variation of BRI response
 	resp.SetRC()
 
 	if resp.ResponseCode != "00" {
 		return appStatus, models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode, resp.ResponseMessage})
 	}
 
-	//update application status
+	// update application status
 	data := resp.Data[0]
 	if _, ok := data["appStatus"].(string); !ok {
 		logger.Make(c, nil).Debug(models.ErrSetVar)
@@ -358,7 +358,7 @@ func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, p
 		return err
 	}
 
-	//upload document to BRI API
+	// upload document to BRI API
 	err = reg.uploadAppDocs(c, acc)
 
 	if err != nil {
@@ -381,7 +381,7 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 		return err
 	}
 
-	//update brixkey id
+	// update brixkey id
 	if _, ok := resp.DataOne["briXkey"].(string); !ok {
 		logger.Make(c, nil).Debug(models.ErrSetVar)
 
@@ -389,7 +389,7 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 	}
 
 	acc.BrixKey = resp.DataOne["briXkey"].(string)
-	//concurrently update brixkey from BRI API
+	// concurrently update brixkey from BRI API
 	go reg.regRepo.UpdateBrixkeyID(c, *acc)
 
 	return nil
@@ -397,7 +397,7 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 
 func (reg *registrationsUseCase) uploadAppDocs(c echo.Context, acc *models.Account) error {
 	for _, doc := range acc.Application.Documents {
-		//concurrently upload application documents to BRI
+		// concurrently upload application documents to BRI
 		go reg.uploadAppDoc(c, acc.BrixKey, doc)
 	}
 
@@ -430,7 +430,7 @@ func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, brixkey string, do
 	}
 
 	doc.DocID = resp.DataOne["documentId"].(string)
-	//concurrently insert or update application document
+	// concurrently insert or update application document
 	go reg.regRepo.UpsertAppDocument(c, doc)
 
 	return nil
