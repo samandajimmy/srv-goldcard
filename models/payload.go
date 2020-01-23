@@ -100,9 +100,6 @@ type PayloadPersonalInformation struct {
 	EmergencyZipcode     string `json:"emergencyZipcode"`
 	EmergencyPhoneNumber string `json:"emergencyPhoneNumber"`
 	RelativePhoneNumber  string `json:"relativePhoneNumber" validate:"required"`
-	ProductRequest       string `json:"productRequest"`
-	BillingCycle         int64  `json:"billingCycle"`
-	CardDeliver          int64  `json:"cardDeliver"`
 }
 
 // PayloadToken a struct to store all payload for token
