@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"encoding/json"
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -172,69 +171,42 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.PayloadCardLimit) error {
 	// get account by appNumber
 	acc, err := reg.checkApplication(c, pl)
+	r := api.SwitchingResponse{}
 
 	if err != nil {
 		return err
 	}
 
+	// Gold Card inquiry Registrations to core
 	body := map[string]interface{}{
 		"noRek": acc.Application.SavingAccount,
 	}
-
-	// Gold Card inquiry Registrations to core
-	res, err := models.SwitchingPost(body, "/goldcard/inquiry")
-	var responseCode interface{}
-	json.Unmarshal(res["responseCode"], &responseCode)
+	req := api.MappingRequestSwitching(body)
+	err = api.RetryableSwitchingPost(c, req, "/goldcard/inquiry", &r)
 
 	if err != nil {
 		return err
 	}
 
 	// Validation response
-	if responseCode != models.SwitchingRCInquiryAllow {
+	if r.ResponseCode != api.SwitchingRCInquiryAllow {
 		return models.ErrInquiryReg
-	}
-
-	// Get STL Price
-	stlRes, err := models.SwitchingPost(map[string]interface{}{}, "/param/stl")
-	var stringData string
-	var responseCodeSTL string
-	var data map[string]string
-
-	if err != nil {
-		return err
-	}
-
-	json.Unmarshal(stlRes["data"], &stringData)
-	json.Unmarshal(stlRes["responseCode"], &responseCodeSTL)
-	err = json.Unmarshal([]byte(stringData), &data)
-
-	if err != nil {
-		return err
-	}
-
-	if responseCodeSTL != models.RCSuccess {
-		return models.ErrGetSTL
-	}
-
-	hargaEmas, err := strconv.ParseInt(data["hargaEmas"], 10, 64)
-
-	if err != nil {
-		return err
 	}
 
 	acc.Card.CardLimit = pl.CardLimit
 	acc.Card.GoldLimit = pl.GoldLimit
-	acc.Card.CurrentSTL = hargaEmas
 	err = reg.regRepo.UpdateCardLimit(c, acc)
 
 	if err != nil {
-		return models.ErrUpdateRegData
+		return models.ErrUpdateCardLimit
 	}
+
+	// Get STL Price
+	go reg.updateSTLPrice(c, acc)
 
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepCardLimit
-	_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
+	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 
 	return nil
 }
@@ -491,4 +463,36 @@ func (reg *registrationsUseCase) upsertDocument(c echo.Context, app models.Appli
 	}
 
 	return nil
+}
+
+func (reg *registrationsUseCase) updateSTLPrice(c echo.Context, acc models.Account) {
+	r := api.SwitchingResponse{}
+	STLBody := map[string]interface{}{}
+	req := api.MappingRequestSwitching(STLBody)
+	err := api.RetryableSwitchingPost(c, req, "/param/stl", &r)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return
+	}
+
+	if r.ResponseCode != "00" {
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode, r.ResponseDesc}))
+		return
+	}
+
+	hargaEmas, err := strconv.ParseInt(r.ResponseData["hargaEmas"], 10, 64)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return
+	}
+
+	acc.Card.CurrentSTL = hargaEmas
+	err = reg.regRepo.UpdateCardLimit(c, acc)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return
+	}
 }

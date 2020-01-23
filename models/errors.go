@@ -97,10 +97,10 @@ var (
 	ErrUpdateAppStatus = errors.New("Terjadi Kesalahan saat update Status")
 
 	// ErrInquiryReg to inquiry registrations to switching/core
-	ErrInquiryReg = errors.New("Data Pengajuan sudah pernah terdaftar atau terjadi kesalahan di server")
+	ErrInquiryReg = errors.New("Data Pengajuan sudah pernah terdaftar")
 
-	// ErrGetSTL to get STL Price
-	ErrGetSTL = errors.New("Terjadi Kesalahan saat mengambil harga STL")
+	// ErrSwitchingAPIRequest to store switching api request error message
+	ErrSwitchingAPIRequest = "SWITCHING API: RC-%s - %s"
 )
 
 // DynamicErr to return parameterize errors
