@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	// SwitchingRCInquiryAllow RC 14
+	//SwitchingRCInquiryAllow RC 14
 	SwitchingRCInquiryAllow = "14"
 )
 
@@ -42,7 +42,7 @@ func MappingRequestSwitching(req map[string]interface{}) interface{} {
 	return req
 }
 
-// NewSwitchingAPI is function to initiate a Switching API request
+//NewSwitchingAPI is function to initiate a Switching API request
 func NewSwitchingAPI(c echo.Context) (APIswitching, error) {
 	apiSwitching := APIswitching{}
 	apiSwitching.ctx = c
@@ -70,7 +70,7 @@ func NewSwitchingAPI(c echo.Context) (APIswitching, error) {
 	return apiSwitching, nil
 }
 
-// Do is a function to execute the http request
+//Do is a function to execute the http request
 func (switc *APIswitching) Do(req *http.Request, v interface{}) (*http.Response, error) {
 	resp, err := switc.API.Do(req, v)
 
@@ -92,18 +92,18 @@ func (switc *APIswitching) mappingDataResponseSwitching(v interface{}) error {
 		return nil
 	}
 
-	// var responseData interface{}
+	//var responseData interface{}
 	var err error
 	err = json.Unmarshal([]byte(resp.Data), &resp.ResponseData)
 
 	if err != nil {
-		logger.Make(nil, nil).Fatal("Response Data Error Unmarshal")
+		logger.Make(switc.ctx, nil).Fatal("Response Data Error Unmarshal")
 	}
 
 	return nil
 }
 
-// Request represent global API Request
+//Request represent global API Request
 func (switc *APIswitching) Request(endpoint, method string, body interface{}) (*http.Request, error) {
 	switc.Method = method
 
@@ -175,7 +175,7 @@ func SwitchingPost(c echo.Context, body interface{}, path string, response inter
 
 }
 
-// RetryableSwitchingPost function to retryable request Switching API with post method
+//RetryableSwitchingPost function to retryable request Switching API with post method
 func RetryableSwitchingPost(c echo.Context, body interface{}, path string, response interface{}) error {
 	fn := func() error {
 		return SwitchingPost(c, body, path, response)
