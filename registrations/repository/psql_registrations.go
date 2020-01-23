@@ -189,7 +189,6 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 
 func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Context, acc models.Account) error {
 	var nilFilters []string
-	// occ := acc.Occupation
 	app := acc.Application
 	pi := acc.PersonalInformation
 
@@ -197,16 +196,6 @@ func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Conte
 		// update card
 		gcdb.NewPipelineStmt("UPDATE cards SET card_name = $1, updated_at = $2 WHERE id = $3;",
 			nilFilters, acc.Card.CardName, time.Now(), acc.CardID),
-		// insert occupation
-		// gcdb.NewPipelineStmt(`INSERT INTO occupations (job_bidang_usaha, job_sub_bidang_usaha,
-		// 	job_category, job_status, total_employee, company, job_title, work_since,
-		// 	office_address_1, office_address_2, office_address_3, office_zipcode, office_city,
-		// 	office_phone, income, created_at)
-		// 	VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id;`,
-		// 	[]string{"occID"}, occ.JobBidangUsaha, occ.JobSubBidangUsaha, occ.JobCategory,
-		// 	occ.JobStatus, occ.TotalEmployee, occ.Company, occ.JobTitle, occ.WorkSince,
-		// 	occ.OfficeAddress1, occ.OfficeAddress2, occ.OfficeAddress3, occ.OfficeZipcode,
-		// 	occ.OfficeCity, occ.OfficePhone, occ.Income, time.Now()),
 		// update application
 		gcdb.NewPipelineStmt(`UPDATE applications set ktp_image_base64 = $1, npwp_image_base64 = $2,
 			selfie_image_base64 = $3, updated_at = $4 WHERE id = $5`,
