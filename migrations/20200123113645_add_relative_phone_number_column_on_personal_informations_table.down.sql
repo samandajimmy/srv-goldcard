@@ -1,0 +1,2 @@
+ALTER TABLE personal_informations
+DROP COLUMN relative_phone_number;

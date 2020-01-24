@@ -99,6 +99,7 @@ type PayloadPersonalInformation struct {
 	EmergencyCity        string `json:"emergencyCity"`
 	EmergencyZipcode     string `json:"emergencyZipcode"`
 	EmergencyPhoneNumber string `json:"emergencyPhoneNumber"`
+	RelativePhoneNumber  string `json:"relativePhoneNumber" validate:"required"`
 }
 
 // PayloadToken a struct to store all payload for token
