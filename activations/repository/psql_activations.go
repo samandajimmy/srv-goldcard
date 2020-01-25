@@ -31,10 +31,10 @@ func (act *psqlActivationsRepository) PostActivations(c echo.Context, acc models
 		gcdb.NewPipelineStmt(`UPDATE accounts SET status = $1, updated_at = $2
 			WHERE id = $3`,
 			nilFilters, acc.Status, time.Now(), acc.ID),
-		gcdb.NewPipelineStmt(`UPDATE applications SET status = $1, update_at = $2
+		gcdb.NewPipelineStmt(`UPDATE applications SET status = $1, updated_at = $2
 			WHERE id = $3`,
 			nilFilters, app.Status, time.Now(), acc.ApplicationID),
-		gcdb.NewPipelineStmt(`UPDATE cards SET status = $1, card_number = $2, valid_until = $3, update_at = $4
+		gcdb.NewPipelineStmt(`UPDATE cards SET status = $1, card_number = $2, valid_until = $3, updated_at = $4
 			WHERE id = $5`,
 			nilFilters, card.Status, card.CardNumber, card.ValidUntil, time.Now(), acc.CardID),
 	}
