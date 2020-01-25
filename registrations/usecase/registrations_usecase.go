@@ -508,7 +508,7 @@ func (reg *registrationsUseCase) updateSTLPrice(c echo.Context, acc models.Accou
 		return
 	}
 
-	if r.ResponseCode != "00" {
+	if r.ResponseCode != api.ApiRCSuccess {
 		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode, r.ResponseDesc}))
 		return
 	}

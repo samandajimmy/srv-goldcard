@@ -6,6 +6,11 @@ import (
 	"github.com/labstack/echo"
 )
 
+var (
+	// ActivationsStatus store status after activations
+	ActivationsStatus = "active"
+)
+
 // Account is a struct to store account data
 type Account struct {
 	ID                    int64               `json:"id"`
@@ -74,6 +79,17 @@ func (acc *Account) MappingAddressData(c echo.Context, pl PayloadAddress) error 
 	acc.Correspondence.AddressLine2 = pl.AddressLine2
 	acc.Correspondence.AddressLine3 = pl.AddressLine3
 	acc.Correspondence.AddressCity = pl.AddressCity
+
+	return nil
+}
+
+// MappingCardActivationsData a function to map all data activations
+func (acc *Account) MappingCardActivationsData(c echo.Context, pa PayloadActivations) error {
+	acc.Card.CardNumber = pa.LastSixDigits
+	acc.Card.ValidUntil = pa.ExpDate
+	acc.Application.Status = ActivationsStatus
+	acc.Card.Status = ActivationsStatus
+	acc.Status = ActivationsStatus
 
 	return nil
 }

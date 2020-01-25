@@ -78,6 +78,9 @@ var (
 	// ErrUpdateBrixkey to store update brixkey error message
 	ErrUpdateBrixkey = errors.New("Terjadi kesalahan saat update brixkey")
 
+	// ErrEmptyBrixkey to store empty brixkey error message
+	ErrEmptyBrixkey = errors.New("Brixkey tidak ditemukan")
+
 	// ErrUpdateAppDocID to store update application document ID error message
 	ErrUpdateAppDocID = errors.New("Terjadi kesalahan saat update document id")
 
@@ -107,6 +110,12 @@ var (
 
 	// ErrAppData to store get application data error message
 	ErrAppData = errors.New("Terjadi Kesalahan saat mengambil data aplikasi")
+
+	// ErrPostActivationsFailed to errors post activations failed
+	ErrPostActivationsFailed = errors.New("Gagal melakukan aktivasi")
+
+	// ErrAlreadyActivated to errors already activated
+	ErrAlreadyActivated = errors.New("Akun ini sudah pernah di aktivasi sebelumnya")
 )
 
 // DynamicErr to return parameterize errors

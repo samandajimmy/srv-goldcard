@@ -10,6 +10,9 @@ import (
 	"strconv"
 	"time"
 
+	_activationsHttpDelivery "gade/srv-goldcard/activations/delivery/http"
+	_activationsRepository "gade/srv-goldcard/activations/repository"
+	_activationsUseCase "gade/srv-goldcard/activations/usecase"
 	_apiRequestsRepository "gade/srv-goldcard/apirequests/repository"
 	_apiRequestsUseCase "gade/srv-goldcard/apirequests/usecase"
 	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
@@ -82,6 +85,11 @@ func main() {
 	// API_REQUESTS
 	apiRequestsRepository := _apiRequestsRepository.NewPsqlAPIRequestsRepository(dbConn, dbpg)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
+
+	// ACTIVATIONS
+	activationsRepository := _activationsRepository.NewPsqlActivations(dbConn, dbpg)
+	activationsUseCase := _activationsUseCase.ActivationsUseCase(activationsRepository, registrationsRepository)
+	_activationsHttpDelivery.NewActivationsHandler(echoGroup, activationsUseCase)
 
 	// PING
 	ech.GET("/ping", ping)
