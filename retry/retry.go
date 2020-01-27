@@ -26,7 +26,7 @@ func Do(c echo.Context, fnName string, fn retry.RetryableFunc) error {
 }
 
 func attempt() retry.Option {
-	attempt, err := strconv.ParseUint(os.Getenv("RETRY_ON_ERR"), 10, 32)
+	attempt, err := strconv.Atoi(os.Getenv(`RETRY_ON_ERR`))
 
 	if err != nil {
 		logger.Make(nil, nil).Fatal(err)
