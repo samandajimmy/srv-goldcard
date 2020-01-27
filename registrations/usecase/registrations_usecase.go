@@ -235,6 +235,7 @@ func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.Payloa
 
 	acc.Occupation.OfficeCity = city
 	acc.Occupation.OfficeZipcode = zipcode
+	acc.Occupation.JobTitle = models.DefJobTitle
 
 	err = reg.regRepo.PostOccupation(c, acc)
 

@@ -4,6 +4,9 @@ import (
 	"time"
 )
 
+// DefJobTitle to store default value of job title
+const DefJobTitle = "MANAGER"
+
 // Occupation is a struct to store occupation data
 type Occupation struct {
 	ID                int64     `json:"id"`

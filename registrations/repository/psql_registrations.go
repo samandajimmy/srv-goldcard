@@ -171,15 +171,18 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 	query := `select acc.product_request, acc.billing_cycle, acc.card_deliver, c.card_name,
 		pi.first_name, pi.last_name, pi.hand_phone_number, pi.email, pi.npwp, pi.nik, pi.birth_place,
 		pi.birth_date, pi.nationality, pi.sex, pi.education, pi.marital_status, pi.mother_name,
-		pi.home_phone_area, pi.home_phone_number, pi.home_status, pi.address_line_1, pi.address_line_2,
-		pi.address_line_3, pi.zipcode, pi.address_city, pi.stayed_since, pi.child, o.job_bidang_usaha,
+		pi.home_phone_area, pi.home_phone_number, pi.home_status, pi.stayed_since, pi.child, o.job_bidang_usaha,
 		o.job_sub_bidang_usaha, o.job_category, o.job_status, o.total_employee, o.company, o.job_title,
 		o.work_since, o.office_address_1, o.office_address_2, o.office_address_3, o.office_zipcode,
 		o.office_city, o.office_phone, o.income, ec.name emergency_name, ec.relation emergency_relation,
 		ec.phone_number emergency_phone_number, ec.address_line_1 emergency_address_1,
 		ec.address_line_2 emergency_address_2, ec.address_line_3 emergency_address_3,
-		ec.address_city emergency_city, ec.zipcode emergency_zipcode, corr.address_line_1,
-		corr.address_line_2, corr.address_line_3, corr.address_city, corr.zipcode
+		ec.address_city emergency_city, ec.zipcode emergency_zipcode,
+		COALESCE(corr.address_line_1, pi.address_line_1) address_line_1,
+		COALESCE(corr.address_line_2, pi.address_line_2) address_line_2,
+		COALESCE(corr.address_line_3, pi.address_line_3) address_line_3,
+		COALESCE(corr.address_city, pi.address_city) address_city,
+		COALESCE(corr.zipcode, pi.zipcode) zipcode
 		from accounts acc
 		left join applications app on acc.application_id = app.id
 		left join cards c on acc.card_id = c.id
