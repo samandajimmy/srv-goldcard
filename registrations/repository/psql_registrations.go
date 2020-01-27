@@ -363,8 +363,24 @@ func (regis *psqlRegistrationsRepository) UpdateBrixkeyID(c echo.Context, acc mo
 	return nil
 }
 
-func (regis *psqlRegistrationsRepository) UpdateGetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error) {
+func (regis *psqlRegistrationsRepository) GetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error) {
 	var appStatus models.AppStatus
+
+	query := `select status, application_processed_date, card_processed_date, card_send_date,
+		card_sent_date, failed_date from applications where id = ?;`
+
+	_, err := regis.DBpg.Query(&appStatus, query, app.ID)
+
+	if err != nil || (appStatus == models.AppStatus{}) {
+		logger.Make(c, nil).Debug(err)
+
+		return appStatus, err
+	}
+
+	return appStatus, nil
+}
+
+func (regis *psqlRegistrationsRepository) UpdateAppStatus(c echo.Context, app models.Applications) error {
 	app.UpdatedAt = time.Now()
 	key := app.GetStatusDateKey()
 
@@ -375,21 +391,10 @@ func (regis *psqlRegistrationsRepository) UpdateGetAppStatus(c echo.Context, app
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return appStatus, err
+		return err
 	}
 
-	query := `select status, application_processed_date, card_processed_date, card_send_date,
-		card_sent_date, failed_date from applications where id = ?;`
-
-	_, err = regis.DBpg.Query(&appStatus, query, app.ID)
-
-	if err != nil || (appStatus == models.AppStatus{}) {
-		logger.Make(c, nil).Debug(err)
-
-		return appStatus, err
-	}
-
-	return appStatus, nil
+	return nil
 }
 
 func (regis *psqlRegistrationsRepository) UpdateAppDocID(c echo.Context, app models.Applications) error {

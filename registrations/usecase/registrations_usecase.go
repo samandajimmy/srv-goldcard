@@ -297,11 +297,13 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	// concurrently apply the goldcard application to BRI
 	go reg.briApply(c, &acc, briPl)
 
-	// update application
-	acc.Application.Status = models.AppStatusProcessed
-	acc.Application.CurrentStep = models.AppStepCompleted
-	// concurrently update status and current_step
-	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
+	// concurrently update application status and current_step
+	go func() {
+		acc.Application.SetStatus(models.AppStatusProcessed)
+		acc.Application.CurrentStep = models.AppStepCompleted
+		_ = reg.regRepo.UpdateAppStatus(c, acc.Application)
+		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
+	}()
 
 	return nil
 }
@@ -315,38 +317,41 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 		return appStatus, err
 	}
 
-	resp := api.BriResponse{}
-	reqBody := map[string]interface{}{
-		"briXkey": acc.BrixKey,
-	}
-	err = api.BriPost(c, "/v1/cobranding/card/appstatus", reqBody, &resp)
+	// concurrently get app status from BRI API then update to our DB
+	go func() {
+		resp := api.BriResponse{}
+		reqBody := map[string]interface{}{
+			"briXkey": acc.BrixKey,
+		}
+
+		err := api.BriPost(c, "/v1/cobranding/card/appstatus", reqBody, &resp)
+
+		if err != nil {
+			logger.Make(c, nil).Debug(err)
+			return
+		}
+
+		// update application status
+		data := resp.Data[0]
+		if _, ok := data["appStatus"].(string); !ok {
+			logger.Make(c, nil).Debug(err)
+			return
+		}
+
+		acc.Application.ID = acc.ApplicationID
+		acc.Application.SetStatus(data["appStatus"].(string))
+		err = reg.regRepo.UpdateAppStatus(c, acc.Application)
+
+		if err != nil {
+			logger.Make(c, nil).Debug(err)
+			return
+		}
+	}()
+
+	appStatus, err = reg.regRepo.GetAppStatus(c, acc.Application)
 
 	if err != nil {
-		return appStatus, models.ErrExternalAPI
-	}
-
-	// to set variation of BRI response
-	resp.SetRC()
-
-	if resp.ResponseCode != "00" {
-		return appStatus, models.DynamicErr(models.ErrBriAPIRequest, []interface{}{resp.ResponseCode, resp.ResponseMessage})
-	}
-
-	// update application status
-	data := resp.Data[0]
-	if _, ok := data["appStatus"].(string); !ok {
-		logger.Make(c, nil).Debug(models.ErrSetVar)
-
-		return appStatus, models.ErrSetVar
-	}
-
-	acc.Application.ID = acc.ApplicationID
-	acc.Application.SetStatus(data["appStatus"].(string))
-	logger.MakeStructToJSON(acc.Application)
-	appStatus, err = reg.regRepo.UpdateGetAppStatus(c, acc.Application)
-
-	if err != nil {
-		return appStatus, models.ErrUpdateAppStatus
+		return appStatus, models.ErrGetAppStatus
 	}
 
 	return appStatus, nil
