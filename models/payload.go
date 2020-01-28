@@ -189,3 +189,10 @@ type PayloadOccupation struct {
 	OfficePhone       string `json:"officePhone" validate:"required"`
 	Income            int64  `json:"income" validate:"required"`
 }
+
+// PayloadActivations a struct to store all payload for activations
+type PayloadActivations struct {
+	ExpDate           string `json:"expDate" validate:"required"`
+	LastSixDigits     string `json:"lastSixDigits" validate:"required"`
+	ApplicationNumber string `json:"applicationNumber" validate:"required"`
+}

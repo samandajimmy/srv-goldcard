@@ -1,9 +1,14 @@
 package activations
 
-import "github.com/labstack/echo"
+import (
+	"gade/srv-goldcard/models"
+
+	"github.com/labstack/echo"
+)
 
 // Repository represent the activations repository contract
 type Repository interface {
+	PostActivations(echo.Context, models.Account) error
 }
 
 // RestRepository represent the rest activations repository contract
