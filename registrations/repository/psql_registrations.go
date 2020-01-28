@@ -7,6 +7,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
+	"strconv"
 	"strings"
 	"time"
 
@@ -171,15 +172,18 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 	query := `select acc.product_request, acc.billing_cycle, acc.card_deliver, c.card_name,
 		pi.first_name, pi.last_name, pi.hand_phone_number, pi.email, pi.npwp, pi.nik, pi.birth_place,
 		pi.birth_date, pi.nationality, pi.sex, pi.education, pi.marital_status, pi.mother_name,
-		pi.home_phone_area, pi.home_phone_number, pi.home_status, pi.address_line_1, pi.address_line_2,
-		pi.address_line_3, pi.zipcode, pi.address_city, pi.stayed_since, pi.child, o.job_bidang_usaha,
+		pi.home_phone_area, pi.home_phone_number, pi.home_status, pi.stayed_since, pi.child, o.job_bidang_usaha,
 		o.job_sub_bidang_usaha, o.job_category, o.job_status, o.total_employee, o.company, o.job_title,
 		o.work_since, o.office_address_1, o.office_address_2, o.office_address_3, o.office_zipcode,
 		o.office_city, o.office_phone, o.income, ec.name emergency_name, ec.relation emergency_relation,
 		ec.phone_number emergency_phone_number, ec.address_line_1 emergency_address_1,
 		ec.address_line_2 emergency_address_2, ec.address_line_3 emergency_address_3,
-		ec.address_city emergency_city, ec.zipcode emergency_zipcode, corr.address_line_1,
-		corr.address_line_2, corr.address_line_3, corr.address_city, corr.zipcode
+		ec.address_city emergency_city, ec.zipcode emergency_zipcode,
+		COALESCE(corr.address_line_1, pi.address_line_1) address_line_1,
+		COALESCE(corr.address_line_2, pi.address_line_2) address_line_2,
+		COALESCE(corr.address_line_3, pi.address_line_3) address_line_3,
+		COALESCE(corr.address_city, pi.address_city) address_city,
+		COALESCE(corr.zipcode, pi.zipcode) zipcode
 		from accounts acc
 		left join applications app on acc.application_id = app.id
 		left join cards c on acc.card_id = c.id
@@ -215,11 +219,11 @@ func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Conte
 			sex = $9, education = $10, marital_status = $11, mother_name = $12, home_phone_area = $13,
 			home_phone_number = $14, home_status = $15, address_line_1 = $16, address_line_2 = $17,
 			address_line_3 = $18, zipcode = $19, address_city = $20, stayed_since = $21, child = $22,
-			updated_at = $23 WHERE id = $24`, nilFilters, pi.FirstName, pi.LastName, pi.Email,
+			updated_at = $23, relative_phone_number = $24 WHERE id = $25`, nilFilters, pi.FirstName, pi.LastName, pi.Email,
 			pi.Npwp, pi.Nik, pi.BirthPlace, pi.BirthDate, pi.Nationality, "male", pi.Education,
 			pi.MaritalStatus, pi.MotherName, pi.HomePhoneArea, pi.HandPhoneNumber, pi.HomeStatus,
 			pi.AddressLine1, pi.AddressLine2, pi.AddressLine3, pi.Zipcode, pi.AddressCity,
-			pi.StayedSince, pi.Child, time.Now(), acc.PersonalInformationID),
+			pi.StayedSince, pi.Child, time.Now(), pi.RelativePhoneNumber, acc.PersonalInformationID),
 		// update account
 		gcdb.NewPipelineStmt(`UPDATE accounts set product_request = $1, billing_cycle = $2,
 			card_deliver = $3, updated_at = $4 WHERE id = $5`,
@@ -317,14 +321,20 @@ func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, acc
 
 func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account) error {
 	var nilFilters []string
+	upsertQuery := `INSERT INTO cards (card_limit, created_at, gold_limit, current_stl)
+		VALUES ($1, $2, $3, $4) RETURNING id;`
+	upsertFilters := []string{"cardID"}
+
+	if acc.CardID != 0 {
+		upsertQuery = `UPDATE cards set card_limit = $1, updated_at = $2, gold_limit = $3,
+			current_stl = $4 WHERE id = ` + strconv.Itoa(int(acc.CardID)) + ` RETURNING id;`
+	}
 
 	stmts := []*gcdb.PipelineStmt{
-		gcdb.NewPipelineStmt(`INSERT INTO cards (card_limit, created_at, gold_limit, current_stl)
-			VALUES ($1, $2, $3, $4) RETURNING id;`,
-			[]string{"cardID"}, acc.Card.CardLimit, time.Now(), acc.Card.GoldLimit, acc.Card.CurrentSTL),
+		gcdb.NewPipelineStmt(upsertQuery, upsertFilters, acc.Card.CardLimit, time.Now(),
+			acc.Card.GoldLimit, acc.Card.CurrentSTL),
 		gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1
-			WHERE id = $2`,
-			nilFilters, time.Now(), acc.ID),
+			WHERE id = $2`, nilFilters, time.Now(), acc.ID),
 	}
 
 	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
@@ -354,8 +364,24 @@ func (regis *psqlRegistrationsRepository) UpdateBrixkeyID(c echo.Context, acc mo
 	return nil
 }
 
-func (regis *psqlRegistrationsRepository) UpdateGetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error) {
+func (regis *psqlRegistrationsRepository) GetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error) {
 	var appStatus models.AppStatus
+
+	query := `select status, application_processed_date, card_processed_date, card_send_date,
+		card_sent_date, failed_date from applications where id = ?;`
+
+	_, err := regis.DBpg.Query(&appStatus, query, app.ID)
+
+	if err != nil || (appStatus == models.AppStatus{}) {
+		logger.Make(c, nil).Debug(err)
+
+		return appStatus, err
+	}
+
+	return appStatus, nil
+}
+
+func (regis *psqlRegistrationsRepository) UpdateAppStatus(c echo.Context, app models.Applications) error {
 	app.UpdatedAt = time.Now()
 	key := app.GetStatusDateKey()
 
@@ -366,21 +392,10 @@ func (regis *psqlRegistrationsRepository) UpdateGetAppStatus(c echo.Context, app
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return appStatus, err
+		return err
 	}
 
-	query := `select status, application_processed_date, card_processed_date, card_send_date,
-		card_sent_date, failed_date from applications where id = ?;`
-
-	_, err = regis.DBpg.Query(&appStatus, query, app.ID)
-
-	if err != nil || (appStatus == models.AppStatus{}) {
-		logger.Make(c, nil).Debug(err)
-
-		return appStatus, err
-	}
-
-	return appStatus, nil
+	return nil
 }
 
 func (regis *psqlRegistrationsRepository) UpdateAppDocID(c echo.Context, app models.Applications) error {

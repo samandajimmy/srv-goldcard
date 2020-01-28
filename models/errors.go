@@ -96,8 +96,8 @@ var (
 	// ErrVerifyToken to verify token error message
 	ErrVerifyToken = errors.New("Terjadi Kesalaahan saat verifikasi Token")
 
-	// ErrUpdateAppStatus to strore update application status error message
-	ErrUpdateAppStatus = errors.New("Terjadi Kesalahan saat update Status")
+	// ErrGetAppStatus to strore update application status error message
+	ErrGetAppStatus = errors.New("Terjadi Kesalahan saat mengambil data status aplikasi")
 
 	// ErrInquiryReg to inquiry registrations to switching/core
 	ErrInquiryReg = errors.New("Data Pengajuan sudah pernah terdaftar")

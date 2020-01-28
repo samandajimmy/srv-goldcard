@@ -21,7 +21,8 @@ type Repository interface {
 	UpdateCardLimit(c echo.Context, acc models.Account) error
 	UpdateBrixkeyID(c echo.Context, acc models.Account) error
 	UpdateAppDocID(c echo.Context, acc models.Applications) error
-	UpdateGetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error)
+	GetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error)
+	UpdateAppStatus(c echo.Context, app models.Applications) error
 	UpdateApplication(c echo.Context, app models.Applications, col []string) error
 	UpsertAppDocument(c echo.Context, app models.Document) error
 	PostOccupation(echo.Context, models.Account) error
