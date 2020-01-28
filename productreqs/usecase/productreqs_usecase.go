@@ -7,9 +7,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-type productreqsUseCase struct {
-	prodReqsUseCase productreqs.UseCase
-}
+type productreqsUseCase struct{}
 
 // ProductReqsUseCase represent product requirements Use Case
 func ProductReqsUseCase() productreqs.UseCase {

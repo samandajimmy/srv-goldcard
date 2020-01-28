@@ -25,6 +25,15 @@ func Do(c echo.Context, fnName string, fn retry.RetryableFunc) error {
 	return nil
 }
 
+// DoConcurrent is function to initiate retry helper concurrently
+func DoConcurrent(c echo.Context, fnName string, fn retry.RetryableFunc) {
+	err := Do(c, fnName, fn)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+	}
+}
+
 func attempt() retry.Option {
 	attempt, err := strconv.ParseUint(os.Getenv("RETRY_ON_ERR"), 10, 32)
 

@@ -35,14 +35,14 @@ func WithTransaction(db *sql.DB, fn TxFn) (err error) {
 	defer func() {
 		if p := recover(); p != nil {
 			// a panic occurred, rollback and repanic
-			tx.Rollback()
+			_ = tx.Rollback()
 			logger.Make(nil, nil).Fatal(p)
 		}
 
 		if err != nil {
 			// something went wrong, rollback
 			logger.Make(nil, nil).Debug(err)
-			tx.Rollback()
+			_ = tx.Rollback()
 			return
 		}
 

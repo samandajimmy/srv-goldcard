@@ -88,7 +88,7 @@ func (cm *customMiddleware) customLogging() {
 func (cm *customMiddleware) customValidation() {
 	validator := validator.New()
 	customValidator := customValidator{}
-	validator.RegisterValidation("isRequiredWith", customValidator.isRequiredWith)
+	_ = validator.RegisterValidation("isRequiredWith", customValidator.isRequiredWith)
 	customValidator.validator = validator
 	cm.e.Validator = &customValidator
 }
@@ -124,7 +124,7 @@ func (cm customMiddleware) jwtAuth() {
 
 func (cv *customValidator) isRequiredWith(fl validator.FieldLevel) bool {
 	field := fl.Field()
-	otherField, _, _ := fl.GetStructFieldOK()
+	otherField, _, _, _ := fl.GetStructFieldOK2()
 
 	if otherField.IsValid() && otherField.Interface() != reflect.Zero(otherField.Type()).Interface() {
 		if field.IsValid() && field.Interface() == reflect.Zero(field.Type()).Interface() {

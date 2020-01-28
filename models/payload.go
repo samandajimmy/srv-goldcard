@@ -155,7 +155,7 @@ type PayloadBriRegister struct {
 	OfficeZipcode        string `json:"officeZipcode" validate:"required"`
 	OfficeCity           string `json:"officeCity" validate:"required"`
 	OfficePhone          string `json:"officePhone" validate:"required"`
-	Child                int64  `json:"child" validate:"required" validate:"min=0"`
+	Child                int64  `json:"child" validate:"min=0"`
 	EmergencyName        string `json:"emergencyName" validate:"required"`
 	EmergencyRelation    int64  `json:"emergencyRelation" validate:"required"`
 	EmergencyAddress1    string `json:"emergencyAddress1" validate:"required" pg:"emergency_address_1"`

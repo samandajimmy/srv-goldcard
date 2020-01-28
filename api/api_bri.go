@@ -40,6 +40,11 @@ func (br *BriResponse) SetRC() {
 	}
 
 	code, ok := br.Status["code"].(string)
+
+	if !ok {
+		logger.Make(nil, nil).Fatal(models.ErrSetVar)
+	}
+
 	desc, ok := br.Status["desc"].(string)
 
 	if !ok {
@@ -120,7 +125,9 @@ func BriPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
 	res := resp.(*BriResponse)
 	res.SetRC()
 
-	go _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, bri.API, reqBody, resp)
+	go func() {
+		_ = _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, bri.API, reqBody, resp)
+	}()
 
 	if r.StatusCode != http.StatusOK {
 		return models.DynamicErr(models.ErrBriAPIRequest, []interface{}{res.ResponseCode,
@@ -242,7 +249,13 @@ func (bri *APIbri) setBriSignature(endpoint string, body interface{}) error {
 
 	key := []byte(os.Getenv(`BRI_CLIENT_SECRET`))
 	h := hmac.New(sha256.New, key)
-	h.Write([]byte(queryParamStr))
+	_, err = h.Write([]byte(queryParamStr))
+
+	if err != nil {
+		logger.Make(bri.ctx, nil).Debug(err)
+		return nil
+	}
+
 	sEnc := base64.StdEncoding.EncodeToString(h.Sum(nil))
 	bri.BRISignature = sEnc
 

@@ -22,8 +22,8 @@ type API struct {
 }
 
 var (
-	// RCSuccess represents response code success
-	apiRCSuccess = "00"
+	// APICSuccess represents response code success
+	APICSuccess = "00"
 )
 
 // NewAPI for create new client request

@@ -7,8 +7,6 @@ import (
 	"github.com/labstack/echo"
 )
 
-var response models.Response
-
 // RegistrationsHandler represent the httphandler for registrations
 type RegistrationsHandler struct {
 	response             models.Response
@@ -35,7 +33,7 @@ func NewRegistrationsHandler(
 	echoGroup.API.POST("/registrations/occupation", handler.PostOccupation)
 }
 
-// Registrations a handler to create a campaign
+// Registrations a handler to handle goldcard registrations
 func (reg *RegistrationsHandler) Registrations(c echo.Context) error {
 	var pr models.PayloadRegistration
 	reg.response, reg.respErrors = models.NewResponse()
