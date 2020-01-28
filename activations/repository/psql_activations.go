@@ -47,3 +47,35 @@ func (act *psqlActivations) PostActivations(c echo.Context, acc models.Account) 
 	}
 	return nil
 }
+
+func (act *psqlActivations) GetAccountByAppNumber(c echo.Context, acc *models.Account) error {
+	newAcc := models.Account{}
+	docs := []models.Document{}
+	err := act.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
+		Relation("Card").
+		Where("application_number = ?", acc.Application.ApplicationNumber).
+		Where("brixkey IS NOT NULL").Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	if err == pg.ErrNoRows {
+		return models.ErrAppNumberNotFound
+	}
+
+	err = act.DBpg.Model(&docs).Where("application_id = ?", newAcc.ApplicationID).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	newAcc.Application.Documents = docs
+
+	*acc = newAcc
+	return nil
+}

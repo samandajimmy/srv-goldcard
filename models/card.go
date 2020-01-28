@@ -11,6 +11,8 @@ const (
 	EffBalLimit float64 = 0.1000
 
 	defMoneyTaken float64 = 0.94
+
+	cardStatusActive string = "active"
 )
 
 // Card is a struct to store card data

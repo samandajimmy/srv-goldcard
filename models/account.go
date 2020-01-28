@@ -7,8 +7,7 @@ import (
 )
 
 var (
-	// ActivationsStatus store status after activations
-	ActivationsStatus = "active"
+	accStatusActive = "active"
 )
 
 // Account is a struct to store account data
@@ -88,9 +87,9 @@ func (acc *Account) MappingAddressData(c echo.Context, pl PayloadAddress) error 
 func (acc *Account) MappingCardActivationsData(c echo.Context, pa PayloadActivations) error {
 	acc.Card.CardNumber = pa.LastSixDigits
 	acc.Card.ValidUntil = pa.ExpDate
-	acc.Application.Status = ActivationsStatus
-	acc.Card.Status = ActivationsStatus
-	acc.Status = ActivationsStatus
+	acc.Application.Status = AppStatusActive
+	acc.Card.Status = cardStatusActive
+	acc.Status = accStatusActive
 
 	return nil
 }
