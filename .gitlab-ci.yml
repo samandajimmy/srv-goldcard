@@ -11,7 +11,7 @@ variables:
 
 lint:
   image:
-    name: 10.251.4.79:8083/golangci/golangci-lint:v1.23.1
+    name: 10.251.4.79:8083/dian/golangci:v1.23.1 
     entrypoint: [""]
   stage: lint
   script:
