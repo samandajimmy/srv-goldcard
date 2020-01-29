@@ -61,30 +61,6 @@ func (ra *restActivations) ActivationsToCore(c echo.Context, acc models.Account)
 	return nil
 }
 
-func (ra *restActivations) OpenRecalculateToCore(c echo.Context, acc models.Account) error {
-	respSwitching := api.SwitchingResponse{}
-	requestDataSwitching := map[string]interface{}{
-		"isBlokir":         api.SwitchingIsBlock,
-		"noRek":            acc.Application.SavingAccount,
-		"gramTransaksi":    acc.Card.GoldLimit,
-		"nominalTransaksi": acc.Card.CardLimit,
-		"isRecalculate":    api.SwitchingIsRecalculate,
-	}
-	req := api.MappingRequestSwitching(requestDataSwitching)
-	errSwitching := api.RetryableSwitchingPost(c, req, "/goldcard/open", &respSwitching)
-
-	if errSwitching != nil {
-		return errSwitching
-	}
-
-	if respSwitching.ResponseCode != api.APIRCSuccess {
-		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc}))
-		return errSwitching
-	}
-
-	return nil
-}
-
 func (ra *restActivations) ActivationsToBRI(c echo.Context, acc models.Account, pa models.PayloadActivations) error {
 	respBRI := api.BriResponse{}
 	requestDataBRI := map[string]interface{}{
