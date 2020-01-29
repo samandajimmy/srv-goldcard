@@ -301,9 +301,9 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	}
 
 	// open and lock gold limit to core
-	if err := reg.rrr.OpenGoldcard(c, acc, false); err != nil {
-		return err
-	}
+	go func() {
+		_ = reg.rrr.OpenGoldcard(c, acc, false)
+	}()
 
 	// concurrently apply the goldcard application to BRI
 	go reg.briApply(c, &acc, briPl)
