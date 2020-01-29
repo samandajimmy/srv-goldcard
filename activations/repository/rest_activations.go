@@ -16,7 +16,6 @@ func NewRestActivations() activations.RestRepository {
 	return &restActivations{}
 }
 
-// GetDetailGoldUser to get detail gold user from core
 func (ra *restActivations) GetDetailGoldUser(c echo.Context, accNumber string) (map[string]string, error) {
 	nilMap := map[string]string{}
 	r := api.SwitchingResponse{}

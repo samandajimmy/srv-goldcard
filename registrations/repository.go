@@ -31,4 +31,5 @@ type Repository interface {
 // RestRepository represent the rest registrations repository contract
 type RestRepository interface {
 	GetCurrentGoldSTL(c echo.Context) (int64, error)
+	OpenGoldcard(c echo.Context, acc models.Account, isRecalculate bool) error
 }

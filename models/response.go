@@ -30,6 +30,7 @@ type Response struct {
 // ResponseErrors struct is represent a data for output payload
 type ResponseErrors struct {
 	Title   string
+	Code    string
 	Details []string
 }
 
@@ -43,6 +44,13 @@ func (re *ResponseErrors) SetTitle(title string) {
 	re.Title = title
 }
 
+// SetTitleCode title and code of Response errors
+func (re *ResponseErrors) SetTitleCode(code string, title string, desc string) {
+	re.Title = title
+	re.Code = code
+	re.AddError(desc)
+}
+
 // AddError adding error on Response errors
 func (re *ResponseErrors) AddError(errString string) {
 	re.Details = append(re.Details, errString)
@@ -50,18 +58,25 @@ func (re *ResponseErrors) AddError(errString string) {
 
 // SetResponse is a function to set response
 func (resp *Response) SetResponse(respData interface{}, respErrors *ResponseErrors) {
-	if respErrors != nil && respErrors.Title != "" {
-		resp.Status = responseError
-		resp.Code = responseCode[responseError]
-		resp.Message = respErrors.Title
-		if len(respErrors.Details) != 0 {
-			resp.Description = strings.Join(respErrors.Details, ", ")
-		}
-	} else {
+	if respErrors == nil && respErrors.Title == "" {
 		resp.Status = responseSuccess
 		resp.Code = responseCode[responseSuccess]
 		resp.Message = MessageDataSuccess
 		resp.Data = respData
+
+		return
+	}
+
+	resp.Status = responseError
+	resp.Code = responseCode[responseError]
+	resp.Message = respErrors.Title
+
+	if len(respErrors.Details) != 0 {
+		resp.Description = strings.Join(respErrors.Details, ", ")
+	}
+
+	if respErrors.Code != "" {
+		resp.Code = respErrors.Code
 	}
 }
 

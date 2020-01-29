@@ -22,7 +22,7 @@ func NewPsqlActivations(Conn *sql.DB, dbpg *pg.DB) activations.Repository {
 	return &psqlActivations{Conn, dbpg}
 }
 
-func (act *psqlActivations) PostActivations(c echo.Context, acc models.Account) error {
+func (pa *psqlActivations) PostActivations(c echo.Context, acc models.Account) error {
 	var nilFilters []string
 	app := acc.Application
 	card := acc.Card
@@ -38,7 +38,7 @@ func (act *psqlActivations) PostActivations(c echo.Context, acc models.Account) 
 			nilFilters, card.Status, card.CardNumber, card.ValidUntil, time.Now(), acc.CardID),
 	}
 
-	err := gcdb.WithTransaction(act.Conn, func(tx gcdb.Transaction) error {
+	err := gcdb.WithTransaction(pa.Conn, func(tx gcdb.Transaction) error {
 		return gcdb.RunPipelineQueryRow(tx, stmts...)
 	})
 	if err != nil {
@@ -47,13 +47,24 @@ func (act *psqlActivations) PostActivations(c echo.Context, acc models.Account) 
 	}
 	return nil
 }
+func (pa *psqlActivations) UpdateGoldLimit(c echo.Context, card models.Card) error {
+	card.UpdatedAt = time.Now()
+	col := []string{"gold_limit", "current_stl", "updated_at"}
+	_, err := pa.DBpg.Model(&card).Column(col...).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
 
 func (act *psqlActivations) GetAccountByAppNumber(c echo.Context, acc *models.Account) error {
 	newAcc := models.Account{}
 	docs := []models.Document{}
-	err := act.DBpg.Model(&newAcc).Relation("Application").
-		Relation("PersonalInformation").
-		Relation("Card").
+	err := act.DBpg.Model(&newAcc).Relation("Application").Relation("Card").
 		Where("application_number = ?", acc.Application.ApplicationNumber).
 		Where("application.status = ?", models.AppStatusSent).Select()
 
