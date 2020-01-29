@@ -169,13 +169,5 @@ func (aUsecase *activationsUseCase) checkApplication(c echo.Context, pl interfac
 		return models.Account{}, models.ErrAppNumberNotFound
 	}
 
-	if acc.Status == models.AppStatusActive {
-		return models.Account{}, models.ErrAlreadyActivated
-	}
-
-	if acc.Application.Status != models.AppStatusSent {
-		return models.Account{}, models.ErrStatusActivations
-	}
-
 	return acc, nil
 }

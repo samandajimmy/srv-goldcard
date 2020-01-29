@@ -51,10 +51,11 @@ func (act *psqlActivations) PostActivations(c echo.Context, acc models.Account) 
 func (act *psqlActivations) GetAccountByAppNumber(c echo.Context, acc *models.Account) error {
 	newAcc := models.Account{}
 	docs := []models.Document{}
-	err := act.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
+	err := act.DBpg.Model(&newAcc).Relation("Application").
+		Relation("PersonalInformation").
 		Relation("Card").
 		Where("application_number = ?", acc.Application.ApplicationNumber).
-		Where("brixkey IS NOT NULL").Select()
+		Where("application.status = ?", models.AppStatusSent).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
