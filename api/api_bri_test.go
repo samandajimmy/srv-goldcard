@@ -73,7 +73,3 @@ func TestNewBriAPI(t *testing.T) {
 	fmt.Println(resp)
 	fmt.Println(response)
 }
-
-func mltplFunc(a, b interface{}) []interface{} {
-	return []interface{}{a, b}
-}

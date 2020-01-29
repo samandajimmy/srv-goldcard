@@ -7,8 +7,6 @@ import (
 	"github.com/labstack/echo"
 )
 
-var response models.Response
-
 // TokensHandler represent the httphandler for tokens
 type TokensHandler struct {
 	response     models.Response

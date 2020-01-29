@@ -14,6 +14,15 @@ import (
 var (
 	// SwitchingRCInquiryAllow RC 14
 	SwitchingRCInquiryAllow = "14"
+
+	// SwitchingIsRecalculate represent recalculate open goldcard if STL > 1.15%
+	SwitchingIsRecalculate = "1"
+
+	// SwitchingIsBlock represent block when open goldcard
+	SwitchingIsBlock = "1"
+
+	// SwitchingIsUnBlock represent unblock when close goldcard
+	SwitchingIsUnBlock = "0"
 )
 
 // SwitchingResponse struct represents a response for API Switching
@@ -78,29 +87,15 @@ func (switc *APIswitching) Do(req *http.Request, v interface{}) (*http.Response,
 		return nil, err
 	}
 
-	switc.mappingDataResponseSwitching(v)
-	logger.MakeStructToJSON(v)
-
-	return resp, err
-}
-
-// MappingResponseSwitching test
-func (switc *APIswitching) mappingDataResponseSwitching(v interface{}) error {
-	resp := v.(*SwitchingResponse)
-
-	if resp.Data == "" {
-		return nil
-	}
-
-	// var responseData interface{}
-	var err error
-	err = json.Unmarshal([]byte(resp.Data), &resp.ResponseData)
+	err = switc.mappingDataResponseSwitching(v)
 
 	if err != nil {
-		logger.Make(switc.ctx, nil).Fatal("Response Data Error Unmarshal")
+		logger.Make(switc.ctx, nil).Debug(err)
+
+		return resp, err
 	}
 
-	return nil
+	return resp, err
 }
 
 // Request represent global API Request
@@ -163,13 +158,15 @@ func SwitchingPost(c echo.Context, body interface{}, path string, response inter
 
 	r, err := switching.Do(req, response)
 
+	go func() {
+		_ = _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, switching.API, body, response)
+	}()
+
 	if err != nil {
 		logger.Make(nil, nil).Debug(err)
 
 		return err
 	}
-
-	go _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, switching.API, body, response)
 
 	return nil
 
@@ -181,7 +178,30 @@ func RetryableSwitchingPost(c echo.Context, body interface{}, path string, respo
 		return SwitchingPost(c, body, path, response)
 	}
 
-	RetryablePost(c, "SWITCHING API: POST "+path, fn)
+	err := RetryablePost(c, "SWITCHING API: POST "+path, fn)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (switc *APIswitching) mappingDataResponseSwitching(v interface{}) error {
+	resp := v.(*SwitchingResponse)
+
+	if resp.Data == "" {
+		return nil
+	}
+
+	err := json.Unmarshal([]byte(resp.Data), &resp.ResponseData)
+	resp.Data = ""
+
+	if err != nil {
+		logger.Make(switc.ctx, nil).Fatal("Response Data Error Unmarshal")
+	}
 
 	return nil
 }

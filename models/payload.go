@@ -156,7 +156,7 @@ type PayloadBriRegister struct {
 	OfficeZipcode        string `json:"officeZipcode" validate:"required"`
 	OfficeCity           string `json:"officeCity" validate:"required"`
 	OfficePhone          string `json:"officePhone" validate:"required"`
-	Child                int64  `json:"child" validate:"required" validate:"min=0"`
+	Child                int64  `json:"child" validate:"min=0"`
 	EmergencyName        string `json:"emergencyName" validate:"required"`
 	EmergencyRelation    int64  `json:"emergencyRelation" validate:"required"`
 	EmergencyAddress1    string `json:"emergencyAddress1" validate:"required" pg:"emergency_address_1"`
@@ -188,4 +188,11 @@ type PayloadOccupation struct {
 	OfficeCity        string `json:"officeCity"`
 	OfficePhone       string `json:"officePhone" validate:"required"`
 	Income            int64  `json:"income" validate:"required"`
+}
+
+// PayloadActivations a struct to store all payload for activations
+type PayloadActivations struct {
+	ExpDate           string `json:"expDate" validate:"required"`
+	LastSixDigits     string `json:"lastSixDigits" validate:"required"`
+	ApplicationNumber string `json:"applicationNumber" validate:"required"`
 }

@@ -107,6 +107,15 @@ var (
 
 	// ErrAppData to store get application data error message
 	ErrAppData = errors.New("Terjadi Kesalahan saat mengambil data aplikasi")
+
+	// ErrPostActivationsFailed to errors post activations failed
+	ErrPostActivationsFailed = errors.New("Gagal melakukan aktivasi")
+
+	// ErrAlreadyActivated to errors already activated
+	ErrAlreadyActivated = errors.New("Akun ini sudah pernah di aktivasi sebelumnya")
+
+	// ErrStatusActivations to store activations status activation status not "sent" yet
+	ErrStatusActivations = errors.New("Status pengajuan tidak sesuai")
 )
 
 // DynamicErr to return parameterize errors

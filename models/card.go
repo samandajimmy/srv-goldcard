@@ -1,6 +1,19 @@
 package models
 
-import "time"
+import (
+	"time"
+)
+
+const (
+	// DecreasedLimit to store a value of decreasing limit
+	DecreasedLimit float64 = 0.0115
+	// EffBalLimit to store a value of effective balance limit
+	EffBalLimit float64 = 0.1000
+
+	defMoneyTaken float64 = 0.94
+
+	cardStatusActive string = "active"
+)
 
 // Card is a struct to store card data
 type Card struct {
@@ -16,4 +29,14 @@ type Card struct {
 	Status      string    `json:"status"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 	CreatedAt   time.Time `json:"createdAt"`
+}
+
+// ConvertMoneyToGold to convert rupiah into gram
+func (c *Card) ConvertMoneyToGold(money int64, stl int64) float64 {
+	moneyFloat := float64(money)
+	stlFloat := float64(stl)
+	gold := (CustomRound("ceil", moneyFloat, 1000) / defMoneyTaken) / stlFloat
+
+	return CustomRound("round", gold, 10000)
+
 }

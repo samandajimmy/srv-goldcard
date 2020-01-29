@@ -7,7 +7,6 @@ import (
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/retry"
 	"reflect"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
@@ -15,11 +14,12 @@ import (
 
 type registrationsUseCase struct {
 	regRepo registrations.Repository
+	rrr     registrations.RestRepository
 }
 
 // RegistrationsUseCase represent Registrations Use Case
-func RegistrationsUseCase(regRepository registrations.Repository) registrations.UseCase {
-	return &registrationsUseCase{regRepo: regRepository}
+func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.RestRepository) registrations.UseCase {
+	return &registrationsUseCase{regRepo, rrr}
 }
 
 func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAddress) error {
@@ -155,14 +155,16 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 	}
 
 	// concurrently insert or update all possible documents
-	go retry.Do(c, "upsertDocument", func() error {
+	go retry.DoConcurrent(c, "upsertDocument", func() error {
 		return reg.upsertDocument(c, acc.Application)
 	})
 
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepPersonalInfo
 	// concurrently update current_step
-	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
+	go func() {
+		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
+	}()
 
 	return nil
 }
@@ -206,7 +208,9 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepCardLimit
 	// concurrently update current_step
-	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
+	go func() {
+		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
+	}()
 
 	return nil
 }
@@ -270,7 +274,9 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 	// update app current step
 	acc.Application.CurrentStep = models.AppStepSavingAcc
 	// concurrently update current_step
-	go reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
+	go func() {
+		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
+	}()
 
 	return nil
 }
@@ -357,21 +363,21 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 	return appStatus, nil
 }
 
-func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, pl models.PayloadBriRegister) error {
+func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, pl models.PayloadBriRegister) {
 	err := reg.briRegister(c, acc, pl)
 
 	if err != nil {
-		return err
+		logger.Make(c, nil).Debug(err)
+		return
 	}
 
 	// upload document to BRI API
 	err = reg.uploadAppDocs(c, acc)
 
 	if err != nil {
-		return err
+		logger.Make(c, nil).Debug(err)
+		return
 	}
-
-	return nil
 }
 
 func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account, pl models.PayloadBriRegister) error {
@@ -396,7 +402,9 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 
 	acc.BrixKey = resp.DataOne["briXkey"].(string)
 	// concurrently update brixkey from BRI API
-	go reg.regRepo.UpdateBrixkeyID(c, *acc)
+	go func() {
+		_ = reg.regRepo.UpdateBrixkeyID(c, *acc)
+	}()
 
 	return nil
 }
@@ -404,7 +412,9 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 func (reg *registrationsUseCase) uploadAppDocs(c echo.Context, acc *models.Account) error {
 	for _, doc := range acc.Application.Documents {
 		// concurrently upload application documents to BRI
-		go reg.uploadAppDoc(c, acc.BrixKey, doc)
+		go func(doc models.Document) {
+			_ = reg.uploadAppDoc(c, acc.BrixKey, doc)
+		}(doc)
 	}
 
 	return nil
@@ -437,7 +447,9 @@ func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, brixkey string, do
 
 	doc.DocID = resp.DataOne["documentId"].(string)
 	// concurrently insert or update application document
-	go reg.regRepo.UpsertAppDocument(c, doc)
+	go func() {
+		_ = reg.regRepo.UpsertAppDocument(c, doc)
+	}()
 
 	return nil
 }
@@ -464,29 +476,6 @@ func (reg *registrationsUseCase) checkApplication(c echo.Context, pl interface{}
 	return acc, nil
 }
 
-func (reg *registrationsUseCase) sendApplicationNotif(c echo.Context, payload map[string]string) error {
-	response := map[string]interface{}{}
-	pds, err := api.NewPdsAPI(c, echo.MIMEApplicationForm)
-
-	if err != nil {
-		return err
-	}
-
-	req, err := pds.Request("/goldcard/status_pengajuan_notif", echo.POST, payload)
-
-	if err != nil {
-		return err
-	}
-
-	_, err = pds.Do(req, &response)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (reg *registrationsUseCase) upsertDocument(c echo.Context, app models.Applications) error {
 	if len(app.Documents) == 0 {
 		return nil
@@ -504,29 +493,14 @@ func (reg *registrationsUseCase) upsertDocument(c echo.Context, app models.Appli
 }
 
 func (reg *registrationsUseCase) updateSTLPrice(c echo.Context, acc models.Account) {
-	r := api.SwitchingResponse{}
-	STLBody := map[string]interface{}{}
-	req := api.MappingRequestSwitching(STLBody)
-	err := api.RetryableSwitchingPost(c, req, "/param/stl", &r)
+	hargeEmas, err := reg.rrr.GetCurrentGoldSTL(c)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 		return
 	}
 
-	if r.ResponseCode != "00" {
-		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode, r.ResponseDesc}))
-		return
-	}
-
-	hargaEmas, err := strconv.ParseInt(r.ResponseData["hargaEmas"], 10, 64)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
-
-	acc.Card.CurrentSTL = hargaEmas
+	acc.Card.CurrentSTL = hargeEmas
 	err = reg.regRepo.UpdateCardLimit(c, acc)
 
 	if err != nil {

@@ -10,6 +10,9 @@ import (
 	"strconv"
 	"time"
 
+	_activationHttpDelivery "gade/srv-goldcard/activations/delivery/http"
+	_activationRepository "gade/srv-goldcard/activations/repository"
+	_activationUseCase "gade/srv-goldcard/activations/usecase"
 	_apiRequestsRepository "gade/srv-goldcard/apirequests/repository"
 	_apiRequestsUseCase "gade/srv-goldcard/apirequests/usecase"
 	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
@@ -65,29 +68,35 @@ func main() {
 	// load all middlewares
 	middleware.InitMiddleware(ech, echoGroup)
 
-	// TOKEN
+	// REPOSITORIES
 	tokenRepository := _tokenRepository.NewPsqlTokenRepository(dbConn)
-	tokenUseCase := _tokenUseCase.NewTokenUseCase(tokenRepository, timeoutContext)
-	_tokenHttpDelivery.NewTokensHandler(echoGroup, tokenUseCase)
-
-	// REGISTRATIONS
 	registrationsRepository := _registrationsRepository.NewPsqlRegistrationsRepository(dbConn, dbpg)
-	registrationsUserCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository)
-	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup, registrationsUserCase)
-
-	// PRODUCT REQUIREMENTS
-	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
-	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
-
-	// API_REQUESTS
+	restRegistrationsRepo := _registrationsRepository.NewRestRegistrations()
+	activationRepository := _activationRepository.NewPsqlActivations(dbConn, dbpg)
+	restActivationRepository := _activationRepository.NewRestActivations()
 	apiRequestsRepository := _apiRequestsRepository.NewPsqlAPIRequestsRepository(dbConn, dbpg)
+
+	// USECASES
+	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
+	tokenUseCase := _tokenUseCase.NewTokenUseCase(tokenRepository, timeoutContext)
+	registrationsUserCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository, restRegistrationsRepo)
+	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
+
+	// DELIVERIES
+	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
+	_tokenHttpDelivery.NewTokensHandler(echoGroup, tokenUseCase)
+	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup, registrationsUserCase)
+	_activationHttpDelivery.NewActivationsHandler(echoGroup, activationUserCase)
 
 	// PING
 	ech.GET("/ping", ping)
 
-	ech.Start(":" + os.Getenv(`PORT`))
+	err = ech.Start(":" + os.Getenv(`PORT`))
 
+	if err != nil {
+		logger.Make(nil, nil).Fatal(err)
+	}
 }
 
 func ping(echTx echo.Context) error {
@@ -140,6 +149,10 @@ func getDBConn() (*sql.DB, *pg.DB) {
 func dataMigrations(dbConn *sql.DB) *migrate.Migrate {
 	driver, err := postgres.WithInstance(dbConn, &postgres.Config{})
 
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+	}
+
 	migrations, err := migrate.NewWithDatabaseInstance(
 		"file://migrations/",
 		os.Getenv(`DB_USER`), driver)
@@ -166,6 +179,4 @@ func loadEnv() {
 	if err != nil {
 		logger.Make(nil, nil).Fatal("Error loading .env file")
 	}
-
-	return
 }

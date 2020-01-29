@@ -14,10 +14,7 @@ import (
 
 const timestampFormat = "2006-01-02 15:04:05.000"
 
-var (
-	errReqLogger      = errors.New("Error during creating a request logger")
-	errEchoContextNil = errors.New("Echo context tidak boleh nil")
-)
+var errEchoContextNil = errors.New("Echo context tidak boleh nil")
 
 type requestLogger struct {
 	RequestID string      `json:"requestID,omitempty"`

@@ -27,3 +27,8 @@ type Repository interface {
 	UpsertAppDocument(c echo.Context, app models.Document) error
 	PostOccupation(echo.Context, models.Account) error
 }
+
+// RestRepository represent the rest registrations repository contract
+type RestRepository interface {
+	GetCurrentGoldSTL(c echo.Context) (int64, error)
+}

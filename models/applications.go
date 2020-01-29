@@ -32,6 +32,12 @@ var (
 	// AppStatusProcessed is to store var application status proccesed
 	AppStatusProcessed = "application_processed"
 
+	// AppStatusActive is to store var application status active
+	AppStatusActive = "active"
+
+	// AppStatusSent is to store var application status card_sent
+	AppStatusSent = "card_sent"
+
 	// AppStepSavingAcc is to store var application step saving account
 	AppStepSavingAcc int64 = 1
 

@@ -1,44 +1,19 @@
 package models
 
+import (
+	"math"
+	"time"
+)
+
 var (
 	// StatusSuccess to store a status response success
 	StatusSuccess = "Success"
 
-	// StatusError to store a status response error
-	StatusError = "Error"
-
-	// MessageSaveSuccess to store a success message response of save
-	MessageSaveSuccess = "Berhasil Disimpan"
-
-	// MessageUpdateSuccess to store a success message response of update
-	MessageUpdateSuccess = "Berhasil Diperbaharui"
-
-	// MessageUploadSuccess to store a success message response of upload
-	MessageUploadSuccess = "Berhasil Unggah"
-
 	// MessageDataSuccess to store a success message response of data
 	MessageDataSuccess = "Data Berhasil Dikirim"
 
-	// MessagePointSuccess to store a success message response of data
-	MessagePointSuccess = "Data Berhasil Dikirim"
-
-	// MessageUpdateError to store an errpr message response 0f update
-	MessageUpdateError = "Gagal Mempebaharui"
-
-	// MessageUploadError to store en erro message response of upload
-	MessageUploadError = "Gagal Unggah"
-
-	// MessageValidationError to store an error message response of field validation
-	MessageValidationError = "Gagal Validasi Kolom"
-
-	// MessageDataNotFound to store a message response of data not found
-	MessageDataNotFound = "Data Tidak Ditemukan"
-
 	// MessageUnprocessableEntity to store a message response of unproccessable entity
 	MessageUnprocessableEntity = "Entitas Tidak Dapat Diproses"
-
-	// MessageTokenFailed to store a message response token failure
-	MessageTokenFailed = "Gagal Membuat Token!"
 
 	// MicroTimeFormat to store a time format of micro timestamp
 	MicroTimeFormat = "20060102150405.000000"
@@ -70,3 +45,22 @@ var (
 	// StarString a string with stars
 	StarString = "**********"
 )
+
+// CustomRound is a function to round the number based on the type
+func CustomRound(roundType string, num float64, decimal float64) float64 {
+	switch roundType {
+	case "ceil":
+		return math.Ceil(num*decimal) / decimal
+	case "floor":
+		return math.Floor(num*decimal) / decimal
+	default:
+		return math.Round(num*decimal) / decimal
+	}
+}
+
+// DateIsNotEqual is a function to compare date now and update date
+func DateIsNotEqual(date1, date2 time.Time) bool {
+	y1, m1, d1 := date1.Date()
+	y2, m2, d2 := date2.Date()
+	return y1 != y2 || m1 != m2 || d1 != d2
+}
