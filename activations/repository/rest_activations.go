@@ -94,7 +94,7 @@ func (ra *restActivations) ActivationsToBRI(c echo.Context, acc models.Account, 
 		"lastSixDigits": pa.LastSixDigits,
 	}
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
-	errBRI := api.RetryableBriPost(c, "/v1/cobranding/card/activation", reqBRIBody, &respBRI)
+	errBRI := api.RetryableBriPost(c, "/v1/cobranding/card/activation", reqBRIBody.RequestData, &respBRI)
 
 	if errBRI != nil {
 		return errBRI
