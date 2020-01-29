@@ -2,14 +2,12 @@ package usecase
 
 import (
 	"errors"
-	"fmt"
 	"gade/srv-goldcard/activations"
-	"gade/srv-goldcard/api"
-	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -52,10 +50,6 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	// compare stl price at applied date and current date
 	currStl, err := aUsecase.rrRepo.GetCurrentGoldSTL(c)
 
-	fmt.Println("currStl")
-	fmt.Println(currStl)
-	fmt.Println("currStl")
-
 	if err != nil {
 		// TODO: change the error message
 		return errors.New("something went wrong when trying to get STL")
@@ -64,14 +58,6 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	appliedStl := acc.Card.CurrentSTL
 	deficitStl := appliedStl - currStl
 
-	fmt.Println("appliedStl")
-	fmt.Println(appliedStl)
-	fmt.Println("appliedStl")
-
-	fmt.Println("deficitStl")
-	fmt.Println(deficitStl)
-	fmt.Println("deficitStl")
-
 	if deficitStl <= 0 {
 		return nil
 	}
@@ -79,10 +65,6 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	// if it decreased
 	// if the decrase <= 1,15% then go head
 	decreasedPercent := models.CustomRound("round", float64(deficitStl)/float64(currStl), 10000)
-
-	fmt.Println("decreasedPercent")
-	fmt.Println(decreasedPercent)
-	fmt.Println("decreasedPercent")
 
 	if decreasedPercent <= models.DecreasedLimit {
 		return nil
@@ -121,23 +103,6 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	}
 
 	// update card gold limit and current stl
-
-	fmt.Println("goldEffBal")
-	fmt.Println(appliedGoldLimit)
-	fmt.Println(currGoldLimit)
-	fmt.Println("goldEffBal")
-
-	fmt.Println("deficitGoldLimit")
-	fmt.Println(deficitGoldLimit)
-	fmt.Println("deficitGoldLimit")
-
-	fmt.Println("acc.Card.CardLimit")
-	fmt.Println(acc.Card.CardLimit)
-	fmt.Println("acc.Card.CardLimit")
-
-	fmt.Println("goldEffBalance")
-	fmt.Println(goldEffBalance)
-	fmt.Println("goldEffBalance")
 	return nil
 }
 
@@ -148,21 +113,37 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 		return err
 	}
 
-	if acc.Status == models.ActivationsStatus {
-		return models.ErrAlreadyActivated
-	}
-
 	err = acc.MappingCardActivationsData(c, pa)
 
 	if err != nil {
 		return models.ErrMappingData
 	}
 
+	// Inquiry activation
+	if models.DateIsNotEqual(acc.Card.UpdatedAt, time.Now()) {
+		appNumber := models.PayloadAppNumber{
+			ApplicationNumber: acc.Application.ApplicationNumber,
+		}
+		err := aUsecase.InquiryActivation(c, appNumber)
+
+		if err != nil {
+			return err
+		}
+	}
+
 	// Activations to BRI
-	aUsecase.activationsToBRI(c, acc, pa)
+	errBri := aUsecase.arRepo.ActivationsToBRI(c, acc, pa)
+
+	if errBri != nil {
+		return errBri
+	}
 
 	// Activations to core
-	aUsecase.activationsToCore(c, acc)
+	errSwitching := aUsecase.arRepo.ActivationsToCore(c, acc)
+
+	if errSwitching != nil {
+		return errSwitching
+	}
 
 	errUpdateAct := aUsecase.aRepo.PostActivations(c, acc)
 
@@ -182,54 +163,11 @@ func (aUsecase *activationsUseCase) checkApplication(c echo.Context, pl interfac
 	}
 
 	acc := models.Account{Application: models.Applications{ApplicationNumber: appNumber.String()}}
-	err := aUsecase.rRepo.GetAccountByAppNumber(c, &acc)
+	err := aUsecase.aRepo.GetAccountByAppNumber(c, &acc)
 
 	if err != nil {
 		return models.Account{}, models.ErrAppNumberNotFound
 	}
 
-	if acc.BrixKey == "" {
-		return models.Account{}, models.ErrEmptyBrixkey
-	}
-
 	return acc, nil
-}
-
-func (aUsecase *activationsUseCase) activationsToCore(c echo.Context, acc models.Account) error {
-	respSwitching := api.SwitchingResponse{}
-	requestDataSwitching := map[string]interface{}{
-		"cif":        acc.CIF,
-		"noRek":      acc.Application.SavingAccount,
-		"branchCode": acc.BranchCode,
-	}
-	req := api.MappingRequestSwitching(requestDataSwitching)
-	errSwitching := api.RetryableSwitchingPost(c, req, "/goldcard/aktivasi", &respSwitching)
-
-	if errSwitching != nil {
-		return errSwitching
-	}
-
-	if respSwitching.ResponseCode != api.APIRCSuccess {
-		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc}))
-		return errSwitching
-	}
-
-	return nil
-}
-
-func (aUsecase *activationsUseCase) activationsToBRI(c echo.Context, acc models.Account, pa models.PayloadActivations) error {
-	respBRI := api.BriResponse{}
-	requestDataBRI := map[string]interface{}{
-		"briXkey":       acc.BrixKey,
-		"expDate":       pa.ExpDate,
-		"lastSixDigits": pa.LastSixDigits,
-	}
-	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
-	errBRI := api.RetryableBriPost(c, "/v1/cobranding/card/activation", reqBRIBody, &respBRI)
-
-	if errBRI != nil {
-		return errBRI
-	}
-
-	return nil
 }

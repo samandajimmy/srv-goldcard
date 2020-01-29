@@ -14,6 +14,15 @@ import (
 var (
 	// SwitchingRCInquiryAllow RC 14
 	SwitchingRCInquiryAllow = "14"
+
+	// SwitchingIsRecalculate represent recalculate open goldcard if STL > 1.15%
+	SwitchingIsRecalculate = "1"
+
+	// SwitchingIsBlock represent block when open goldcard
+	SwitchingIsBlock = "1"
+
+	// SwitchingIsUnBlock represent unblock when close goldcard
+	SwitchingIsUnBlock = "0"
 )
 
 // SwitchingResponse struct represents a response for API Switching
