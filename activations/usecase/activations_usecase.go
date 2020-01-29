@@ -119,7 +119,7 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 		return models.ErrMappingData
 	}
 
-	// TODO Di sini akan ada pengecekan STL turun lebih dari 1.15%
+	// Inquiry activation
 	if models.DateIsNotEqual(acc.Card.UpdatedAt, time.Now()) {
 		appNumber := models.PayloadAppNumber{
 			ApplicationNumber: acc.Application.ApplicationNumber,
@@ -130,9 +130,6 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 			return err
 		}
 	}
-
-	// TODO Open Recalculate jika STL turun lebih dari 1.15%
-	// act.arRepo.openRecalculateToCore(c, acc)
 
 	// Activations to BRI
 	errBri := aUsecase.arRepo.ActivationsToBRI(c, acc, pa)
