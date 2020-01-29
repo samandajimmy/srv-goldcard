@@ -17,6 +17,5 @@ type Repository interface {
 type RestRepository interface {
 	GetDetailGoldUser(c echo.Context, accNumber string) (map[string]string, error)
 	ActivationsToCore(c echo.Context, acc models.Account) error
-	OpenRecalculateToCore(c echo.Context, acc models.Account) error
 	ActivationsToBRI(c echo.Context, acc models.Account, pa models.PayloadActivations) error
 }
