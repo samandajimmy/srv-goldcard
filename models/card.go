@@ -7,8 +7,8 @@ import (
 const (
 	// DecreasedLimit to store a value of decreasing limit
 	DecreasedLimit float64 = 0.0115
-	// EffBalLimit to store a value of effective balance limit
-	EffBalLimit float64 = 0.1000
+	// MinEffBalance to store a value of minimum effective balance
+	MinEffBalance float64 = 0.1000
 
 	defMoneyTaken float64 = 0.94
 

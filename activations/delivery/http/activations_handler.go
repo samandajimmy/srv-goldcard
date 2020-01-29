@@ -44,16 +44,14 @@ func (ah *ActivationsHandler) ActivationsInquiry(c echo.Context) error {
 
 	err := ah.aUsecase.InquiryActivation(c, pl)
 
-	if err != nil {
-		ah.respErrors.SetTitle(err.Error())
-		ah.response.SetResponse("", &ah.respErrors)
+	if err.Title != "" {
+		ah.response.SetResponse("", &err)
 
-		return ah.response.Body(c, err)
+		return ah.response.Body(c, nil)
 	}
 
-	ah.response.SetResponse("", &ah.respErrors)
-
-	return ah.response.Body(c, err)
+	ah.response.SetResponse("", &err)
+	return ah.response.Body(c, nil)
 }
 
 // Activations a handler to activations

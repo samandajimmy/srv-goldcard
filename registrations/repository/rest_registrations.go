@@ -46,3 +46,31 @@ func (rr *restRegistrations) GetCurrentGoldSTL(c echo.Context) (int64, error) {
 
 	return currSTL, nil
 }
+
+func (rr *restRegistrations) OpenGoldcard(c echo.Context, acc models.Account, isRecalculate bool) error {
+	const (
+		isBlokirTrue      = "1"
+		isRecalculateTrue = "1"
+	)
+
+	r := api.SwitchingResponse{}
+	body := map[string]interface{}{
+		"isBlokir":      isBlokirTrue,
+		"noRek":         acc.Application.SavingAccount,
+		"gramTransaksi": acc.Card.CardLimit,
+		"stlPengajuan":  acc.Card.CurrentSTL,
+	}
+
+	if isRecalculate {
+		body["isRecalculate"] = isRecalculateTrue
+	}
+
+	req := api.MappingRequestSwitching(body)
+	err := api.RetryableSwitchingPost(c, req, "/goldcard/open", &r)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

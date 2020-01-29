@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	_apiRequestsUseCase "gade/srv-goldcard/apirequests/usecase"
 	"gade/srv-goldcard/logger"
+	"gade/srv-goldcard/models"
 	"net/http"
 	"net/url"
 	"os"
@@ -158,14 +159,21 @@ func SwitchingPost(c echo.Context, body interface{}, path string, response inter
 
 	r, err := switching.Do(req, response)
 
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	res := response.(*SwitchingResponse)
+
 	go func() {
 		_ = _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, switching.API, body, response)
 	}()
 
-	if err != nil {
-		logger.Make(nil, nil).Debug(err)
-
-		return err
+	if res.ResponseCode == "500" {
+		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{res.ResponseCode,
+			res.ResponseDesc})
 	}
 
 	return nil
