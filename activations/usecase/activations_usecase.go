@@ -2,12 +2,12 @@ package usecase
 
 import (
 	"errors"
-	"fmt"
 	"gade/srv-goldcard/activations"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -49,10 +49,6 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	// validate stl price changes
 	// compare stl price at applied date and current date
 	currStl, err := aUsecase.rrRepo.GetCurrentGoldSTL(c)
-
-	fmt.Println("currStl")
-	fmt.Println(currStl)
-	fmt.Println("currStl")
 
 	if err != nil {
 		// TODO: change the error message
@@ -124,9 +120,16 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 	}
 
 	// TODO Di sini akan ada pengecekan STL turun lebih dari 1.15%
-	// if models.DateIsNotEqual(acc.Card.UpdatedAt, time.Now()) {
+	if models.DateIsNotEqual(acc.Card.UpdatedAt, time.Now()) {
+		appNumber := models.PayloadAppNumber{
+			ApplicationNumber: acc.Application.ApplicationNumber,
+		}
+		err := aUsecase.InquiryActivation(c, appNumber)
 
-	// }
+		if err != nil {
+			return err
+		}
+	}
 
 	// TODO Open Recalculate jika STL turun lebih dari 1.15%
 	// act.arRepo.openRecalculateToCore(c, acc)
