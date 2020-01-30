@@ -56,7 +56,6 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.MaritalStatus = pl.MaritalStatus
 	acc.PersonalInformation.MotherName = pl.MotherName
 	acc.PersonalInformation.HomePhoneArea = pl.HomePhoneArea
-	acc.PersonalInformation.HomePhoneNumber = pl.HomePhoneNumber
 	acc.PersonalInformation.HomeStatus = pl.HomeStatus
 	acc.PersonalInformation.AddressLine1 = pl.AddressLine1
 	acc.PersonalInformation.AddressLine2 = pl.AddressLine2

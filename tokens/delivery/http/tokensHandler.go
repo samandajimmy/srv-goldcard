@@ -72,7 +72,6 @@ func (tkn *TokensHandler) getToken(c echo.Context) error {
 	}
 
 	tkn.response.SetResponse(accToken, &tkn.respErrors)
-
 	return tkn.response.Body(c, err)
 }
 
