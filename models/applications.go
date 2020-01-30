@@ -70,6 +70,12 @@ var (
 		"NpwpImageBase64":   "npwp",
 		"SelfieImageBase64": "selfie",
 	}
+	// MapBRIDocType to store map values of BRI DOC type
+	MapBRIDocType = map[string]string{
+		"ktp":    "A",
+		"npwp":   "G",
+		"selfie": "P",
+	}
 )
 
 // Applications is a struct to store application data

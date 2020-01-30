@@ -46,25 +46,28 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.LastName = pl.LastName
 	acc.PersonalInformation.HandPhoneNumber = pl.HandPhoneNumber
 	acc.PersonalInformation.Email = pl.Email
-	acc.PersonalInformation.Npwp = pl.Npwp
+	acc.PersonalInformation.Npwp = defNPWP
 	acc.PersonalInformation.Nik = pl.Nik
 	acc.PersonalInformation.BirthPlace = pl.BirthPlace
 	acc.PersonalInformation.BirthDate = pl.BirthDate
-	acc.PersonalInformation.Nationality = pl.Nationality
+	acc.PersonalInformation.Nationality = nationalityMap[pl.Nationality]
 	acc.PersonalInformation.Sex = acc.PersonalInformation.GetSex(pl.Sex)
 	acc.PersonalInformation.Education = pl.Education
 	acc.PersonalInformation.MaritalStatus = pl.MaritalStatus
 	acc.PersonalInformation.MotherName = pl.MotherName
-	acc.PersonalInformation.HomePhoneArea = pl.HomePhoneArea
+	acc.PersonalInformation.HomePhoneArea = defHomePhoneArea
 	acc.PersonalInformation.HomeStatus = pl.HomeStatus
 	acc.PersonalInformation.AddressLine1 = pl.AddressLine1
 	acc.PersonalInformation.AddressLine2 = pl.AddressLine2
 	acc.PersonalInformation.AddressLine3 = pl.AddressLine3
 	acc.PersonalInformation.Zipcode = pl.Zipcode
 	acc.PersonalInformation.AddressCity = pl.AddressCity
-	acc.PersonalInformation.StayedSince = pl.StayedSince
-	acc.PersonalInformation.Child = pl.Child
+	acc.PersonalInformation.StayedSince = defStayedSince
+	acc.PersonalInformation.Child = defChildNumber
 	acc.PersonalInformation.RelativePhoneNumber = pl.RelativePhoneNumber
+
+	// set home phone number
+	acc.PersonalInformation.SetHomePhone()
 
 	// application documents
 	acc.Application.SetDocument(pl)

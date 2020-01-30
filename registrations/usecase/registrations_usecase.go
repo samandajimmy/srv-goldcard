@@ -335,7 +335,7 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 			"briXkey": acc.BrixKey,
 		}
 
-		err := api.BriPost(c, "/v1/cobranding/card/appstatus", reqBody, &resp)
+		err := api.RetryableBriPost(c, "/v1/cobranding/card/appstatus", reqBody, &resp)
 
 		if err != nil {
 			logger.Make(c, nil).Debug(err)
@@ -344,6 +344,7 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 
 		// update application status
 		data := resp.Data[0]
+
 		if _, ok := data["appStatus"].(string); !ok {
 			logger.Make(c, nil).Debug(err)
 			return
@@ -432,7 +433,7 @@ func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, brixkey string, do
 
 	briReq := models.AppDocument{
 		BriXkey:    brixkey,
-		DocType:    models.DefAppDocType,
+		DocType:    models.MapBRIDocType[doc.Type],
 		FileName:   doc.FileName,
 		FileExt:    doc.FileExtension,
 		Base64file: "data:image/jpeg;base64," + doc.FileBase64,
@@ -472,10 +473,6 @@ func (reg *registrationsUseCase) checkApplication(c echo.Context, pl interface{}
 
 	if err != nil {
 		return models.Account{}, models.ErrAppNumberNotFound
-	}
-
-	if acc.BrixKey != "" {
-		return models.Account{}, models.ErrAppNumberCompleted
 	}
 
 	return acc, nil
