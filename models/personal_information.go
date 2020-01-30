@@ -2,10 +2,22 @@ package models
 
 import "time"
 
-var briSexInt = map[int64]string{
-	1: "male",
-	2: "female",
-}
+var (
+	defHomePhoneArea string = "021"
+	defWNI           string = "1"
+	defWNA           string = "2"
+	defStayedSince   string = "01/16"
+	defNPWP          string = "111222333444"
+	defChildNumber   int64  = 1
+	briSexInt               = map[int64]string{
+		1: "male",
+		2: "female",
+	}
+	nationalityMap = map[string]string{
+		defWNI: "WNI",
+		defWNA: "WNA",
+	}
+)
 
 // PersonalInformation is a struct to store personal info data
 type PersonalInformation struct {
@@ -54,4 +66,14 @@ func (pi *PersonalInformation) GetBriSex(sex string) int64 {
 	}
 
 	return res
+}
+
+// SetHomePhone to set home phone number value
+func (pi *PersonalInformation) SetHomePhone() {
+	if pi.HomePhoneNumber != "" {
+		return
+	}
+
+	// TODO: need to change this when the validation fixed
+	pi.HomePhoneNumber = "1122334455"
 }

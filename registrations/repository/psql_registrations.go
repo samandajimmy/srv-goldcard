@@ -221,7 +221,7 @@ func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Conte
 			address_line_3 = $18, zipcode = $19, address_city = $20, stayed_since = $21, child = $22,
 			updated_at = $23, relative_phone_number = $24 WHERE id = $25`, nilFilters, pi.FirstName, pi.LastName, pi.Email,
 			pi.Npwp, pi.Nik, pi.BirthPlace, pi.BirthDate, pi.Nationality, "male", pi.Education,
-			pi.MaritalStatus, pi.MotherName, pi.HomePhoneArea, pi.HandPhoneNumber, pi.HomeStatus,
+			pi.MaritalStatus, pi.MotherName, pi.HomePhoneArea, pi.HomePhoneNumber, pi.HomeStatus,
 			pi.AddressLine1, pi.AddressLine2, pi.AddressLine3, pi.Zipcode, pi.AddressCity,
 			pi.StayedSince, pi.Child, time.Now(), pi.RelativePhoneNumber, acc.PersonalInformationID),
 		// update account

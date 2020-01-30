@@ -62,14 +62,8 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	}
 
 	// if it decreased
-	// if the decrase <= 1,15% then go head
-	decreasedPercent := models.CustomRound("round", float64(deficitStl)/float64(currStl), 10000)
-
-	if decreasedPercent <= models.DecreasedLimit {
-		return errors
-	}
-
-	// if the decrase > 1,15% then
+	// get decreasing percentage
+	_ = models.CustomRound("round", float64(deficitStl)/float64(currStl), 10000)
 	// get user effective balance
 	userDetail, err := aUsecase.arRepo.GetDetailGoldUser(c, acc.Application.SavingAccount)
 
@@ -143,23 +137,23 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 		}
 	}
 
-	// Activations to BRI
-	errBri := aUsecase.arRepo.ActivationsToBRI(c, acc, pa)
-
-	if errBri != nil {
-		return errBri
-	}
-
 	// Activations to core
-	errSwitching := aUsecase.arRepo.ActivationsToCore(c, acc)
+	err = aUsecase.arRepo.ActivationsToCore(c, acc)
 
-	if errSwitching != nil {
-		return errSwitching
+	if err != nil {
+		return err
 	}
 
-	errUpdateAct := aUsecase.aRepo.PostActivations(c, acc)
+	// Activations to BRI
+	err = aUsecase.arRepo.ActivationsToBRI(c, acc, pa)
 
-	if errUpdateAct != nil {
+	if err != nil {
+		return err
+	}
+
+	err = aUsecase.aRepo.PostActivations(c, acc)
+
+	if err != nil {
 		return models.ErrPostActivationsFailed
 	}
 

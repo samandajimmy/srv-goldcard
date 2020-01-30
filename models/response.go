@@ -58,7 +58,7 @@ func (re *ResponseErrors) AddError(errString string) {
 
 // SetResponse is a function to set response
 func (resp *Response) SetResponse(respData interface{}, respErrors *ResponseErrors) {
-	if respErrors == nil && respErrors.Title == "" {
+	if respErrors.Title == "" {
 		resp.Status = responseSuccess
 		resp.Code = responseCode[responseSuccess]
 		resp.Message = MessageDataSuccess

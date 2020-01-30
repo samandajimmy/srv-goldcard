@@ -45,7 +45,7 @@ func (occ *Occupation) MappingOccupation(pl PayloadOccupation) error {
 	occ.OfficeZipcode = pl.OfficeZipcode
 	occ.OfficeCity = pl.OfficeCity
 	occ.OfficePhone = pl.OfficePhone
-	occ.Income = pl.Income
+	occ.Income = pl.Income * 12
 
 	return nil
 }

@@ -62,28 +62,26 @@ type PayloadPersonalInformation struct {
 	FirstName            string `json:"firstName" validate:"required"`
 	LastName             string `json:"lastName" validate:"required"`
 	CardName             string `json:"cardName" validate:"required"`
-	Npwp                 string `json:"npwp" validate:"required"`
+	Npwp                 string `json:"npwp"`
 	Nik                  string `json:"nik" validate:"required"`
 	BirthPlace           string `json:"birthPlace" validate:"required"`
 	BirthDate            string `json:"birthDate" validate:"required"`
 	AddressLine1         string `json:"addressLine1" validate:"required" pg:"address_line_1"`
-	AddressLine2         string `json:"addressLine2" validate:"required" pg:"address_line_2"`
-	AddressLine3         string `json:"addressLine3" validate:"required" pg:"address_line_3"`
+	AddressLine2         string `json:"addressLine2" pg:"address_line_2"`
+	AddressLine3         string `json:"addressLine3" pg:"address_line_3"`
 	Sex                  int64  `json:"sex" validate:"required" pg:"-"`
 	SexString            string `json:"sexString,omitempty" pg:"sex"`
 	HomeStatus           int64  `json:"homeStatus" validate:"required"`
 	AddressCity          string `json:"addressCity" validate:"required"`
 	Nationality          string `json:"nationality" validate:"required"`
-	StayedSince          string `json:"stayedSince" validate:"required"`
+	StayedSince          string `json:"stayedSince"`
 	Education            int64  `json:"education" validate:"required"`
-	Zipcode              string `json:"zipcode" validate:"required"`
+	Zipcode              string `json:"zipcode"`
 	MaritalStatus        int64  `json:"maritalStatus" validate:"required"`
 	MotherName           string `json:"motherName" validate:"required"`
-	HandPhoneNumber      string `json:"handPhoneNumber" validate:"required"`
-	HomePhoneArea        string `json:"homePhoneArea" validate:"required"`
-	HomePhoneNumber      string `json:"homePhoneNumber" validate:"required"`
+	HandPhoneNumber      string `json:"handPhoneNumber"`
+	HomePhoneArea        string `json:"homePhoneArea"`
 	Email                string `json:"email" validate:"required"`
-	Income               int64  `json:"income" validate:"required"`
 	KtpImageBase64       string `json:"ktpImageBase64,omitempty" validate:"required"`
 	NpwpImageBase64      string `json:"npwpImageBase64,omitempty" validate:"required"`
 	SelfieImageBase64    string `json:"selfieImageBase64,omitempty" validate:"required"`
