@@ -83,7 +83,7 @@ type PayloadPersonalInformation struct {
 	HomePhoneArea        string `json:"homePhoneArea"`
 	Email                string `json:"email" validate:"required"`
 	KtpImageBase64       string `json:"ktpImageBase64,omitempty" validate:"required"`
-	NpwpImageBase64      string `json:"npwpImageBase64,omitempty" validate:"required"`
+	NpwpImageBase64      string `json:"npwpImageBase64,omitempty"`
 	SelfieImageBase64    string `json:"selfieImageBase64,omitempty" validate:"required"`
 	Province             string `json:"province,omitempty" validate:"required"`
 	Subdistrict          string `json:"subdistrict,omitempty" validate:"required"`
