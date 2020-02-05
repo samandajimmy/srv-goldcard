@@ -3,6 +3,8 @@ package api_test
 import (
 	"fmt"
 	"gade/srv-goldcard/api"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/labstack/echo"
@@ -15,14 +17,19 @@ var stlRequest = map[string]interface{}{
 }
 
 func TestNewSwitchingAPI(t *testing.T) {
-	response := map[string]interface{}{}
+	response := api.SwitchingResponse{}
 	body := stlRequest
 
-	switc, _ := api.NewSwitchingAPI(nil)
-	req, _ := switc.Request("/param/stl", echo.POST, body)
-	resp, _ := switc.Do(req, &response)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
 
-	fmt.Println(req)
+	switc, _ := api.NewSwitchingAPI(c)
+	reqBody, _ := switc.Request("/param/stl", echo.POST, body)
+	resp, _ := switc.Do(reqBody, &response)
+
+	fmt.Println(reqBody)
 	fmt.Println(resp)
 	fmt.Println(response)
 }
