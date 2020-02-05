@@ -27,9 +27,9 @@ func (pa *psqlActivations) PostActivations(c echo.Context, acc models.Account) e
 	app := acc.Application
 	card := acc.Card
 	stmts := []*gcdb.PipelineStmt{
-		gcdb.NewPipelineStmt(`UPDATE accounts SET status = $1, updated_at = $2
-			WHERE id = $3`,
-			nilFilters, acc.Status, time.Now(), acc.ID),
+		gcdb.NewPipelineStmt(`UPDATE accounts SET status = $1, updated_at = $2, account_number = $3
+			WHERE id = $4`,
+			nilFilters, acc.Status, time.Now(), acc.AccountNumber, acc.ID),
 		gcdb.NewPipelineStmt(`UPDATE applications SET status = $1, updated_at = $2
 			WHERE id = $3`,
 			nilFilters, app.Status, time.Now(), acc.ApplicationID),

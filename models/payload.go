@@ -194,3 +194,8 @@ type PayloadActivations struct {
 	LastSixDigits     string `json:"lastSixDigits" validate:"required"`
 	ApplicationNumber string `json:"applicationNumber" validate:"required"`
 }
+
+// RespActivations to store response activations
+type RespActivations struct {
+	AccountNumber string `json:"accountNumber"`
+}

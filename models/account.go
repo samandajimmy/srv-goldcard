@@ -27,6 +27,7 @@ type Account struct {
 	OccupationID          int64               `json:"occupationId"`
 	EmergencyContactID    int64               `json:"emergencyContactId"`
 	CorrespondenceID      int64               `json:"correspondenceId"`
+	AccountNumber         string              `json:"accountNumber"`
 	CreatedAt             time.Time           `json:"createdAt"`
 	UpdatedAt             time.Time           `json:"updatedAt"`
 	Bank                  Bank                `json:"bank"`
