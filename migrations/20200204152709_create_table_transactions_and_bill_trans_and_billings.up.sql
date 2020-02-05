@@ -26,7 +26,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transactions_methods_enum_default') THEN
         CREATE TYPE transactions_methods_enum_default AS ENUM (
             'payment',
-            'adjustments'
+            'adjustment'
         );
     END IF;
 END
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     nominal INTEGER,
     gold_nominal FLOAT,
     type transactions_type_enum_default DEFAULT NULL,
-    status transactions_status_enum_default DEFAULT NULL,
+    status transactions_status_enum_default DEFAULT 'pending',
     balance INTEGER,
     gold_balance FLOAT,
     methods transactions_methods_enum_default DEFAULT NULL,
@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS billings (
     created_at TIMESTAMP DEFAULT NULL
 );
 
-CREATE INDEX index_billings ON billings (id, account_id, billing_date, created_at);
+CREATE INDEX index_billings ON billings (id, billing_date, created_at);
 
 CREATE TABLE IF NOT EXISTS billing_transactions (
     id SERIAL PRIMARY KEY NOT NULL,
