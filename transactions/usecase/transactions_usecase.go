@@ -11,7 +11,7 @@ type transactionsUseCase struct {
 	trRepo transactions.Repository
 }
 
-// RegistrationsUseCase represent Registrations Use Case
+// TransactionsUseCase represent Transactions Use Case
 func RegistrationsUseCase(trRepo transactions.Repository) transactions.UseCase {
 	return &transactionsUseCase{trRepo}
 }
