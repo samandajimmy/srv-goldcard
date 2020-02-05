@@ -199,7 +199,7 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 		return plRegister, err
 	}
 
-	plRegister.Sex = pi.GetBriSex(plRegister.SexString)
+	plRegister.Sex = pi.GetSexInt(plRegister.SexString)
 	plRegister.SexString = ""
 
 	return plRegister, nil

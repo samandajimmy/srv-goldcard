@@ -3,13 +3,12 @@ package models
 import "time"
 
 var (
-	defHomePhoneArea string = "021"
-	defWNI           string = "1"
-	defWNA           string = "2"
-	defStayedSince   string = "01/16"
-	defNPWP          string = "111222333444"
-	defChildNumber   int64  = 1
-	briSexInt               = map[int64]string{
+	defWNI         string = "1"
+	defWNA         string = "2"
+	defStayedSince string = "00/00"
+	defNPWP        string = "00000000000"
+	defChildNumber int64  = 0
+	briSexInt             = map[int64]string{
 		1: "male",
 		2: "female",
 	}
@@ -55,8 +54,8 @@ func (pi *PersonalInformation) GetSex(sex int64) string {
 	return briSexInt[sex]
 }
 
-// GetBriSex to get bri sex status
-func (pi *PersonalInformation) GetBriSex(sex string) int64 {
+// GetSexInt to get bri sex status
+func (pi *PersonalInformation) GetSexInt(sex string) int64 {
 	var res int64
 
 	for k, v := range briSexInt {
@@ -74,6 +73,22 @@ func (pi *PersonalInformation) SetHomePhone() {
 		return
 	}
 
-	// TODO: need to change this when the validation fixed
-	pi.HomePhoneNumber = "1122334455"
+	if pi.RelativePhoneNumber == "" {
+		return
+	}
+
+	// string into slices character
+	runes := []rune(pi.RelativePhoneNumber)
+	pi.HomePhoneArea = string(runes[0:4])
+	pi.HomePhoneNumber = string(runes[4:])
+}
+
+// SetNPWP to get npwp value
+func (pi *PersonalInformation) SetNPWP(npwp string) {
+	if npwp != "" {
+		pi.Npwp = npwp
+		return
+	}
+
+	pi.Npwp = defNPWP
 }
