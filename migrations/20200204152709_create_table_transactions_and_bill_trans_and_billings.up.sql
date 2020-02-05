@@ -34,6 +34,7 @@ $$;
 
 CREATE TABLE IF NOT EXISTS transactions (
     id SERIAL PRIMARY KEY NOT NULL,
+    account_id INTEGER REFERENCES accounts(id) UNIQUE,
     ref_trx_pgdn VARCHAR(100) NOT NULL,
     ref_trx VARCHAR(100) NOT NULL,
     nominal INTEGER,
@@ -70,16 +71,18 @@ CREATE TABLE IF NOT EXISTS billing_transactions (
     id SERIAL PRIMARY KEY NOT NULL,
     trx_id INTEGER REFERENCES transactions(id) NOT NULL,
     bill_id INTEGER REFERENCES billings(id) NOT NULL,
-    nominal INTEGER,
-    gold_nominal FLOAT,
-    type transactions_type_enum_default DEFAULT NULL,
-    status transactions_status_enum_default DEFAULT NULL,
-    balance INTEGER,
-    gold_balance FLOAT,
-    methods transactions_methods_enum_default DEFAULT NULL,
-    trx_date TIMESTAMP DEFAULT NULL,
     updated_at TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP DEFAULT NULL
 );
 
-CREATE INDEX index_bill_transactions ON billing_transactions (id, trx_id, bill_id, created_at);
+CREATE INDEX index_bill_transactions ON billing_transactions (id);
+
+CREATE TABLE IF NOT EXISTS billing_payments (
+    id SERIAL PRIMARY KEY NOT NULL,
+    trx_id INTEGER REFERENCES transactions(id) NOT NULL,
+    bill_id INTEGER REFERENCES billings(id) NOT NULL,
+    updated_at TIMESTAMP DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT NULL
+);
+
+CREATE INDEX index_billing_payments ON billing_payments (id);
