@@ -46,14 +46,12 @@ func (th *TransactionsHandler) BRIPendingTransactions(c echo.Context) error {
 
 	err := th.transactionsUseCase.PostBRIPendingTransactions(c, pbpt)
 
-	if err != nil {
-		th.respErrors.SetTitle(err.Error())
-		th.response.SetResponse("", &th.respErrors)
+	if err.Title != "" {
+		th.response.SetResponse("", &err)
 
-		return th.response.Body(c, err)
+		return th.response.Body(c, nil)
 	}
 
-	th.response.SetResponse("", &th.respErrors)
-
-	return th.response.Body(c, err)
+	th.response.SetResponse("", &err)
+	return th.response.Body(c, nil)
 }

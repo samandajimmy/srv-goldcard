@@ -199,7 +199,7 @@ type PayloadBRIPendingTransactions struct {
 	TransactionId  string `json:"transactionId" validate:"required"`
 	BrixKey        string `json:"brixKey" validate:"required"`
 	TrxDateTime    string `json:"trxDateTime" validate:"required"`
-	Amount         string `json:"amount" validate:"required"`
+	Amount         int64  `json:"amount" validate:"required"`
 	CurrencyAmount string `json:"currencyAmount" validate:"required"`
 	TrxDesc        string `json:"trxDesc" validate:"required"`
 }
