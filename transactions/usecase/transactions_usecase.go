@@ -11,13 +11,13 @@ import (
 )
 
 type transactionsUseCase struct {
-	trRepo transactions.Repository
-	rrRepo registrations.RestRepository
+	trxRepo transactions.Repository
+	rrRepo  registrations.RestRepository
 }
 
 // TransactionsUseCase represent Transactions Use Case
-func TransactionsUseCase(trRepo transactions.Repository, rrRepo registrations.RestRepository) transactions.UseCase {
-	return &transactionsUseCase{trRepo, rrRepo}
+func TransactionsUseCase(trxRepo transactions.Repository, rrRepo registrations.RestRepository) transactions.UseCase {
+	return &transactionsUseCase{trxRepo, rrRepo}
 }
 
 func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl models.PayloadBRIPendingTransactions) models.ResponseErrors {
@@ -46,7 +46,7 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 		return errors
 	}
 
-	err = trxUS.trRepo.PostBRIPendingTransactions(c, trx)
+	err = trxUS.trxRepo.PostBRIPendingTransactions(c, trx)
 
 	if err != nil {
 		errors.SetTitle(models.ErrInsertTransactions.Error())
@@ -62,7 +62,7 @@ func (trxUS *transactionsUseCase) checkAccount(c echo.Context, pl interface{}) (
 
 	// Get Account by BrixKey
 	trx := models.Transaction{Account: models.Account{BrixKey: BrixKey.String()}}
-	err := trxUS.trRepo.GetAccountByBrixKey(c, &trx)
+	err := trxUS.trxRepo.GetAccountByBrixKey(c, &trx)
 
 	if err != nil {
 		return models.Transaction{}, models.ErrGetAccByBrixkey
