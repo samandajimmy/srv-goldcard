@@ -21,9 +21,9 @@ func NewPsqlTransactionsRepository(Conn *sql.DB, DBpg *pg.DB) transactions.Repos
 	return &psqlTransactionsRepository{Conn, DBpg}
 }
 
-func (trx *psqlTransactionsRepository) PostBRIPendingTransactions(c echo.Context, trans models.Transaction) error {
+func (PSQLTrx *psqlTransactionsRepository) PostBRIPendingTransactions(c echo.Context, trans models.Transaction) error {
 	trans.CreatedAt = time.Now()
-	err := trx.DBpg.Insert(&trans)
+	err := PSQLTrx.DBpg.Insert(&trans)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
@@ -34,10 +34,10 @@ func (trx *psqlTransactionsRepository) PostBRIPendingTransactions(c echo.Context
 	return nil
 }
 
-func (trx *psqlTransactionsRepository) GetAccountByBrixKey(c echo.Context, trans *models.Transaction) error {
+func (PSQLTrx *psqlTransactionsRepository) GetAccountByBrixKey(c echo.Context, trx *models.Transaction) error {
 	newAcc := models.Account{}
-	err := trx.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").Relation("Card").
-		Where("brixkey = ?", trans.Account.BrixKey).Select()
+	err := PSQLTrx.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").Relation("Card").
+		Where("brixkey = ?", trx.Account.BrixKey).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
@@ -45,12 +45,12 @@ func (trx *psqlTransactionsRepository) GetAccountByBrixKey(c echo.Context, trans
 		return err
 	}
 
-	newTrans := models.Transaction{Account: newAcc}
+	newTrx := models.Transaction{Account: newAcc}
 
 	if err == pg.ErrNoRows {
 		return models.ErrGetAccByBrixkey
 	}
 
-	*trans = newTrans
+	*trx = newTrx
 	return nil
 }

@@ -20,33 +20,33 @@ func TransactionsUseCase(trRepo transactions.Repository, rrRepo registrations.Re
 	return &transactionsUseCase{trRepo, rrRepo}
 }
 
-func (trx *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl models.PayloadBRIPendingTransactions) models.ResponseErrors {
+func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl models.PayloadBRIPendingTransactions) models.ResponseErrors {
 	var errors models.ResponseErrors
-	trans, err := trx.checkAccount(c, pl)
+	trx, err := trxUS.checkAccount(c, pl)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetAccByBrixkey.Error())
 		return errors
 	}
 	// Generate ref transactions pegadaian
-	refTrxPg, _ := uuid.NewRandom()
+	refTrxPgdn, _ := uuid.NewRandom()
 
 	// Get curr STL
-	currStl, err := trx.rrRepo.GetCurrentGoldSTL(c)
+	currStl, err := trxUS.rrRepo.GetCurrentGoldSTL(c)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetCurrSTL.Error())
 		return errors
 	}
 
-	err = trans.MappingTransactions(c, pl, trans, refTrxPg.String(), currStl)
+	err = trx.MappingTransactions(c, pl, trx, refTrxPgdn.String(), currStl)
 
 	if err != nil {
 		errors.SetTitle(models.ErrMappingData.Error())
 		return errors
 	}
 
-	err = trx.trRepo.PostBRIPendingTransactions(c, trans)
+	err = trxUS.trRepo.PostBRIPendingTransactions(c, trx)
 
 	if err != nil {
 		errors.SetTitle(models.ErrInsertTransactions.Error())
@@ -56,20 +56,17 @@ func (trx *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl mo
 	return errors
 }
 
-func (trx *transactionsUseCase) checkAccount(c echo.Context, pl interface{}) (models.Transaction, error) {
+func (trxUS *transactionsUseCase) checkAccount(c echo.Context, pl interface{}) (models.Transaction, error) {
 	r := reflect.ValueOf(pl)
 	BrixKey := r.FieldByName("BrixKey")
 
-	if BrixKey.IsZero() {
-		return models.Transaction{}, nil
-	}
-
-	trans := models.Transaction{Account: models.Account{BrixKey: BrixKey.String()}}
-	err := trx.trRepo.GetAccountByBrixKey(c, &trans)
+	// Get Account by BrixKey
+	trx := models.Transaction{Account: models.Account{BrixKey: BrixKey.String()}}
+	err := trxUS.trRepo.GetAccountByBrixKey(c, &trx)
 
 	if err != nil {
 		return models.Transaction{}, models.ErrGetAccByBrixkey
 	}
 
-	return trans, nil
+	return trx, nil
 }

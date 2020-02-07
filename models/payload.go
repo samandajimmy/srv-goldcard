@@ -203,3 +203,5 @@ type PayloadBRIPendingTransactions struct {
 	CurrencyAmount string `json:"currencyAmount" validate:"required"`
 	TrxDesc        string `json:"trxDesc" validate:"required"`
 }
+
+// type Payload
