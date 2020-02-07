@@ -10,6 +10,6 @@ DROP TABLE IF EXISTS billing_payments;
 DROP INDEX index_billings;
 DROP TABLE IF EXISTS billings;
 
-DROP TYPE transactions_type_enum_default;
-DROP TYPE transactions_status_enum_default;
-DROP TYPE transactions_methods_enum_default;
+DROP TYPE transactions_type_enum;
+DROP TYPE transactions_status_enum;
+DROP TYPE transactions_methods_enum;

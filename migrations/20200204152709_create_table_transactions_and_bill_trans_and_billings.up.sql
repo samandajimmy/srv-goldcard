@@ -1,7 +1,7 @@
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transactions_type_enum_default') THEN
-        CREATE TYPE transactions_type_enum_default AS ENUM (
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transactions_type_enum') THEN
+        CREATE TYPE transactions_type_enum AS ENUM (
             'debit',
             'credit'
         );
@@ -11,8 +11,8 @@ $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transactions_status_enum_default') THEN
-        CREATE TYPE transactions_status_enum_default AS ENUM (
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transactions_status_enum') THEN
+        CREATE TYPE transactions_status_enum AS ENUM (
             'posted',
             'pending',
             'canceled'
@@ -23,8 +23,8 @@ $$;
 
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transactions_methods_enum_default') THEN
-        CREATE TYPE transactions_methods_enum_default AS ENUM (
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'transactions_methods_enum') THEN
+        CREATE TYPE transactions_methods_enum AS ENUM (
             'payment',
             'adjustment'
         );
@@ -39,11 +39,11 @@ CREATE TABLE IF NOT EXISTS transactions (
     ref_trx VARCHAR(100) NOT NULL,
     nominal INTEGER,
     gold_nominal FLOAT,
-    type transactions_type_enum_default DEFAULT NULL,
-    status transactions_status_enum_default DEFAULT 'pending',
+    type transactions_type_enum DEFAULT NULL,
+    status transactions_status_enum DEFAULT 'pending',
     balance INTEGER,
     gold_balance FLOAT,
-    methods transactions_methods_enum_default DEFAULT NULL,
+    methods transactions_methods_enum DEFAULT NULL,
     trx_date TIMESTAMP DEFAULT NULL,
     updated_at TIMESTAMP DEFAULT NULL,
     created_at TIMESTAMP DEFAULT NULL
