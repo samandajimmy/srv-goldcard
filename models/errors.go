@@ -78,6 +78,9 @@ var (
 	// ErrUpdateBrixkey to store update brixkey error message
 	ErrUpdateBrixkey = errors.New("Terjadi kesalahan saat update brixkey")
 
+	// ErrUpdateBrixkey to store update brixkey error message
+	ErrGetAccByBrixkey = errors.New("Brixkey tidak di temukan")
+
 	// ErrUpdateAppDocID to store update application document ID error message
 	ErrUpdateAppDocID = errors.New("Terjadi kesalahan saat update document id")
 
@@ -137,6 +140,9 @@ var (
 
 	// ErrDecreasedSTLDesc to store the description of get decreasing STL error message
 	ErrDecreasedSTLDesc = errors.New("Harga emas turun cukup tinggi sejak kamu mengajukan kartu emas. Top Up Tabungan Emas kamu untuk melanjutkan proses aktivasi.")
+
+	// ErrInsertTransactions to store get failed when insert data to table transactions
+	ErrInsertTransactions = errors.New("Gagal saat memasukan data transaksi")
 )
 
 // DynamicErr to return parameterize errors

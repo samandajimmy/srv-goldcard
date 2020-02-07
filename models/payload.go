@@ -194,3 +194,13 @@ type PayloadActivations struct {
 	LastSixDigits     string `json:"lastSixDigits" validate:"required"`
 	ApplicationNumber string `json:"applicationNumber" validate:"required"`
 }
+
+// PayloadBRIPendingTransactions a struct to store all payload for transactions pending from BRI
+type PayloadBRIPendingTransactions struct {
+	TransactionId  string `json:"transactionId" validate:"required"`
+	BrixKey        string `json:"brixKey" validate:"required"`
+	TrxDateTime    string `json:"trxDateTime" validate:"required"`
+	Amount         int64  `json:"amount" validate:"required"`
+	CurrencyAmount string `json:"currencyAmount" validate:"required"`
+	TrxDesc        string `json:"trxDesc" validate:"required"`
+}
