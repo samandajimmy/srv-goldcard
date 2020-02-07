@@ -12,6 +12,7 @@ const (
 	statusTrxPending string = "pending"
 )
 
+// Transaction is a struct to store transaction data
 type Transaction struct {
 	ID          int64     `json:"id"`
 	AccountId   int64     `json:"accountId"`
@@ -30,7 +31,8 @@ type Transaction struct {
 	Account     Account   `json:"account"`
 }
 
-type Billings struct {
+// Billing is a struct to store billing data
+type Billing struct {
 	AccountId   int64     `json:"accountId"`
 	Amount      int64     `json:"amount"`
 	GoldAmount  float64   `json:"goldAmount"`
@@ -43,24 +45,27 @@ type Billings struct {
 	Account     Account   `json:"account"`
 }
 
-type BillingTransactions struct {
+// BillingTransaction is a struct to store billing transaction data
+type BillingTransaction struct {
 	TrxId       int64       `json:"trxId"`
 	BillId      int64       `json:"billId"`
 	UpdatedAt   time.Time   `json:"updatedAt"`
 	CreatedAt   time.Time   `json:"createdAt"`
 	Transaction Transaction `json:"transaction"`
-	Billings    Billings    `json:"billings"`
+	Billing     Billing     `json:"billing"`
 }
 
-type BillingPayments struct {
+// BillingPayment is a struct to store billing payment data
+type BillingPayment struct {
 	TrxId       int64       `json:"trxId"`
 	BillId      int64       `json:"billId"`
 	UpdatedAt   time.Time   `json:"updatedAt"`
 	CreatedAt   time.Time   `json:"createdAt"`
 	Transaction Transaction `json:"transaction"`
-	Billings    Billings    `json:"billings"`
+	Billing     Billing     `json:"billing"`
 }
 
+// MappingTransactions is a struct to mapping transactions data
 func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPendingTransactions, trans Transaction, refTrxPg string, stl int64) error {
 	goldNominal := trans.Account.Card.ConvertMoneyToGold(pl.Amount, stl)
 
