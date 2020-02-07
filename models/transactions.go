@@ -10,8 +10,6 @@ const (
 	typeTrxCredit string = "credit"
 
 	statusTrxPending string = "pending"
-
-	methodMethodUsage string = "usage"
 )
 
 type Transaction struct {
