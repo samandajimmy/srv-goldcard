@@ -195,7 +195,17 @@ type PayloadActivations struct {
 	ApplicationNumber string `json:"applicationNumber" validate:"required"`
 }
 
-// RespActivations to store response activations
+// PayloadBRIPendingTransactions a struct to store all payload for transactions pending from BRI
+type PayloadBRIPendingTransactions struct {
+	TransactionId  string `json:"transactionId" validate:"required"`
+	BrixKey        string `json:"brixKey" validate:"required"`
+	TrxDateTime    string `json:"trxDateTime" validate:"required"`
+	Amount         int64  `json:"amount" validate:"required"`
+	CurrencyAmount string `json:"currencyAmount" validate:"required"`
+	TrxDesc        string `json:"trxDesc" validate:"required"`
+}
+
+// Payload ResActivations atruct to store all payload for success response activation
 type RespActivations struct {
 	AccountNumber string `json:"accountNumber"`
 }

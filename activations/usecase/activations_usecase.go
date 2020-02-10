@@ -153,8 +153,8 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 		return respActNil, err
 	}
 
-	appNumber, _ := uuid.NewRandom()
-	acc.AccountNumber = appNumber.String()
+	accNumber, _ := uuid.NewRandom()
+	acc.AccountNumber = accNumber.String()
 
 	err = aUsecase.aRepo.PostActivations(c, acc)
 

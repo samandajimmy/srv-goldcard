@@ -47,7 +47,6 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.LastName = pl.LastName
 	acc.PersonalInformation.HandPhoneNumber = pl.HandPhoneNumber
 	acc.PersonalInformation.Email = pl.Email
-	acc.PersonalInformation.Npwp = defNPWP
 	acc.PersonalInformation.Nik = pl.Nik
 	acc.PersonalInformation.BirthPlace = pl.BirthPlace
 	acc.PersonalInformation.BirthDate = pl.BirthDate
@@ -56,7 +55,6 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.Education = pl.Education
 	acc.PersonalInformation.MaritalStatus = pl.MaritalStatus
 	acc.PersonalInformation.MotherName = pl.MotherName
-	acc.PersonalInformation.HomePhoneArea = defHomePhoneArea
 	acc.PersonalInformation.HomeStatus = pl.HomeStatus
 	acc.PersonalInformation.AddressLine1 = pl.AddressLine1
 	acc.PersonalInformation.AddressLine2 = pl.AddressLine2
@@ -67,8 +65,15 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.Child = defChildNumber
 	acc.PersonalInformation.RelativePhoneNumber = pl.RelativePhoneNumber
 
+	if acc.PersonalInformation.HandPhoneNumber != "" {
+		acc.PersonalInformation.HomePhoneArea = pl.HomePhoneArea
+	}
+
 	// set home phone number
 	acc.PersonalInformation.SetHomePhone()
+
+	// set npwp
+	acc.PersonalInformation.SetNPWP(pl.Npwp)
 
 	// application documents
 	acc.Application.SetDocument(pl)

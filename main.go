@@ -23,6 +23,9 @@ import (
 	_tokenHttpDelivery "gade/srv-goldcard/tokens/delivery/http"
 	_tokenRepository "gade/srv-goldcard/tokens/repository"
 	_tokenUseCase "gade/srv-goldcard/tokens/usecase"
+	_transactionsHttpDelivery "gade/srv-goldcard/transactions/delivery/http"
+	_transactionsRepository "gade/srv-goldcard/transactions/repository"
+	_transactionsUseCase "gade/srv-goldcard/transactions/usecase"
 
 	"github.com/go-pg/pg/v9"
 	"github.com/golang-migrate/migrate/v4"
@@ -75,6 +78,7 @@ func main() {
 	activationRepository := _activationRepository.NewPsqlActivations(dbConn, dbpg)
 	restActivationRepository := _activationRepository.NewRestActivations()
 	apiRequestsRepository := _apiRequestsRepository.NewPsqlAPIRequestsRepository(dbConn, dbpg)
+	transactionsRepository := _transactionsRepository.NewPsqlTransactionsRepository(dbConn, dbpg)
 
 	// USECASES
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
@@ -82,12 +86,14 @@ func main() {
 	registrationsUserCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository, restRegistrationsRepo)
 	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
+	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, restRegistrationsRepo)
 
 	// DELIVERIES
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
 	_tokenHttpDelivery.NewTokensHandler(echoGroup, tokenUseCase)
 	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup, registrationsUserCase)
 	_activationHttpDelivery.NewActivationsHandler(echoGroup, activationUserCase)
+	_transactionsHttpDelivery.NewTransactionsHandler(echoGroup, transactionsUseCase)
 
 	// PING
 	ech.GET("/ping", ping)

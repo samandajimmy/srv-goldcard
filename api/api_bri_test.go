@@ -3,6 +3,8 @@ package api_test
 import (
 	"fmt"
 	"gade/srv-goldcard/api"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/labstack/echo"
@@ -60,16 +62,21 @@ var registerRequest = map[string]interface{}{
 }
 
 func TestNewBriAPI(t *testing.T) {
-	response := map[string]interface{}{}
+	response := api.BriResponse{}
 	body := map[string]interface{}{
 		"requestData": registerRequest,
 	}
 
-	bri, _ := api.NewBriAPI(nil)
-	req, _ := bri.Request("/v1/cobranding/register", echo.POST, body)
-	resp, _ := bri.Do(req, &response)
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
 
-	fmt.Println(req)
+	bri, _ := api.NewBriAPI(c)
+	reqBody, _ := bri.Request("/v1/cobranding/register", echo.POST, body)
+	resp, _ := bri.Do(reqBody, &response)
+
+	fmt.Println(reqBody)
 	fmt.Println(resp)
 	fmt.Println(response)
 }
