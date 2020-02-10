@@ -1,2 +1,2 @@
 ALTER TABLE transactions
-DROP COLUMN account_id;
+ADD CONSTRAINT transactions_account_id_key UNIQUE(account_id)
