@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -111,17 +112,18 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	return errors
 }
 
-func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.PayloadActivations) error {
+func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.PayloadActivations) (models.RespActivations, error) {
+	var respActNil models.RespActivations
 	acc, err := aUsecase.checkApplication(c, pa)
 
 	if err != nil {
-		return err
+		return respActNil, err
 	}
 
 	err = acc.MappingCardActivationsData(c, pa)
 
 	if err != nil {
-		return models.ErrMappingData
+		return respActNil, models.ErrMappingData
 	}
 
 	// Inquiry activation
@@ -133,7 +135,7 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 		err := aUsecase.InquiryActivation(c, appNumber)
 
 		if err.Title != "" {
-			return errors.New(err.Title)
+			return respActNil, errors.New(err.Title)
 		}
 	}
 
@@ -141,23 +143,26 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 	err = aUsecase.arRepo.ActivationsToCore(c, acc)
 
 	if err != nil {
-		return err
+		return respActNil, err
 	}
 
 	// Activations to BRI
 	err = aUsecase.arRepo.ActivationsToBRI(c, acc, pa)
 
 	if err != nil {
-		return err
+		return respActNil, err
 	}
+
+	accNumber, _ := uuid.NewRandom()
+	acc.AccountNumber = accNumber.String()
 
 	err = aUsecase.aRepo.PostActivations(c, acc)
 
 	if err != nil {
-		return models.ErrPostActivationsFailed
+		return respActNil, models.ErrPostActivationsFailed
 	}
 
-	return nil
+	return models.RespActivations{AccountNumber: acc.AccountNumber}, nil
 }
 
 func (aUsecase *activationsUseCase) checkApplication(c echo.Context, pl interface{}) (models.Account, error) {

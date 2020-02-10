@@ -204,3 +204,8 @@ type PayloadBRIPendingTransactions struct {
 	CurrencyAmount string `json:"currencyAmount" validate:"required"`
 	TrxDesc        string `json:"trxDesc" validate:"required"`
 }
+
+// Payload ResActivations atruct to store all payload for success response activation
+type RespActivations struct {
+	AccountNumber string `json:"accountNumber"`
+}

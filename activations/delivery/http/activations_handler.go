@@ -73,7 +73,7 @@ func (ah *ActivationsHandler) Activations(c echo.Context) error {
 		return ah.response.Body(c, err)
 	}
 
-	err := ah.aUsecase.PostActivations(c, pa)
+	resp, err := ah.aUsecase.PostActivations(c, pa)
 
 	if err != nil {
 		ah.respErrors.SetTitle(err.Error())
@@ -82,7 +82,7 @@ func (ah *ActivationsHandler) Activations(c echo.Context) error {
 		return ah.response.Body(c, err)
 	}
 
-	ah.response.SetResponse("", &ah.respErrors)
+	ah.response.SetResponse(resp, &ah.respErrors)
 
 	return ah.response.Body(c, err)
 }
