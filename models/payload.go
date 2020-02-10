@@ -209,3 +209,23 @@ type PayloadBRIPendingTransactions struct {
 type RespActivations struct {
 	AccountNumber string `json:"accountNumber"`
 }
+
+// PaginationPayload struct to store pagination payload
+type PaginationPayload struct {
+	Limit  int64 `json:"limit"`
+	Offset int64 `json:"offset"`
+}
+
+// PayloadHistoryTransactions struct to store request history transactions
+type PayloadHistoryTransactions struct {
+	AccountNumber string            `json:"accountNumber" validate:"required"`
+	Pagination    PaginationPayload `json:"pagination" validate:"required"`
+}
+
+// ResponseHistoryTransactions struct to store response history transactions
+type ResponseHistoryTransactions struct {
+	Nominal     int64  `json:"nominal"`
+	TrxDate     string `json:"trxDate"`
+	Status      string `json:"status"`
+	Description string `json:"description"`
+}

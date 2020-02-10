@@ -143,6 +143,9 @@ var (
 
 	// ErrInsertTransactions to store get failed when insert data to table transactions
 	ErrInsertTransactions = errors.New("Gagal saat memasukan data transaksi")
+
+	// ErrGetHistoryTransactions to store message failed when get data history account in table transactions
+	ErrGetHistoryTransactions = errors.New("Gagal saat mencari data history transaksi")
 )
 
 // DynamicErr to return parameterize errors
