@@ -11,6 +11,7 @@ type Repository interface {
 	PostActivations(echo.Context, models.Account) error
 	GetAccountByAppNumber(c echo.Context, acc *models.Account) error
 	UpdateGoldLimit(echo.Context, models.Card) error
+	GetStoredGoldPrice(c echo.Context) (int64, error)
 }
 
 // RestRepository represent the rest activations repository contract

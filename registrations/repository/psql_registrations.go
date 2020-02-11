@@ -446,6 +446,28 @@ func (regis *psqlRegistrationsRepository) UpsertAppDocument(c echo.Context, doc 
 	return nil
 }
 
+func (regis *psqlRegistrationsRepository) GetCoreServiceStatus(c echo.Context) error {
+	var param models.Parameter
+	query := `select id, key, value, description, created_at, updated_at
+		from parameters where key = ? limit 1;`
+
+	_, err := regis.DBpg.Query(&param, query, "CORE_EOD_HEALTH")
+
+	if err != nil || (param == models.Parameter{}) {
+		logger.Make(nil, nil).Debug(err)
+
+		return err
+	}
+
+	coreStatus, _ := strconv.ParseBool(param.Value)
+
+	if coreStatus {
+		return models.ErrCoreEODStatus
+	}
+
+	return nil
+}
+
 func (regis *psqlRegistrationsRepository) insertAppDocument(c echo.Context, doc models.Document) error {
 	doc.CreatedAt = time.Now()
 	err := regis.DBpg.Insert(&doc)

@@ -23,6 +23,11 @@ func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.Re
 }
 
 func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAddress) error {
+	// get core service health status
+	if err := reg.regRepo.GetCoreServiceStatus(c); err != nil {
+		return err
+	}
+
 	// get account by appNumber
 	acc, err := reg.checkApplication(c, pl)
 

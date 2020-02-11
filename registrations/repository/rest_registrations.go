@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"gade/srv-goldcard/activations"
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -10,30 +11,40 @@ import (
 	"github.com/labstack/echo"
 )
 
-type restRegistrations struct{}
+type restRegistrations struct {
+	aRepo activations.Repository
+}
 
 // NewRestRegistrations will create an object that represent the registrations.Repository interface
-func NewRestRegistrations() registrations.RestRepository {
-	return &restRegistrations{}
+func NewRestRegistrations(aRepo activations.Repository) registrations.RestRepository {
+	return &restRegistrations{aRepo}
 }
 
 // GetCurrentGoldSTL to get current STL from core
 func (rr *restRegistrations) GetCurrentGoldSTL(c echo.Context) (int64, error) {
+	// get stored gold price
+	hargaEmas, err := rr.aRepo.GetStoredGoldPrice(c)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		hargaEmas = 0
+	}
+
 	r := api.SwitchingResponse{}
 	STLBody := map[string]interface{}{}
 	req := api.MappingRequestSwitching(STLBody)
-	err := api.RetryableSwitchingPost(c, req, "/param/stl", &r)
+	err = api.RetryableSwitchingPost(c, req, "/param/stl", &r)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return 0, err
+		return hargaEmas, nil
 	}
 
 	if r.ResponseCode != "00" {
 		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode, r.ResponseDesc}))
 
-		return 0, err
+		return hargaEmas, nil
 	}
 
 	currSTL, err := strconv.ParseInt(r.ResponseData["hargaEmas"], 10, 64)
