@@ -37,7 +37,7 @@ func (PSQLTrx *psqlTransactionsRepository) PostBRIPendingTransactions(c echo.Con
 func (PSQLTrx *psqlTransactionsRepository) GetTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) ([]models.ResponseHistoryTransactions, error) {
 	trx := []models.ResponseHistoryTransactions{}
 	_, err := PSQLTrx.DBpg.Query(&trx, `SELECT t.nominal, t.trx_date, t.status, t.description FROM transactions t 
-		INNER JOIN accounts a ON a.id = t.account_id WHERE a.account_number = ? LIMIT ? OFFSET ?`,
+		LEFT JOIN accounts a ON a.id = t.account_id WHERE a.account_number = ? LIMIT ? OFFSET ?`,
 		pt.AccountNumber, pt.Pagination.Limit, pt.Pagination.Offset)
 
 	if err != nil && err != pg.ErrNoRows {

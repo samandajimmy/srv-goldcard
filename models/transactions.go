@@ -69,6 +69,7 @@ type BillingPayment struct {
 // MappingTransactions is a struct to mapping transactions data
 func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPendingTransactions, trans Transaction, refTrxPg string, stl int64) error {
 	goldNominal := trx.Account.Card.ConvertMoneyToGold(pl.Amount, stl)
+	// TODO lanjut di GCD-8
 	balance := trx.Account.Card.CardLimit - pl.Amount
 	goldBalance := trx.Account.Card.ConvertMoneyToGold(balance, stl)
 

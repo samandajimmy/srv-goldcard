@@ -21,10 +21,10 @@ func NewTransactionsHandler(
 		transactionsUseCase: trUseCase,
 	}
 
-	// Endpoin For BRI
+	// Endpoint For BRI
 	echoGroup.API.POST("/transactions/bri", handler.BRIPendingTransactions)
 
-	// Endpoin For PDS
+	// Endpoint For PDS
 	echoGroup.API.GET("/transactions/history", handler.HistoryTransactions)
 }
 
