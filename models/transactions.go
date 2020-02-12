@@ -65,6 +65,10 @@ type BillingPayment struct {
 	Billing     Billing     `json:"billing"`
 }
 
+type BRICardBalance struct {
+	CurrentBalance float64 `json:"currentBalance"`
+}
+
 // MappingTransactions is a struct to mapping transactions data
 func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPendingTransactions, trans Transaction, refTrxPg string, stl int64) error {
 	goldNominal := trans.Account.Card.ConvertMoneyToGold(pl.Amount, stl)
@@ -79,6 +83,13 @@ func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPending
 	trx.Balance = int64(trans.Account.Card.CardLimit - pl.Amount)
 	trx.GoldBalance = float64(trans.Account.Card.GoldLimit - goldNominal)
 	trx.TrxDate = pl.TrxDateTime
+
+	return nil
+}
+
+// MappingTransactionsAccount is a struc to mapping transactions account data
+func (trx *Transaction) MappingTransactionsAccount(c echo.Context, pl PayloadAccNumber) error {
+	trx.Account.AccountNumber = pl.AccountNumber
 
 	return nil
 }

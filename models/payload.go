@@ -209,3 +209,11 @@ type PayloadBRIPendingTransactions struct {
 type RespActivations struct {
 	AccountNumber string `json:"accountNumber"`
 }
+
+type PayloadBriGetCardInformation struct {
+	BriXkey string `json:"briXkey" validate:"required"`
+}
+
+type PayloadAccNumber struct {
+	AccountNumber string `json:"accountNumber" validate:"required"`
+}

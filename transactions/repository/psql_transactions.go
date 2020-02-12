@@ -54,3 +54,25 @@ func (PSQLTrx *psqlTransactionsRepository) GetAccountByBrixKey(c echo.Context, t
 	*trx = newTrx
 	return nil
 }
+
+func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Context, trx *models.Transaction) error {
+	newAcc := models.Account{}
+	err := PSQLTrx.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
+		Relation("Card").
+		Where("account_number = ?", trx.Account.AccountNumber).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	newTrx := models.Transaction{Account: newAcc}
+
+	if err == pg.ErrNoRows {
+		return models.ErrAppNumberNotFound
+	}
+
+	*trx = newTrx
+	return nil
+}
