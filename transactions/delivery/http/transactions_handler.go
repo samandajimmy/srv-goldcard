@@ -26,8 +26,7 @@ func NewTransactionsHandler(
 
 	// Endpoint For PDS
 	echoGroup.API.GET("/transactions/history", handler.HistoryTransactions)
-	echoGroup.API.POST("/transactions/saldo", handler.GetCardBalance)
-
+	echoGroup.API.POST("/transactions/balance", handler.GetCardBalance)
 }
 
 // Registrations a handler to handle goldcard registrations

@@ -1,11 +1,13 @@
 package usecase
 
 import (
+	"errors"
 	"gade/srv-goldcard/activations"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
 	"reflect"
 	"strconv"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
@@ -124,32 +126,32 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 		return respActNil, models.ErrMappingData
 	}
 
-	// // Inquiry activation
-	// if models.DateIsNotEqual(acc.Card.UpdatedAt, time.Now()) {
-	// 	appNumber := models.PayloadAppNumber{
-	// 		ApplicationNumber: acc.Application.ApplicationNumber,
-	// 	}
+	// Inquiry activation
+	if models.DateIsNotEqual(acc.Card.UpdatedAt, time.Now()) {
+		appNumber := models.PayloadAppNumber{
+			ApplicationNumber: acc.Application.ApplicationNumber,
+		}
 
-	// 	err := aUsecase.InquiryActivation(c, appNumber)
+		err := aUsecase.InquiryActivation(c, appNumber)
 
-	// 	if err.Title != "" {
-	// 		return respActNil, errors.New(err.Title)
-	// 	}
-	// }
+		if err.Title != "" {
+			return respActNil, errors.New(err.Title)
+		}
+	}
 
-	// // Activations to core
-	// err = aUsecase.arRepo.ActivationsToCore(c, acc)
+	// Activations to core
+	err = aUsecase.arRepo.ActivationsToCore(c, acc)
 
-	// if err != nil {
-	// 	return respActNil, err
-	// }
+	if err != nil {
+		return respActNil, err
+	}
 
-	// // Activations to BRI
-	// err = aUsecase.arRepo.ActivationsToBRI(c, acc, pa)
+	// Activations to BRI
+	err = aUsecase.arRepo.ActivationsToBRI(c, acc, pa)
 
-	// if err != nil {
-	// 	return respActNil, err
-	// }
+	if err != nil {
+		return respActNil, err
+	}
 
 	accNumber, _ := uuid.NewRandom()
 	acc.AccountNumber = accNumber.String()

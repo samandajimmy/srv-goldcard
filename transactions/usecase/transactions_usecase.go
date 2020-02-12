@@ -6,7 +6,6 @@ import (
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/transactions"
 	"reflect"
-	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
@@ -35,8 +34,7 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 	refTrxPgdn, _ := uuid.NewRandom()
 
 	// Get curr STL
-	// currStl, err := trxUS.rrRepo.GetCurrentGoldSTL(c)
-	currStl, _ := strconv.ParseInt("560782", 10, 64)
+	currStl, err := trxUS.rrRepo.GetCurrentGoldSTL(c)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetCurrSTL.Error())
@@ -123,8 +121,12 @@ func (trxUS *transactionsUseCase) GetCardBalance(c echo.Context, pl models.Paylo
 		return briCBal, err
 	}
 
-	jmGbci, _ := json.Marshal(gBriCInfo)
-	json.Unmarshal(jmGbci, &briCBal)
+	jmGbci, err := json.Marshal(gBriCInfo)
 
+	if err != nil {
+		return briCBal, err
+	}
+
+	json.Unmarshal(jmGbci, &briCBal)
 	return briCBal, err
 }
