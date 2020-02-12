@@ -152,6 +152,9 @@ var (
 
 	// ErrCoreEODStatus to store down time core servive
 	ErrCoreEODStatus = errors.New("Mohon maaf, Layanan sedang tidak tersedia")
+
+	// ErrGetCardBalance to store get gold card balance error message
+	ErrGetCardBalance = errors.New("Terjadi kesalahan ketika mendapatkan data saldo kartu emas")
 )
 
 // DynamicErr to return parameterize errors

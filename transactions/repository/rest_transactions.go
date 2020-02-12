@@ -25,6 +25,8 @@ func (ra *restTransactions) GetBRICardInformation(c echo.Context, acc models.Acc
 	errBRI := api.RetryableBriPost(c, "/v1/cobranding/card/information", reqBRIBody.RequestData, &respBRI)
 
 	if errBRI != nil {
+		logger.Make(c, nil).Debug(errBRI)
+
 		return nil, errBRI
 	}
 

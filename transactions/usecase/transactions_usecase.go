@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"encoding/json"
+	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/transactions"
@@ -94,6 +95,7 @@ func (trxUS *transactionsUseCase) checkAccountByAccountNumber(c echo.Context, pl
 	err := trxUS.trxRepo.GetAccountByAccountNumber(c, &trx)
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
 		return models.Transaction{}, models.ErrGetAccByAccountNumber
 	}
 
@@ -101,32 +103,40 @@ func (trxUS *transactionsUseCase) checkAccountByAccountNumber(c echo.Context, pl
 }
 
 func (trxUS *transactionsUseCase) GetCardBalance(c echo.Context, pl models.PayloadAccNumber) (models.BRICardBalance, error) {
-	var briCBal models.BRICardBalance
+	var briCardBal models.BRICardBalance
 	trx, err := trxUS.checkAccountByAccountNumber(c, pl)
 
 	if err != nil {
-		return briCBal, err
+		return briCardBal, err
 	}
 
 	err = trx.MappingTransactionsAccount(c, pl)
 
 	if err != nil {
-		return briCBal, err
+		logger.Make(c, nil).Debug(err)
+		return briCardBal, err
 	}
 
 	// Hit BRI endpoint for check card information
-	gBriCInfo, err := trxUS.trxrRepo.GetBRICardInformation(c, trx.Account)
+	briCardInfo, err := trxUS.trxrRepo.GetBRICardInformation(c, trx.Account)
 
 	if err != nil {
-		return briCBal, err
+		return briCardBal, models.ErrGetCardBalance
 	}
 
-	jmGbci, err := json.Marshal(gBriCInfo)
+	mrshlCardInfo, err := json.Marshal(briCardInfo)
 
 	if err != nil {
-		return briCBal, err
+		logger.Make(c, nil).Debug(err)
+		return briCardBal, models.ErrGetCardBalance
 	}
 
-	json.Unmarshal(jmGbci, &briCBal)
-	return briCBal, err
+	err = json.Unmarshal(mrshlCardInfo, &briCardBal)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return briCardBal, models.ErrGetCardBalance
+	}
+
+	return briCardBal, err
 }
