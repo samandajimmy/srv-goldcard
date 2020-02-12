@@ -46,6 +46,16 @@ var (
 	StarString = "**********"
 )
 
+// Parameter struct is represent a data for parameters model
+type Parameter struct {
+	ID          int64     `json:"id"`
+	Key         string    `json:"key"`
+	Value       string    `json:"value"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"createdAt"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+}
+
 // CustomRound is a function to round the number based on the type
 func CustomRound(roundType string, num float64, decimal float64) float64 {
 	switch roundType {
