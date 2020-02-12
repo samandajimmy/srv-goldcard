@@ -22,18 +22,6 @@ func NewPsqlTransactionsRepository(Conn *sql.DB, DBpg *pg.DB) transactions.Repos
 	return &psqlTransactionsRepository{Conn, DBpg}
 }
 
-func (PSQLTrx *psqlTransactionsRepository) PostBRIPendingTransactions(c echo.Context, trx models.Transaction) error {
-	err := PSQLTrx.PostTransactionsANDCardBalance(c, trx)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
-	return nil
-}
-
 func (PSQLTrx *psqlTransactionsRepository) GetTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) ([]models.ResponseHistoryTransactions, error) {
 	trx := []models.ResponseHistoryTransactions{}
 	_, err := PSQLTrx.DBpg.Query(&trx, `SELECT t.nominal, t.trx_date, t.status, t.description FROM transactions t 
@@ -71,7 +59,7 @@ func (PSQLTrx *psqlTransactionsRepository) GetAccountByBrixKey(c echo.Context, t
 	return nil
 }
 
-func (PSQLTrx *psqlTransactionsRepository) PostTransactionsANDCardBalance(c echo.Context, trx models.Transaction) error {
+func (PSQLTrx *psqlTransactionsRepository) PostTransactions(c echo.Context, trx models.Transaction) error {
 	trx.CreatedAt = time.Now()
 	var nilFilters []string
 	stmts := []*gcdb.PipelineStmt{
@@ -94,6 +82,8 @@ func (PSQLTrx *psqlTransactionsRepository) PostTransactionsANDCardBalance(c echo
 	})
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
 		return err
 	}
 
