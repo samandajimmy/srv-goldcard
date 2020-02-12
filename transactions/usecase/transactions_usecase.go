@@ -60,6 +60,18 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 	return errors
 }
 
+func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, pht models.PayloadHistoryTransactions) (interface{}, models.ResponseErrors) {
+	var errors models.ResponseErrors
+	result, err := trxUS.trxRepo.GetTransactionsHistory(c, pht)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
+		return result, errors
+	}
+
+	return result, errors
+}
+
 func (trxUS *transactionsUseCase) checkAccount(c echo.Context, pl interface{}) (models.Transaction, error) {
 	r := reflect.ValueOf(pl)
 	BrixKey := r.FieldByName("BrixKey")

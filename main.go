@@ -74,8 +74,8 @@ func main() {
 	// REPOSITORIES
 	tokenRepository := _tokenRepository.NewPsqlTokenRepository(dbConn)
 	registrationsRepository := _registrationsRepository.NewPsqlRegistrationsRepository(dbConn, dbpg)
-	restRegistrationsRepo := _registrationsRepository.NewRestRegistrations()
 	activationRepository := _activationRepository.NewPsqlActivations(dbConn, dbpg)
+	restRegistrationsRepo := _registrationsRepository.NewRestRegistrations(activationRepository)
 	restActivationRepository := _activationRepository.NewRestActivations()
 	apiRequestsRepository := _apiRequestsRepository.NewPsqlAPIRequestsRepository(dbConn, dbpg)
 	transactionsRepository := _transactionsRepository.NewPsqlTransactionsRepository(dbConn, dbpg)

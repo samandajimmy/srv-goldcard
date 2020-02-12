@@ -91,3 +91,20 @@ func (act *psqlActivations) GetAccountByAppNumber(c echo.Context, acc *models.Ac
 	*acc = newAcc
 	return nil
 }
+
+func (act *psqlActivations) GetStoredGoldPrice(c echo.Context) (int64, error) {
+	var goldPrice models.GoldPrice
+
+	query := `select id, price, valid_date, created_at
+		from gold_prices order by created_at desc limit 1;`
+
+	_, err := act.DBpg.Query(&goldPrice, query)
+
+	if err != nil || (goldPrice == models.GoldPrice{}) {
+		logger.Make(nil, nil).Debug(err)
+
+		return 0, err
+	}
+
+	return int64(goldPrice.Price), nil
+}

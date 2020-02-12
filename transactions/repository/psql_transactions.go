@@ -34,6 +34,22 @@ func (PSQLTrx *psqlTransactionsRepository) PostBRIPendingTransactions(c echo.Con
 	return nil
 }
 
+func (PSQLTrx *psqlTransactionsRepository) GetTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) ([]models.ResponseHistoryTransactions, error) {
+	trx := []models.ResponseHistoryTransactions{}
+	_, err := PSQLTrx.DBpg.Query(&trx, `SELECT t.nominal, t.trx_date, t.status, t.description FROM transactions t 
+		LEFT JOIN accounts a ON a.id = t.account_id WHERE a.account_number = ? LIMIT ? OFFSET ?`,
+		pt.AccountNumber, pt.Pagination.Limit, pt.Pagination.Offset)
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return trx, err
+	}
+
+	return trx, nil
+
+}
+
 func (PSQLTrx *psqlTransactionsRepository) GetAccountByBrixKey(c echo.Context, trx *models.Transaction) error {
 	newAcc := models.Account{}
 	err := PSQLTrx.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").Relation("Card").
