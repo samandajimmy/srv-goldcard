@@ -216,7 +216,6 @@ type PayloadBriGetCardInformation struct {
 }
 
 // PayloadAccNumber a struct to store all payload for getting user transactions data from pds
-
 type PayloadAccNumber struct {
 	AccountNumber string `json:"accountNumber" validate:"required"`
 }

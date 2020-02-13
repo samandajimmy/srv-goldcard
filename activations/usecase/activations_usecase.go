@@ -92,6 +92,7 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	}
 
 	acc.Card.GoldLimit = currGoldLimit
+	acc.Card.GoldBalance = currGoldLimit
 	acc.Card.CurrentSTL = currStl
 	// recalculate open goldcard registrations
 	err = aUsecase.rrRepo.OpenGoldcard(c, acc, true)

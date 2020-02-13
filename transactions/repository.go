@@ -8,12 +8,13 @@ import (
 
 // UseCase represent the transactions usecases
 type Repository interface {
-	PostBRIPendingTransactions(c echo.Context, trans models.Transaction) error
 	GetAccountByBrixKey(c echo.Context, acc *models.Transaction) error
 	GetTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) ([]models.ResponseHistoryTransactions, error)
+	PostTransactions(c echo.Context, trx models.Transaction) error
 	GetAccountByAccountNumber(c echo.Context, acc *models.Transaction) error
 }
 
+// RestRepository represent the rest transactions repository contract
 type RestRepository interface {
 	GetBRICardInformation(c echo.Context, acc models.Account) (map[string]interface{}, error)
 }
