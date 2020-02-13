@@ -6,6 +6,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/transactions"
+	"strconv"
 	"time"
 
 	"github.com/go-pg/pg/v9"
@@ -66,14 +67,14 @@ func (PSQLTrx *psqlTransactionsRepository) PostTransactions(c echo.Context, trx 
 		gcdb.NewPipelineStmt(`INSERT INTO transactions (account_id, ref_trx_pgdn, ref_trx, nominal, gold_nominal,
 			type, status, balance, gold_balance, description, created_at)
 			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 ,$10, $11) RETURNING account_id;`,
-			[]string{"accID"}, trx.AccountId, trx.RefTrxPgdn, trx.RefTrx, trx.Nominal, trx.GoldNominal, trx.Type, trx.Status, trx.Balance,
+			nilFilters, trx.AccountId, trx.RefTrxPgdn, trx.RefTrx, trx.Nominal, trx.GoldNominal, trx.Type, trx.Status, trx.Balance,
 			trx.GoldBalance, trx.Description, time.Now()),
 
 		gcdb.NewPipelineStmt(`UPDATE cards c 
 			set balance = $1, gold_balance = $2, updated_at = $3
 			FROM accounts a 
 			WHERE a.card_id = c.id
-			AND a.id = {accID} RETURNING c.id;`,
+			AND a.id = `+strconv.Itoa(int(trx.AccountId))+` RETURNING c.id;`,
 			nilFilters, trx.Balance, trx.GoldBalance, time.Now()),
 	}
 
