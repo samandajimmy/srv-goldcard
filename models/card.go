@@ -26,6 +26,8 @@ type Card struct {
 	ValidUntil  string    `json:"validUntil"`
 	PinNumber   string    `json:"pinNumber"`
 	Description string    `json:"description"`
+	Balance     int64     `json:"balance"`
+	GoldBalance float64   `json:"goldBalance"`
 	Status      string    `json:"status"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 	CreatedAt   time.Time `json:"createdAt"`

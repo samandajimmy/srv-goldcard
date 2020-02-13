@@ -49,7 +49,7 @@ func (pa *psqlActivations) PostActivations(c echo.Context, acc models.Account) e
 }
 func (pa *psqlActivations) UpdateGoldLimit(c echo.Context, card models.Card) error {
 	card.UpdatedAt = time.Now()
-	col := []string{"gold_limit", "current_stl", "updated_at"}
+	col := []string{"gold_limit", "gold_balance", "current_stl", "updated_at"}
 	_, err := pa.DBpg.Model(&card).Column(col...).WherePK().Update()
 
 	if err != nil {

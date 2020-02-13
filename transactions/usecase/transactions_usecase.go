@@ -46,7 +46,7 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 		return errors
 	}
 
-	err = trxUS.trxRepo.PostBRIPendingTransactions(c, trx)
+	err = trxUS.trxRepo.PostTransactions(c, trx)
 
 	if err != nil {
 		errors.SetTitle(models.ErrInsertTransactions.Error())
