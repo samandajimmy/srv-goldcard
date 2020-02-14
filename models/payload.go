@@ -222,7 +222,7 @@ type PayloadHistoryTransactions struct {
 	Pagination    PaginationPayload `json:"pagination" validate:"required"`
 }
 
-// ResponseHistoryTransactions struct to store response history transactions
+// ListHistoryTransactions struct to store list history transactions
 type ListHistoryTransactions struct {
 	Nominal     int64  `json:"nominal"`
 	TrxDate     string `json:"trxDate"`
@@ -230,6 +230,7 @@ type ListHistoryTransactions struct {
 	Description string `json:"description"`
 }
 
+// ResponseHistoryTransactions struct to store response history transactions
 type ResponseHistoryTransactions struct {
 	IsLastPage              string                    `json:"isLastPage"`
 	ListHistoryTransactions []ListHistoryTransactions `json:"listHistoryTransactions"`
