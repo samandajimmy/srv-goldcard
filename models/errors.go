@@ -96,6 +96,9 @@ var (
 	// ErrBriAPIRequest to store bri api request error message
 	ErrBriAPIRequest = "BRI API: RC-%s - %s"
 
+	// ErrPdsAPIRequest to store pds api request error message
+	ErrPdsAPIRequest = "PDS API: %s - %s"
+
 	// ErrCreateToken to create/update token error message
 	ErrCreateToken = errors.New("Terjadi Kesalaahan saat membuat Token")
 

@@ -461,7 +461,7 @@ func (regis *psqlRegistrationsRepository) GetCoreServiceStatus(c echo.Context) e
 
 	coreStatus, _ := strconv.ParseBool(param.Value)
 
-	if coreStatus {
+	if !coreStatus {
 		return models.ErrCoreEODStatus
 	}
 

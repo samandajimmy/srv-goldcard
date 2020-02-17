@@ -33,4 +33,5 @@ type Repository interface {
 type RestRepository interface {
 	GetCurrentGoldSTL(c echo.Context) (int64, error)
 	OpenGoldcard(c echo.Context, acc models.Account, isRecalculate bool) error
+	SendNotification(c echo.Context, notif models.PdsNotification, notifType string) error
 }

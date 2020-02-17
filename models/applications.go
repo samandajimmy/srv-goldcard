@@ -161,7 +161,9 @@ func (app *Applications) getCurrentDoc(currDocs []Document, docType string) Docu
 }
 
 func (app *Applications) getStatus(msg string) string {
-	switch msg {
+	switch strings.ToLower(msg) {
+	case "delivered":
+		return "card_sent"
 	default:
 		return "application_processed"
 	}
