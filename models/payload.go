@@ -234,3 +234,8 @@ type ResponseHistoryTransactions struct {
 	IsLastPage              bool                      `json:"isLastPage"`
 	ListHistoryTransactions []ListHistoryTransactions `json:"listHistoryTransactions"`
 }
+
+// PayloadAccNumber a struct to store all payload for transactions
+type PayloadAccNumber struct {
+	AccountNumber string `json:"accountNumber" validate:"required"`
+}

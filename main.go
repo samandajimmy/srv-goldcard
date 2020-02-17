@@ -15,6 +15,9 @@ import (
 	_activationUseCase "gade/srv-goldcard/activations/usecase"
 	_apiRequestsRepository "gade/srv-goldcard/apirequests/repository"
 	_apiRequestsUseCase "gade/srv-goldcard/apirequests/usecase"
+	_billingsHttpDelivery "gade/srv-goldcard/billings/delivery/http"
+	_billingsRepository "gade/srv-goldcard/billings/repository"
+	_billingsUseCase "gade/srv-goldcard/billings/usecase"
 	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
 	_productreqsUseCase "gade/srv-goldcard/productreqs/usecase"
 	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
@@ -79,6 +82,7 @@ func main() {
 	restActivationRepository := _activationRepository.NewRestActivations()
 	apiRequestsRepository := _apiRequestsRepository.NewPsqlAPIRequestsRepository(dbConn, dbpg)
 	transactionsRepository := _transactionsRepository.NewPsqlTransactionsRepository(dbConn, dbpg)
+	billingsRepository := _billingsRepository.NewPsqlBillingsRepository(dbConn, dbpg)
 
 	// USECASES
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
@@ -87,6 +91,7 @@ func main() {
 	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
 	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, restRegistrationsRepo)
+	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository)
 
 	// DELIVERIES
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
@@ -94,6 +99,7 @@ func main() {
 	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup, registrationsUserCase)
 	_activationHttpDelivery.NewActivationsHandler(echoGroup, activationUserCase)
 	_transactionsHttpDelivery.NewTransactionsHandler(echoGroup, transactionsUseCase)
+	_billingsHttpDelivery.NewBillingsHandler(echoGroup, billingsUseCase)
 
 	// PING
 	ech.GET("/ping", ping)

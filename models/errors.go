@@ -149,6 +149,18 @@ var (
 
 	// ErrCoreEODStatus to store down time core servive
 	ErrCoreEODStatus = errors.New("Mohon maaf, Layanan sedang tidak tersedia")
+
+	// ErrNoBilling to store get billing statement error message
+	ErrNoBilling = errors.New("Anda belum memiliki tagihan")
+
+	// ErrGetAccByAccountNumber to store error find account goldcard
+	ErrGetAccByAccountNumber = errors.New("Akun tidak ditemukan")
+
+	// ErrGetParameter to store error get parameter
+	ErrGetParameter = errors.New("Parameter tidak ditemukan")
+
+	// ErrParseParameter to store error parsing parameter value
+	ErrParseParameter = errors.New("Gagal memparsing parameter value, format parameter tidak sesuai")
 )
 
 // DynamicErr to return parameterize errors
