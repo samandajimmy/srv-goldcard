@@ -9,8 +9,6 @@ import (
 	"github.com/labstack/echo"
 )
 
-var response models.Response
-
 // BillingsHandler represent the httphandler for Product Requirements
 type BillingsHandler struct {
 	response        models.Response
