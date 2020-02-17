@@ -30,8 +30,6 @@ func NewBillingsHandler(echoGroup models.EchoGroup, bl billings.UseCase) {
 
 func (bh *BillingsHandler) billingStatement(c echo.Context) error {
 	var pan models.PayloadAccNumber
-	// response = models.Response{}
-	// respErrors := &models.ResponseErrors{}
 
 	bh.response, bh.respErrors = models.NewResponse()
 
