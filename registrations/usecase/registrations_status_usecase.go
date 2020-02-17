@@ -118,7 +118,9 @@ func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.A
 			case err := <-errAppCore:
 				if err == nil {
 					go applyBri()
-				} else if err != nil {
+				}
+
+				if err != nil {
 					// send notif app failed
 					notif.GcApplication(accChannel, "failed")
 					_ = reg.rrr.SendNotification(c, notif, "")
@@ -130,7 +132,9 @@ func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.A
 					notif.GcApplication(accChannel, "failed")
 					_ = reg.rrr.SendNotification(c, notif, "")
 					return
-				} else if err == nil {
+				}
+
+				if err == nil {
 					// send notif app succeeded
 					notif.GcApplication(accChannel, "succeeded")
 					_ = reg.rrr.SendNotification(c, notif, "")

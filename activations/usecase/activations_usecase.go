@@ -215,7 +215,9 @@ func (aUsecase *activationsUseCase) afterActivationGoldcard(c echo.Context, acc 
 			case err := <-errActCore:
 				if err == nil {
 					go briActivation()
-				} else if err != nil {
+				}
+
+				if err != nil {
 					// send notif activation failed
 					go sendFailedNotif()
 					errActivation <- err
@@ -223,7 +225,9 @@ func (aUsecase *activationsUseCase) afterActivationGoldcard(c echo.Context, acc 
 			case err := <-errActBri:
 				if err == nil {
 					go updateActivation()
-				} else if err != nil {
+				}
+
+				if err != nil {
 					// send notif activation failed
 					go sendFailedNotif()
 					errActivation <- err
@@ -233,7 +237,9 @@ func (aUsecase *activationsUseCase) afterActivationGoldcard(c echo.Context, acc 
 					// send notif activation succeeded
 					go sendSucceededNotif()
 					errActivation <- nil
-				} else if err != nil {
+				}
+
+				if err != nil {
 					// send notif activation failed
 					go sendFailedNotif()
 					errActivation <- err
