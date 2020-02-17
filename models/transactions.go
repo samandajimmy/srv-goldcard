@@ -92,7 +92,7 @@ func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPending
 	return nil
 }
 
-// MappingTransactionsAccount is a struc to mapping transactions account data
+// MappingTransactionsAccount is a struct to mapping transactions account data
 func (trx *Transaction) MappingTransactionsAccount(c echo.Context, pl PayloadAccNumber) error {
 	trx.Account.AccountNumber = pl.AccountNumber
 

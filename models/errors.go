@@ -81,8 +81,8 @@ var (
 	// ErrUpdateBrixkey to store update brixkey error message
 	ErrGetAccByBrixkey = errors.New("Brixkey tidak di temukan")
 
-	// ErrGetAccByAccountNumber to store account not found error message
-	ErrGetAccByAccountNumber = errors.New("Account Number tidak di temukan")
+	// ErrGetAccByAccountNumber to store account number not found error message
+	ErrGetAccByAccountNumber = errors.New("Nomor akun kartu emas tidak di temukan")
 
 	// ErrUpdateAppDocID to store update application document ID error message
 	ErrUpdateAppDocID = errors.New("Terjadi kesalahan saat update document id")

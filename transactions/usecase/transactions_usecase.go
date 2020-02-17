@@ -117,7 +117,7 @@ func (trxUS *transactionsUseCase) GetCardBalance(c echo.Context, pl models.Paylo
 		return briCardBal, err
 	}
 
-	// Hit BRI endpoint for check card information
+	// Request BRI endpoint for check card information
 	briCardInfo, err := trxUS.trxrRepo.GetBRICardInformation(c, trx.Account)
 
 	if err != nil {
