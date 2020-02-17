@@ -6,6 +6,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/transactions"
+	"math"
 	"strconv"
 	"time"
 
@@ -23,11 +24,12 @@ func NewPsqlTransactionsRepository(Conn *sql.DB, DBpg *pg.DB) transactions.Repos
 	return &psqlTransactionsRepository{Conn, DBpg}
 }
 
-func (PSQLTrx *psqlTransactionsRepository) GetTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) ([]models.ResponseHistoryTransactions, error) {
-	trx := []models.ResponseHistoryTransactions{}
-	_, err := PSQLTrx.DBpg.Query(&trx, `SELECT t.nominal, t.trx_date, t.status, t.description FROM transactions t 
-		LEFT JOIN accounts a ON a.id = t.account_id WHERE a.account_number = ? LIMIT ? OFFSET ?`,
-		pt.AccountNumber, pt.Pagination.Limit, pt.Pagination.Offset)
+func (PSQLTrx *psqlTransactionsRepository) GetAllTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) (models.ResponseHistoryTransactions, error) {
+	trx := models.ResponseHistoryTransactions{}
+
+	_, err := PSQLTrx.DBpg.Query(&trx.ListHistoryTransactions, `SELECT t.nominal, t.trx_date, t.description FROM transactions t 
+		LEFT JOIN accounts a ON a.id = t.account_id WHERE a.account_number = ? ORDER BY t.created_at`,
+		pt.AccountNumber)
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
@@ -35,6 +37,7 @@ func (PSQLTrx *psqlTransactionsRepository) GetTransactionsHistory(c echo.Context
 		return trx, err
 	}
 
+	trx.IsLastPage = true
 	return trx, nil
 
 }
@@ -65,10 +68,10 @@ func (PSQLTrx *psqlTransactionsRepository) PostTransactions(c echo.Context, trx 
 	var nilFilters []string
 	stmts := []*gcdb.PipelineStmt{
 		gcdb.NewPipelineStmt(`INSERT INTO transactions (account_id, ref_trx_pgdn, ref_trx, nominal, gold_nominal,
-			type, status, balance, gold_balance, description, created_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 ,$10, $11) RETURNING account_id;`,
+			type, status, balance, gold_balance, description, created_at, trx_date)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 ,$10, $11, $12) RETURNING account_id;`,
 			nilFilters, trx.AccountId, trx.RefTrxPgdn, trx.RefTrx, trx.Nominal, trx.GoldNominal, trx.Type, trx.Status, trx.Balance,
-			trx.GoldBalance, trx.Description, time.Now()),
+			trx.GoldBalance, trx.Description, time.Now(), trx.TrxDate),
 
 		gcdb.NewPipelineStmt(`UPDATE cards c 
 			set balance = $1, gold_balance = $2, updated_at = $3
@@ -89,6 +92,50 @@ func (PSQLTrx *psqlTransactionsRepository) PostTransactions(c echo.Context, trx 
 	}
 
 	return nil
+}
+
+func (PSQLTrx *psqlTransactionsRepository) GetPgTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) (models.ResponseHistoryTransactions, error) {
+	trx := models.ResponseHistoryTransactions{}
+	offset := (pt.Pagination.Page - 1) * pt.Pagination.Limit
+
+	_, err := PSQLTrx.DBpg.Query(&trx.ListHistoryTransactions, `SELECT t.nominal, t.trx_date, t.description FROM transactions t 
+		LEFT JOIN accounts a ON a.id = t.account_id  WHERE a.account_number = ? ORDER BY t.created_at LIMIT ? OFFSET ?`,
+		pt.AccountNumber, pt.Pagination.Limit, offset)
+
+	if err != nil && err != pg.ErrNoRows {
+		return trx, err
+	}
+
+	// get total data transactions
+	total, err := PSQLTrx.getTotalTransactions(c, pt)
+
+	if err != nil && err != pg.ErrNoRows {
+		return trx, err
+	}
+
+	// flag isLastPage
+	totalPage := total / float64(pt.Pagination.Limit)
+	if float64(pt.Pagination.Page) == math.Ceil(totalPage) {
+		trx.IsLastPage = true
+
+		return trx, nil
+	}
+
+	return trx, nil
+}
+
+func (PSQLTrx *psqlTransactionsRepository) getTotalTransactions(c echo.Context, pt models.PayloadHistoryTransactions) (float64, error) {
+	var count float64
+
+	_, err := PSQLTrx.DBpg.Query(&count, `SELECT count(t.id) FROM transactions t 
+		LEFT JOIN accounts a ON a.id = t.account_id WHERE a.account_number = ?`,
+		pt.AccountNumber)
+
+	if err != nil && err != pg.ErrNoRows {
+		return count, err
+	}
+
+	return count, err
 }
 
 func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Context, trx *models.Transaction) error {
