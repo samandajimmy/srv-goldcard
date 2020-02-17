@@ -58,7 +58,11 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 
 func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, pht models.PayloadHistoryTransactions) (interface{}, models.ResponseErrors) {
 	var errors models.ResponseErrors
-	result, err := trxUS.trxRepo.GetTransactionsHistory(c, pht)
+	if pht.Pagination.Limit != 0 {
+		return trxUS.GetPgTransactionsHistory(c, pht)
+	}
+
+	result, err := trxUS.trxRepo.GetAllTransactionsHistory(c, pht)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
@@ -81,4 +85,16 @@ func (trxUS *transactionsUseCase) checkAccount(c echo.Context, pl interface{}) (
 	}
 
 	return trx, nil
+}
+
+func (trxUS *transactionsUseCase) GetPgTransactionsHistory(c echo.Context, pht models.PayloadHistoryTransactions) (interface{}, models.ResponseErrors) {
+	var errors models.ResponseErrors
+	result, err := trxUS.trxRepo.GetPgTransactionsHistory(c, pht)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
+		return result, errors
+	}
+
+	return result, errors
 }

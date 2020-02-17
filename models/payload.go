@@ -212,8 +212,8 @@ type RespActivations struct {
 
 // PaginationPayload struct to store pagination payload
 type PaginationPayload struct {
-	Limit  int64 `json:"limit"`
-	Offset int64 `json:"offset"`
+	Limit int64 `json:"limit"`
+	Page  int64 `json:"page"`
 }
 
 // PayloadHistoryTransactions struct to store request history transactions
@@ -222,10 +222,15 @@ type PayloadHistoryTransactions struct {
 	Pagination    PaginationPayload `json:"pagination" validate:"required"`
 }
 
-// ResponseHistoryTransactions struct to store response history transactions
-type ResponseHistoryTransactions struct {
+// ListHistoryTransactions struct to store list history transactions
+type ListHistoryTransactions struct {
 	Nominal     int64  `json:"nominal"`
 	TrxDate     string `json:"trxDate"`
-	Status      string `json:"status"`
 	Description string `json:"description"`
+}
+
+// ResponseHistoryTransactions struct to store response history transactions
+type ResponseHistoryTransactions struct {
+	IsLastPage              bool                      `json:"isLastPage"`
+	ListHistoryTransactions []ListHistoryTransactions `json:"listHistoryTransactions"`
 }
