@@ -83,6 +83,7 @@ func main() {
 	apiRequestsRepository := _apiRequestsRepository.NewPsqlAPIRequestsRepository(dbConn, dbpg)
 	transactionsRepository := _transactionsRepository.NewPsqlTransactionsRepository(dbConn, dbpg)
 	billingsRepository := _billingsRepository.NewPsqlBillingsRepository(dbConn, dbpg)
+	restTransactionsRepo := _transactionsRepository.NewRestTransactions()
 
 	// USECASES
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
@@ -90,8 +91,8 @@ func main() {
 	registrationsUserCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository, restRegistrationsRepo)
 	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
-	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, restRegistrationsRepo)
-	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository)
+	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, restTransactionsRepo, restRegistrationsRepo)
+	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, transactionsUseCase)
 
 	// DELIVERIES
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)

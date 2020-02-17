@@ -23,34 +23,19 @@ func NewPsqlBillingsRepository(Conn *sql.DB, dbpg *pg.DB) billings.Repository {
 }
 
 func (PSQLBill *psqlBillings) GetBilling(c echo.Context, bill *models.Billing) error {
-	// Populate billing date to filter which billing to get
-	time := time.Now()
-
-	// if day < 2 then it shown previous month billing
-	if time.Day() < 2 {
-		time = time.AddDate(0, -1, 0)
-	}
-
-	yyyy := time.Format("2006")
-	MM := time.Format("01")
-	dd, err := PSQLBill.GetBillingPrintDateParam(c)
+	month, err := PSQLBill.calculateBillingMonth(c)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return models.ErrGetParameter
+		return err
 	}
-
-	HHmmss := "00:00:00"
-	billingDate := yyyy + "-" + MM + "-" + dd + " " + HHmmss
 
 	// Get last billing published
 	newBill := models.Billing{}
 	err = PSQLBill.DBpg.Model(&newBill).Relation("Account").
 		Where("account.account_number = ?", bill.Account.AccountNumber).
-		Where("billing_date >= ?", billingDate).
-		Order("created_at DESC").
-		Limit(1).Select()
+		Where("EXTRACT(MONTH FROM billing_date) = ?", month).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
@@ -68,25 +53,32 @@ func (PSQLBill *psqlBillings) GetBilling(c echo.Context, bill *models.Billing) e
 	return nil
 }
 
-func (PSQLBill *psqlBillings) GetAccountByAccountNumber(c echo.Context, bill *models.Billing) error {
-	newAcc := models.Account{}
-	err := PSQLBill.DBpg.Model(&newAcc).
-		Where("account_number = ?", bill.Account.AccountNumber).Select()
+func (PSQLBill *psqlBillings) calculateBillingMonth(c echo.Context) (time.Month, error) {
+	// Populate billing date to filter which billing to get
+	timeNow := time.Now()
 
-	if err != nil && err != pg.ErrNoRows {
-		logger.Make(c, nil).Debug(err)
+	dd, err := PSQLBill.GetBillingPrintDateParam(c)
 
-		return err
+	if err != nil {
+		return 0, err
 	}
 
-	newBill := models.Billing{Account: newAcc}
+	day, err := strconv.Atoi(dd)
 
-	if err == pg.ErrNoRows {
-		return models.ErrAppNumberNotFound
+	if err != nil {
+		return 0, err
 	}
 
-	*bill = newBill
-	return nil
+	// if day < 2 then it shown previous month billing (only for the 1st)
+	if timeNow.Day() < day {
+		month := timeNow.AddDate(0, -2, 0).Month()
+
+		return month, nil
+	}
+
+	month := timeNow.AddDate(0, -1, 0).Month()
+
+	return month, nil
 }
 
 func (PSQLBill *psqlBillings) GetMinPaymentParam(c echo.Context) (float64, error) {
@@ -117,24 +109,32 @@ func (PSQLBill *psqlBillings) GetMinPaymentParam(c echo.Context) (float64, error
 	return minPayConst, nil
 }
 
-func (PSQLBill *psqlBillings) GetDueDateParam(c echo.Context) (string, error) {
+func (PSQLBill *psqlBillings) GetDueDateParam(c echo.Context) (int, error) {
 	newPrm := models.Parameter{}
 	err := PSQLBill.DBpg.Model(&newPrm).
-		Where("key = ?", "BILLING_DUE_DATE").Select()
+		Where("key = ?", "BILLING_INTERVAL_DUE_DATE").Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
 
-		return "", err
+		return 0, err
 	}
 
 	if err == pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
 
-		return "", models.ErrGetParameter
+		return 0, models.ErrGetParameter
 	}
 
-	return newPrm.Value, nil
+	dueDateParam, err := strconv.Atoi(newPrm.Value)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return 0, models.ErrParseParameter
+	}
+
+	return dueDateParam, nil
 }
 
 func (PSQLBill *psqlBillings) GetBillingPrintDateParam(c echo.Context) (string, error) {

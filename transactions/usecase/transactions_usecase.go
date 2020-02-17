@@ -1,6 +1,8 @@
 package usecase
 
 import (
+	"encoding/json"
+	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/transactions"
@@ -11,13 +13,14 @@ import (
 )
 
 type transactionsUseCase struct {
-	trxRepo transactions.Repository
-	rrRepo  registrations.RestRepository
+	trxRepo  transactions.Repository
+	trxrRepo transactions.RestRepository
+	rrRepo   registrations.RestRepository
 }
 
 // TransactionsUseCase represent Transactions Use Case
-func TransactionsUseCase(trxRepo transactions.Repository, rrRepo registrations.RestRepository) transactions.UseCase {
-	return &transactionsUseCase{trxRepo, rrRepo}
+func TransactionsUseCase(trxRepo transactions.Repository, trxrRepo transactions.RestRepository, rrRepo registrations.RestRepository) transactions.UseCase {
+	return &transactionsUseCase{trxRepo, trxrRepo, rrRepo}
 }
 
 func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl models.PayloadBRIPendingTransactions) models.ResponseErrors {
@@ -97,4 +100,52 @@ func (trxUS *transactionsUseCase) GetPgTransactionsHistory(c echo.Context, pht m
 	}
 
 	return result, errors
+}
+
+func (trxUS *transactionsUseCase) CheckAccountByAccountNumber(c echo.Context, pl interface{}) (models.Account, error) {
+	r := reflect.ValueOf(pl)
+	accNumber := r.FieldByName("AccountNumber")
+
+	// Get Account by Account Number
+	acc := models.Account{AccountNumber: accNumber.String()}
+	err := trxUS.trxRepo.GetAccountByAccountNumber(c, &acc)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return models.Account{}, models.ErrGetAccByAccountNumber
+	}
+
+	return acc, nil
+}
+
+func (trxUS *transactionsUseCase) GetCardBalance(c echo.Context, pl models.PayloadAccNumber) (models.BRICardBalance, error) {
+	var briCardBal models.BRICardBalance
+	acc, err := trxUS.CheckAccountByAccountNumber(c, pl)
+
+	if err != nil {
+		return briCardBal, err
+	}
+
+	// Request BRI endpoint for check card information
+	briCardInfo, err := trxUS.trxrRepo.GetBRICardInformation(c, acc)
+
+	if err != nil {
+		return briCardBal, models.ErrGetCardBalance
+	}
+
+	mrshlCardInfo, err := json.Marshal(briCardInfo)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return briCardBal, models.ErrGetCardBalance
+	}
+
+	err = json.Unmarshal(mrshlCardInfo, &briCardBal)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return briCardBal, models.ErrGetCardBalance
+	}
+
+	return briCardBal, err
 }

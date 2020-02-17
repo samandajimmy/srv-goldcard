@@ -1,6 +1,7 @@
 package models
 
 import (
+	"math"
 	"time"
 
 	"github.com/labstack/echo"
@@ -56,6 +57,16 @@ type BillingStatement struct {
 // MappingBillingAccount is a struct to mapping billing account data
 func (bill *Billing) MappingAccountNumberToBilling(c echo.Context, pl PayloadAccNumber) error {
 	bill.Account.AccountNumber = pl.AccountNumber
+
+	return nil
+}
+
+func (bill *Billing) MapBillingStatementResponse(c echo.Context, dueDate int, minPay float64, billStmt *BillingStatement) error {
+
+	billStmt.BillingAmount = bill.Amount
+	billStmt.BillingDueDate = bill.BillingDate.AddDate(0, 0, dueDate).Format("2006-01-02")
+	billStmt.BillingMinPayment = int64(math.Ceil(float64(bill.Amount) * minPay))
+	billStmt.BillingPrintDate = bill.BillingDate.Format("2006-01-02")
 
 	return nil
 }

@@ -137,3 +137,23 @@ func (PSQLTrx *psqlTransactionsRepository) getTotalTransactions(c echo.Context, 
 
 	return count, err
 }
+
+func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Context, acc *models.Account) error {
+	newAcc := models.Account{}
+	err := PSQLTrx.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
+		Relation("Card").
+		Where("account_number = ?", acc.AccountNumber).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	if err == pg.ErrNoRows {
+		return models.ErrAppNumberNotFound
+	}
+
+	*acc = newAcc
+	return nil
+}

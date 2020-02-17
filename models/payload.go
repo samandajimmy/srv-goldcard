@@ -210,6 +210,11 @@ type RespActivations struct {
 	AccountNumber string `json:"accountNumber"`
 }
 
+// Payload PayloadBriGetCardInformation a struct to store all payload for card information inquiry to BRI
+type PayloadBriGetCardInformation struct {
+	BriXkey string `json:"briXkey" validate:"required"`
+}
+
 // PaginationPayload struct to store pagination payload
 type PaginationPayload struct {
 	Limit int64 `json:"limit"`

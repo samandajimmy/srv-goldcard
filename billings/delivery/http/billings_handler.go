@@ -23,40 +23,39 @@ func NewBillingsHandler(echoGroup models.EchoGroup, bl billings.UseCase) {
 	}
 
 	// End Point For External
-	echoGroup.API.GET("/billings/billing-statement", handler.billingStatement)
+	echoGroup.API.GET("/billings/statements", handler.billingStatement)
 }
 
-func (bh *BillingsHandler) billingStatement(c echo.Context) error {
+func (bhn *BillingsHandler) billingStatement(c echo.Context) error {
 	var pan models.PayloadAccNumber
-
-	bh.response, bh.respErrors = models.NewResponse()
+	bhn.response, bhn.respErrors = models.NewResponse()
 
 	if err := c.Bind(&pan); err != nil {
-		bh.respErrors.SetTitle(models.MessageUnprocessableEntity)
-		bh.response.SetResponse("", &bh.respErrors)
+		bhn.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		bhn.response.SetResponse("", &bhn.respErrors)
 
-		return bh.response.Body(c, err)
+		return bhn.response.Body(c, err)
 	}
 
 	if err := c.Validate(pan); err != nil {
-		bh.respErrors.SetTitle(err.Error())
-		bh.response.SetResponse("", &bh.respErrors)
+		bhn.respErrors.SetTitle(err.Error())
+		bhn.response.SetResponse("", &bhn.respErrors)
 
-		return bh.response.Body(c, err)
+		return bhn.response.Body(c, err)
 	}
 
-	responseData, err := bh.billingsUseCase.GetBillingStatement(c, pan)
+	responseData, err := bhn.billingsUseCase.GetBillingStatement(c, pan)
 
 	if err != nil {
-		bh.respErrors.SetTitle(err.Error())
-		bh.response.SetResponse("", &bh.respErrors)
+		bhn.respErrors.SetTitle(err.Error())
+		bhn.response.SetResponse("", &bhn.respErrors)
 
-		return c.JSON(http.StatusBadRequest, bh.response)
+		return c.JSON(http.StatusBadRequest, bhn.response)
 	}
 
-	bh.response.SetResponse(responseData, &bh.respErrors)
+	bhn.response.SetResponse(responseData, &bhn.respErrors)
 
-	return c.JSON(getStatusCode(err), bh.response)
+	return c.JSON(getStatusCode(err), bhn.response)
 }
 
 func getStatusCode(err error) int {

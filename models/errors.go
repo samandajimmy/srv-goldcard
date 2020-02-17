@@ -161,6 +161,9 @@ var (
 
 	// ErrParseParameter to store error parsing parameter value
 	ErrParseParameter = errors.New("Gagal memparsing parameter value, format parameter tidak sesuai")
+
+	// ErrGetCardBalance to store get gold card balance error message
+	ErrGetCardBalance = errors.New("Terjadi kesalahan ketika mendapatkan data saldo kartu emas")
 )
 
 // DynamicErr to return parameterize errors
