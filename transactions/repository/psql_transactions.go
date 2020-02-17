@@ -37,7 +37,7 @@ func (PSQLTrx *psqlTransactionsRepository) GetAllTransactionsHistory(c echo.Cont
 		return trx, err
 	}
 
-	trx.IsLastPage = "true"
+	trx.IsLastPage = true
 	return trx, nil
 
 }
@@ -116,12 +116,10 @@ func (PSQLTrx *psqlTransactionsRepository) GetPgTransactionsHistory(c echo.Conte
 	// flag isLastPage
 	totalPage := total / float64(pt.Pagination.Limit)
 	if float64(pt.Pagination.Page) == math.Ceil(totalPage) {
-		trx.IsLastPage = "true"
+		trx.IsLastPage = true
 
 		return trx, nil
 	}
-
-	trx.IsLastPage = "false"
 
 	return trx, nil
 }

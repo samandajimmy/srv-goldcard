@@ -232,6 +232,6 @@ type ListHistoryTransactions struct {
 
 // ResponseHistoryTransactions struct to store response history transactions
 type ResponseHistoryTransactions struct {
-	IsLastPage              string                    `json:"isLastPage"`
+	IsLastPage              bool                      `json:"isLastPage"`
 	ListHistoryTransactions []ListHistoryTransactions `json:"listHistoryTransactions"`
 }
