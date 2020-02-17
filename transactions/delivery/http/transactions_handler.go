@@ -26,6 +26,7 @@ func NewTransactionsHandler(
 
 	// Endpoint For PDS
 	echoGroup.API.GET("/transactions/history", handler.HistoryTransactions)
+	echoGroup.API.GET("/transactions/balance", handler.GetCardBalance)
 }
 
 // Registrations a handler to handle goldcard registrations
@@ -87,4 +88,36 @@ func (th *TransactionsHandler) HistoryTransactions(c echo.Context) error {
 
 	th.response.SetResponse(result, &err)
 	return th.response.Body(c, nil)
+}
+
+// Registrations a handler to handle goldcard get card information
+func (th *TransactionsHandler) GetCardBalance(c echo.Context) error {
+	var pan models.PayloadAccNumber
+	th.response, th.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pan); err != nil {
+		th.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		th.response.SetResponse("", &th.respErrors)
+
+		return th.response.Body(c, err)
+	}
+
+	if err := c.Validate(pan); err != nil {
+		th.respErrors.SetTitle(err.Error())
+		th.response.SetResponse("", &th.respErrors)
+
+		return th.response.Body(c, err)
+	}
+
+	resp, err := th.transactionsUseCase.GetCardBalance(c, pan)
+
+	if err != nil {
+		th.respErrors.SetTitle(err.Error())
+		th.response.SetResponse("", &th.respErrors)
+
+		return th.response.Body(c, err)
+	}
+
+	th.response.SetResponse(resp, &th.respErrors)
+	return th.response.Body(c, err)
 }
