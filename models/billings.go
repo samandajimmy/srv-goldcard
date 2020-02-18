@@ -41,11 +41,6 @@ type BillingPayment struct {
 	Billing     Billing     `json:"billing"`
 }
 
-// AppStatus is a struct to store application status data
-type PrintBilling struct {
-	Uri string `json:"uri"`
-}
-
 // BillingStatement is a struct to store response for billing inquiry
 type BillingStatement struct {
 	BillingPrintDate  string `json:"billingPrintDate"`

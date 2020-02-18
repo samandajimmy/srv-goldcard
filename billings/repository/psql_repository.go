@@ -23,7 +23,7 @@ func NewPsqlBillingsRepository(Conn *sql.DB, dbpg *pg.DB) billings.Repository {
 }
 
 func (PSQLBill *psqlBillings) GetBilling(c echo.Context, bill *models.Billing) error {
-	month, err := PSQLBill.calculateBillingMonth(c)
+	billDate, err := PSQLBill.calculateBillingMonthYear(c)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
@@ -35,7 +35,8 @@ func (PSQLBill *psqlBillings) GetBilling(c echo.Context, bill *models.Billing) e
 	newBill := models.Billing{}
 	err = PSQLBill.DBpg.Model(&newBill).Relation("Account").
 		Where("account.account_number = ?", bill.Account.AccountNumber).
-		Where("EXTRACT(MONTH FROM billing_date) = ?", month).Select()
+		Where("EXTRACT(MONTH FROM billing_date) = ?", billDate.Month()).
+		Where("EXTRACT(YEAR FROM billing_date) = ?", billDate.Year()).Limit(1).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
@@ -53,38 +54,34 @@ func (PSQLBill *psqlBillings) GetBilling(c echo.Context, bill *models.Billing) e
 	return nil
 }
 
-func (PSQLBill *psqlBillings) calculateBillingMonth(c echo.Context) (time.Month, error) {
+func (PSQLBill *psqlBillings) calculateBillingMonthYear(c echo.Context) (time.Time, error) {
 	// Populate billing date to filter which billing to get
 	timeNow := time.Now()
 
 	dd, err := PSQLBill.GetBillingPrintDateParam(c)
 
 	if err != nil {
-		return 0, err
+		return timeNow, err
 	}
 
 	day, err := strconv.Atoi(dd)
 
 	if err != nil {
-		return 0, err
+		return timeNow, err
 	}
 
 	// if day < 2 then it shown previous month billing (only for the 1st)
 	if timeNow.Day() < day {
-		month := timeNow.AddDate(0, -2, 0).Month()
-
-		return month, nil
+		return timeNow.AddDate(0, -1, 0), nil
 	}
 
-	month := timeNow.AddDate(0, -1, 0).Month()
-
-	return month, nil
+	return timeNow, nil
 }
 
 func (PSQLBill *psqlBillings) GetMinPaymentParam(c echo.Context) (float64, error) {
 	newPrm := models.Parameter{}
 	err := PSQLBill.DBpg.Model(&newPrm).
-		Where("key = ?", "BILLING_MIN_PAYMENT").Select()
+		Where("key = ?", "BILLING_MIN_PAYMENT").Limit(1).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
@@ -112,7 +109,7 @@ func (PSQLBill *psqlBillings) GetMinPaymentParam(c echo.Context) (float64, error
 func (PSQLBill *psqlBillings) GetDueDateParam(c echo.Context) (int, error) {
 	newPrm := models.Parameter{}
 	err := PSQLBill.DBpg.Model(&newPrm).
-		Where("key = ?", "BILLING_INTERVAL_DUE_DATE").Select()
+		Where("key = ?", "BILLING_INTERVAL_DUE_DATE").Limit(1).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
@@ -140,7 +137,7 @@ func (PSQLBill *psqlBillings) GetDueDateParam(c echo.Context) (int, error) {
 func (PSQLBill *psqlBillings) GetBillingPrintDateParam(c echo.Context) (string, error) {
 	newPrm := models.Parameter{}
 	err := PSQLBill.DBpg.Model(&newPrm).
-		Where("key = ?", "BILLING_PRINT_DATE").Select()
+		Where("key = ?", "BILLING_PRINT_DATE").Limit(1).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
