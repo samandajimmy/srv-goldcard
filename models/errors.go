@@ -81,9 +81,6 @@ var (
 	// ErrUpdateBrixkey to store update brixkey error message
 	ErrGetAccByBrixkey = errors.New("Brixkey tidak di temukan")
 
-	// ErrGetAccByAccountNumber to store account number not found error message
-	ErrGetAccByAccountNumber = errors.New("Nomor akun kartu emas tidak di temukan")
-
 	// ErrUpdateAppDocID to store update application document ID error message
 	ErrUpdateAppDocID = errors.New("Terjadi kesalahan saat update document id")
 
@@ -152,6 +149,18 @@ var (
 
 	// ErrCoreEODStatus to store down time core servive
 	ErrCoreEODStatus = errors.New("Mohon maaf, Layanan sedang tidak tersedia")
+
+	// ErrNoBilling to store get billing statement error message
+	ErrNoBilling = errors.New("Anda belum memiliki tagihan")
+
+	// ErrGetAccByAccountNumber to store account number not found error message
+	ErrGetAccByAccountNumber = errors.New("Nomor akun kartu emas tidak di temukan")
+
+	// ErrGetParameter to store error get parameter
+	ErrGetParameter = errors.New("Parameter tidak ditemukan")
+
+	// ErrParseParameter to store error parsing parameter value
+	ErrParseParameter = errors.New("Gagal memparsing parameter value, format parameter tidak sesuai")
 
 	// ErrGetCardBalance to store get gold card balance error message
 	ErrGetCardBalance = errors.New("Terjadi kesalahan ketika mendapatkan data saldo kartu emas")

@@ -12,7 +12,7 @@ type Repository interface {
 	GetAllTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) (models.ResponseHistoryTransactions, error)
 	GetPgTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) (models.ResponseHistoryTransactions, error)
 	PostTransactions(c echo.Context, trx models.Transaction) error
-	GetAccountByAccountNumber(c echo.Context, acc *models.Transaction) error
+	GetAccountByAccountNumber(c echo.Context, acc *models.Account) error
 }
 
 // RestRepository represent the rest transactions repository contract

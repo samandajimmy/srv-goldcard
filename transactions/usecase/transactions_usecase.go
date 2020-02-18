@@ -102,39 +102,32 @@ func (trxUS *transactionsUseCase) GetPgTransactionsHistory(c echo.Context, pht m
 	return result, errors
 }
 
-func (trxUS *transactionsUseCase) checkAccountByAccountNumber(c echo.Context, pl interface{}) (models.Transaction, error) {
+func (trxUS *transactionsUseCase) CheckAccountByAccountNumber(c echo.Context, pl interface{}) (models.Account, error) {
 	r := reflect.ValueOf(pl)
 	accNumber := r.FieldByName("AccountNumber")
 
 	// Get Account by Account Number
-	trx := models.Transaction{Account: models.Account{AccountNumber: accNumber.String()}}
-	err := trxUS.trxRepo.GetAccountByAccountNumber(c, &trx)
+	acc := models.Account{AccountNumber: accNumber.String()}
+	err := trxUS.trxRepo.GetAccountByAccountNumber(c, &acc)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
-		return models.Transaction{}, models.ErrGetAccByAccountNumber
+		return models.Account{}, models.ErrGetAccByAccountNumber
 	}
 
-	return trx, nil
+	return acc, nil
 }
 
 func (trxUS *transactionsUseCase) GetCardBalance(c echo.Context, pl models.PayloadAccNumber) (models.BRICardBalance, error) {
 	var briCardBal models.BRICardBalance
-	trx, err := trxUS.checkAccountByAccountNumber(c, pl)
+	acc, err := trxUS.CheckAccountByAccountNumber(c, pl)
 
 	if err != nil {
-		return briCardBal, err
-	}
-
-	err = trx.MappingTransactionsAccount(c, pl)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
 		return briCardBal, err
 	}
 
 	// Request BRI endpoint for check card information
-	briCardInfo, err := trxUS.trxrRepo.GetBRICardInformation(c, trx.Account)
+	briCardInfo, err := trxUS.trxrRepo.GetBRICardInformation(c, acc)
 
 	if err != nil {
 		return briCardBal, models.ErrGetCardBalance

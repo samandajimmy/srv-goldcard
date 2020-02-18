@@ -138,11 +138,11 @@ func (PSQLTrx *psqlTransactionsRepository) getTotalTransactions(c echo.Context, 
 	return count, err
 }
 
-func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Context, trx *models.Transaction) error {
+func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Context, acc *models.Account) error {
 	newAcc := models.Account{}
 	err := PSQLTrx.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
 		Relation("Card").
-		Where("account_number = ?", trx.Account.AccountNumber).Select()
+		Where("account_number = ?", acc.AccountNumber).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
@@ -150,12 +150,10 @@ func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Cont
 		return err
 	}
 
-	newTrx := models.Transaction{Account: newAcc}
-
 	if err == pg.ErrNoRows {
 		return models.ErrAppNumberNotFound
 	}
 
-	*trx = newTrx
+	*acc = newAcc
 	return nil
 }

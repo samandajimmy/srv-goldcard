@@ -215,11 +215,6 @@ type PayloadBriGetCardInformation struct {
 	BriXkey string `json:"briXkey" validate:"required"`
 }
 
-// PayloadAccNumber a struct to store all payload for getting user transactions data from pds
-type PayloadAccNumber struct {
-	AccountNumber string `json:"accountNumber" validate:"required"`
-}
-
 // PaginationPayload struct to store pagination payload
 type PaginationPayload struct {
 	Limit int64 `json:"limit"`
@@ -243,4 +238,9 @@ type ListHistoryTransactions struct {
 type ResponseHistoryTransactions struct {
 	IsLastPage              bool                      `json:"isLastPage"`
 	ListHistoryTransactions []ListHistoryTransactions `json:"listHistoryTransactions"`
+}
+
+// PayloadAccNumber a struct to store all payload for transactions
+type PayloadAccNumber struct {
+	AccountNumber string `json:"accountNumber" validate:"required"`
 }

@@ -32,40 +32,6 @@ type Transaction struct {
 	Account     Account   `json:"account"`
 }
 
-// Billing is a struct to store billing data
-type Billing struct {
-	AccountId   int64     `json:"accountId"`
-	Amount      int64     `json:"amount"`
-	GoldAmount  float64   `json:"goldAmount"`
-	BillingDate time.Time `json:"billingDate"`
-	DepthAmount int64     `json:"depthAmount"`
-	DepthGold   float64   `json:"depthGold"`
-	STL         int64     `json:"stl"`
-	DepthSTL    int64     `json:"depthStl"`
-	CreatedAt   time.Time `json:"createdAt"`
-	Account     Account   `json:"account"`
-}
-
-// BillingTransaction is a struct to store billing transaction data
-type BillingTransaction struct {
-	TrxId       int64       `json:"trxId"`
-	BillId      int64       `json:"billId"`
-	UpdatedAt   time.Time   `json:"updatedAt"`
-	CreatedAt   time.Time   `json:"createdAt"`
-	Transaction Transaction `json:"transaction"`
-	Billing     Billing     `json:"billing"`
-}
-
-// BillingPayment is a struct to store billing payment data
-type BillingPayment struct {
-	TrxId       int64       `json:"trxId"`
-	BillId      int64       `json:"billId"`
-	UpdatedAt   time.Time   `json:"updatedAt"`
-	CreatedAt   time.Time   `json:"createdAt"`
-	Transaction Transaction `json:"transaction"`
-	Billing     Billing     `json:"billing"`
-}
-
 type BRICardBalance struct {
 	CurrentBalance float64 `json:"currentBalance"`
 	CreditLimit    float64 `json:"creditLimit"`
@@ -88,13 +54,6 @@ func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPending
 	trx.GoldBalance = float64(goldBalance)
 	trx.TrxDate = pl.TrxDateTime
 	trx.Description = pl.TrxDesc
-
-	return nil
-}
-
-// MappingTransactionsAccount is a struct to mapping transactions account data
-func (trx *Transaction) MappingTransactionsAccount(c echo.Context, pl PayloadAccNumber) error {
-	trx.Account.AccountNumber = pl.AccountNumber
 
 	return nil
 }

@@ -11,4 +11,5 @@ type UseCase interface {
 	PostBRIPendingTransactions(c echo.Context, pbpt models.PayloadBRIPendingTransactions) models.ResponseErrors
 	GetCardBalance(c echo.Context, pl models.PayloadAccNumber) (models.BRICardBalance, error)
 	GetTransactionsHistory(c echo.Context, pht models.PayloadHistoryTransactions) (interface{}, models.ResponseErrors)
+	CheckAccountByAccountNumber(c echo.Context, pl interface{}) (models.Account, error)
 }
