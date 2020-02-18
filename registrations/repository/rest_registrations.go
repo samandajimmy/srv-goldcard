@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"gade/srv-goldcard/activations"
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
@@ -47,7 +48,7 @@ func (rr *restRegistrations) GetCurrentGoldSTL(c echo.Context) (int64, error) {
 		return hargaEmas, nil
 	}
 
-	currSTL, err := strconv.ParseInt(r.ResponseData["hargaEmas"], 10, 64)
+	currSTL, err := strconv.ParseInt(r.ResponseData["hargaEmas"].(string), 10, 64)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
@@ -66,10 +67,10 @@ func (rr *restRegistrations) OpenGoldcard(c echo.Context, acc models.Account, is
 
 	r := api.SwitchingResponse{}
 	body := map[string]interface{}{
-		"isBlokir":      isBlokirTrue,
-		"noRek":         acc.Application.SavingAccount,
-		"gramTransaksi": acc.Card.CardLimit,
-		"stlPengajuan":  acc.Card.CurrentSTL,
+		"isBlokir":         isBlokirTrue,
+		"noRek":            acc.Application.SavingAccount,
+		"gramTransaksi":    fmt.Sprintf("%f", acc.Card.GoldLimit),
+		"nominalTransaksi": strconv.FormatInt(acc.Card.CardLimit, 10),
 	}
 
 	if isRecalculate {
@@ -81,6 +82,36 @@ func (rr *restRegistrations) OpenGoldcard(c echo.Context, acc models.Account, is
 
 	if err != nil {
 		return err
+	}
+
+	if r.ResponseCode != "00" {
+		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode,
+			r.ResponseDesc})
+	}
+
+	return nil
+}
+
+func (rr *restRegistrations) SendNotification(c echo.Context, notif models.PdsNotification, notifType string) error {
+	resp := api.PdsResponse{}
+	reqBody := notif
+	endpoint := "/goldcard/notification"
+
+	switch notifType {
+	case "email":
+		endpoint += "/email"
+	case "mobile":
+		endpoint += "/mobile"
+	default:
+		endpoint += ""
+	}
+
+	err := api.RetryablePdsPost(c, endpoint, reqBody, &resp)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return nil
 	}
 
 	return nil

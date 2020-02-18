@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-// UseCase represent the transactions usecases
+// Repository represent the transactions Repository
 type Repository interface {
 	GetAccountByBrixKey(c echo.Context, acc *models.Transaction) error
 	GetAllTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) (models.ResponseHistoryTransactions, error)

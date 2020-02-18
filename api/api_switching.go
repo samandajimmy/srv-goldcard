@@ -28,10 +28,10 @@ var (
 
 // SwitchingResponse struct represents a response for API Switching
 type SwitchingResponse struct {
-	ResponseCode string            `json:"responseCode"`
-	ResponseDesc string            `json:"responseDesc"`
-	Data         string            `json:"data"`
-	ResponseData map[string]string `json:"responseData,omitempty"`
+	ResponseCode string                 `json:"responseCode"`
+	ResponseDesc string                 `json:"responseDesc"`
+	Data         string                 `json:"data"`
+	ResponseData map[string]interface{} `json:"responseData,omitempty"`
 }
 
 // APIswitching struct represents a request for API Switching
@@ -205,11 +205,12 @@ func (switc *APIswitching) mappingDataResponseSwitching(v interface{}) error {
 	}
 
 	err := json.Unmarshal([]byte(resp.Data), &resp.ResponseData)
-	resp.Data = ""
 
 	if err != nil {
 		logger.Make(switc.ctx, nil).Fatal("Response Data Error Unmarshal")
 	}
+
+	resp.Data = ""
 
 	return nil
 }

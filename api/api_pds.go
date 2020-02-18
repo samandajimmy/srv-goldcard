@@ -1,11 +1,23 @@
 package api
 
 import (
-	"github.com/labstack/echo"
+	_apiRequestsUseCase "gade/srv-goldcard/apirequests/usecase"
+	"gade/srv-goldcard/logger"
+	"gade/srv-goldcard/models"
 	"net/http"
 	"net/url"
 	"os"
+
+	"github.com/labstack/echo"
 )
+
+// PdsResponse struct to store response from PDS API
+type PdsResponse struct {
+	Status  string                   `json:"status"`
+	Message string                   `json:"message"`
+	Errors  string                   `json:"errors"`
+	Data    []map[string]interface{} `json:"data,omitempty"`
+}
 
 // APIpds struct represents a request for API PDS
 type APIpds struct {
@@ -35,6 +47,62 @@ func NewPdsAPI(c echo.Context, contentType string) (APIpds, error) {
 	apiPds.API = api
 
 	return apiPds, nil
+}
+
+// PdsPost function to request PDS API with post method
+func PdsPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
+	pds, err := NewPdsAPI(c, echo.MIMEApplicationJSON)
+
+	if err != nil {
+		return err
+	}
+
+	req, err := pds.Request(endpoint, echo.POST, reqBody)
+
+	if err != nil {
+		return err
+	}
+
+	r, err := pds.Do(req, resp)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return models.ErrExternalAPI
+	}
+
+	res := resp.(*PdsResponse)
+
+	go func() {
+		_ = _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, pds.API, reqBody, resp)
+	}()
+
+	if r.StatusCode != http.StatusOK {
+		return models.DynamicErr(models.ErrPdsAPIRequest, []interface{}{res.Status,
+			res.Message})
+	}
+
+	if res.Status != "success" {
+		return models.DynamicErr(models.ErrPdsAPIRequest, []interface{}{res.Status,
+			res.Message})
+	}
+
+	return nil
+}
+
+// RetryablePdsPost function to retryable request PDS API with post method
+func RetryablePdsPost(c echo.Context, endpoint string, reqBody interface{}, resp interface{}) error {
+	fn := func() error {
+		return PdsPost(c, endpoint, reqBody, resp)
+	}
+
+	err := RetryablePost(c, "PDS API: POST "+endpoint, fn)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Request represent PDS API Request

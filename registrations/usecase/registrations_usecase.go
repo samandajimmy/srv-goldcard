@@ -6,7 +6,6 @@ import (
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/retry"
-	"reflect"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
@@ -220,7 +219,6 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 	return nil
 }
 
-// PostOccupation representation update occupation to database
 func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.PayloadOccupation) error {
 	var city string
 	var zipcode string
@@ -259,7 +257,6 @@ func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.Payloa
 	return nil
 }
 
-// PostAddress representation update address to database
 func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.PayloadSavingAccount) error {
 	// get account by appNumber
 	acc, err := reg.checkApplication(c, pl)
@@ -302,16 +299,30 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 
 	// validasi bri register payload
 	if err := c.Validate(briPl); err != nil {
+		logger.Make(c, nil).Debug(err)
+
 		return err
 	}
 
 	// open and lock gold limit to core
+	errAppBri := make(chan error)
+	errAppCore := make(chan error)
+	accChan := make(chan models.Account)
+
 	go func() {
-		_ = reg.rrr.OpenGoldcard(c, acc, false)
+		err := reg.rrr.OpenGoldcard(c, acc, false)
+
+		if err != nil {
+			logger.Make(c, nil).Debug(err)
+			errAppCore <- err
+			return
+		}
+
+		errAppCore <- nil
 	}()
 
-	// concurrently apply the goldcard application to BRI
-	go reg.briApply(c, &acc, briPl)
+	// channeling after core open goldcard finish
+	go reg.afterOpenGoldcard(c, &acc, briPl, accChan, errAppBri, errAppCore)
 
 	// concurrently update application status and current_step
 	go func() {
@@ -319,199 +330,9 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		acc.Application.CurrentStep = models.AppStepCompleted
 		_ = reg.regRepo.UpdateAppStatus(c, acc.Application)
 		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
+		accChannel, _ := reg.checkApplication(c, pl)
+		accChan <- accChannel
 	}()
 
 	return nil
-}
-
-func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadAppNumber) (models.AppStatus, error) {
-	var appStatus models.AppStatus
-	// Get account by app number
-	acc, err := reg.checkApplication(c, pl)
-
-	if err != nil {
-		return appStatus, err
-	}
-
-	// concurrently get app status from BRI API then update to our DB
-	go func() {
-		resp := api.BriResponse{}
-		reqBody := map[string]interface{}{
-			"briXkey": acc.BrixKey,
-		}
-
-		err := api.RetryableBriPost(c, "/v1/cobranding/card/appstatus", reqBody, &resp)
-
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			return
-		}
-
-		// update application status
-		data := resp.Data[0]
-
-		if _, ok := data["appStatus"].(string); !ok {
-			logger.Make(c, nil).Debug(err)
-			return
-		}
-
-		acc.Application.ID = acc.ApplicationID
-		acc.Application.SetStatus(data["appStatus"].(string))
-		err = reg.regRepo.UpdateAppStatus(c, acc.Application)
-
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			return
-		}
-	}()
-
-	appStatus, err = reg.regRepo.GetAppStatus(c, acc.Application)
-
-	if err != nil {
-		return appStatus, models.ErrGetAppStatus
-	}
-
-	return appStatus, nil
-}
-
-func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, pl models.PayloadBriRegister) {
-	err := reg.briRegister(c, acc, pl)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
-
-	// upload document to BRI API
-	err = reg.uploadAppDocs(c, acc)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
-}
-
-func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account, pl models.PayloadBriRegister) error {
-	if acc.BrixKey != "" {
-		return nil
-	}
-
-	resp := api.BriResponse{}
-	reqBody := api.BriRequest{RequestData: pl}
-	err := api.RetryableBriPost(c, "/v1/cobranding/register", reqBody, &resp)
-
-	if err != nil {
-		return err
-	}
-
-	// update brixkey id
-	if _, ok := resp.DataOne["briXkey"].(string); !ok {
-		logger.Make(c, nil).Debug(models.ErrSetVar)
-
-		return models.ErrSetVar
-	}
-
-	acc.BrixKey = resp.DataOne["briXkey"].(string)
-	// concurrently update brixkey from BRI API
-	go func() {
-		_ = reg.regRepo.UpdateBrixkeyID(c, *acc)
-	}()
-
-	return nil
-}
-
-func (reg *registrationsUseCase) uploadAppDocs(c echo.Context, acc *models.Account) error {
-	for _, doc := range acc.Application.Documents {
-		// concurrently upload application documents to BRI
-		go func(doc models.Document) {
-			_ = reg.uploadAppDoc(c, acc.BrixKey, doc)
-		}(doc)
-	}
-
-	return nil
-}
-
-func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, brixkey string, doc models.Document) error {
-	if doc.DocID != "" {
-		return nil
-	}
-
-	briReq := models.AppDocument{
-		BriXkey:    brixkey,
-		DocType:    models.MapBRIDocType[doc.Type],
-		FileName:   doc.FileName,
-		FileExt:    doc.FileExtension,
-		Base64file: "data:image/jpeg;base64," + doc.FileBase64,
-	}
-
-	resp := api.BriResponse{}
-	reqBody := api.BriRequest{RequestData: briReq}
-	err := api.RetryableBriPost(c, "/v1/cobranding/document", reqBody, &resp)
-
-	if err != nil {
-		return err
-	}
-
-	if _, ok := resp.DataOne["documentId"].(string); !ok {
-		return models.ErrDocIDNotFound
-	}
-
-	doc.DocID = resp.DataOne["documentId"].(string)
-	// concurrently insert or update application document
-	go func() {
-		_ = reg.regRepo.UpsertAppDocument(c, doc)
-	}()
-
-	return nil
-}
-
-func (reg *registrationsUseCase) checkApplication(c echo.Context, pl interface{}) (models.Account, error) {
-	r := reflect.ValueOf(pl)
-	appNumber := r.FieldByName("ApplicationNumber")
-
-	if appNumber.IsZero() {
-		return models.Account{}, nil
-	}
-
-	acc := models.Account{Application: models.Applications{ApplicationNumber: appNumber.String()}}
-	err := reg.regRepo.GetAccountByAppNumber(c, &acc)
-
-	if err != nil {
-		return models.Account{}, models.ErrAppNumberNotFound
-	}
-
-	return acc, nil
-}
-
-func (reg *registrationsUseCase) upsertDocument(c echo.Context, app models.Applications) error {
-	if len(app.Documents) == 0 {
-		return nil
-	}
-
-	for _, doc := range app.Documents {
-		err := reg.regRepo.UpsertAppDocument(c, doc)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (reg *registrationsUseCase) updateSTLPrice(c echo.Context, acc models.Account) {
-	hargeEmas, err := reg.rrr.GetCurrentGoldSTL(c)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
-
-	acc.Card.CurrentSTL = hargeEmas
-	err = reg.regRepo.UpdateCardLimit(c, acc)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
 }

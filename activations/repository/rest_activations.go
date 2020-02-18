@@ -16,8 +16,8 @@ func NewRestActivations() activations.RestRepository {
 	return &restActivations{}
 }
 
-func (ra *restActivations) GetDetailGoldUser(c echo.Context, accNumber string) (map[string]string, error) {
-	nilMap := map[string]string{}
+func (ra *restActivations) GetDetailGoldUser(c echo.Context, accNumber string) (map[string]interface{}, error) {
+	nilMap := map[string]interface{}{}
 	r := api.SwitchingResponse{}
 	reqBody := map[string]interface{}{"norek": accNumber}
 	req := api.MappingRequestSwitching(reqBody)
