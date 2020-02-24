@@ -167,6 +167,12 @@ var (
 
 	// ErrGetCardBalance to store get gold card balance error message
 	ErrGetCardBalance = errors.New("Terjadi kesalahan ketika mendapatkan data saldo kartu emas")
+
+	// ErrInsertPegadaianBillings to store get failed when insert data to table pegadaian billings
+	ErrInsertPegadaianBillings = errors.New("Gagal saat memasukan data tagihan pegadaian")
+
+	// ErrValidateBase64 to store error decode base64
+	ErrValidateBase64 = errors.New("Format file harus dalam bentuk base64")
 )
 
 // DynamicErr to return parameterize errors
