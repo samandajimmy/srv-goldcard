@@ -1,4 +1,4 @@
-FROM artifactory.pegadaian.co.id:8083/golang:1.13 as build-env
+FROM artifactory.pegadaian.co.id:8084/golang:1.13 as build-env
 RUN apt-get update && apt-get install git
 # All these steps will be cached
 
@@ -28,7 +28,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -installsuffix cgo -o /go/bin/srv-goldcard
 
 # Second step to build minimal image
-FROM artifactory.pegadaian.co.id:8083/alpine:3.7
+FROM artifactory.pegadaian.co.id:8084/alpine:3.7
 COPY --from=build-env /go/bin/srv-goldcard /go/bin/srv-goldcard
 COPY --from=build-env /srv-goldcard/entrypoint.sh /srv-goldcard/entrypoint.sh
 COPY --from=build-env /srv-goldcard/migrations /migrations
@@ -43,5 +43,5 @@ RUN cp /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
 RUN echo "Asia/Jakarta" > /etc/timezone
 RUN apk del tzdata
 
-EXPOSE 8083
+EXPOSE 8084
 ENTRYPOINT ["sh", "/srv-goldcard/entrypoint.sh"]

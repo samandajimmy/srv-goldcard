@@ -3,13 +3,13 @@ stages:
   - build
 
 variables:
-  DOCKER_AUTH_CONFIG: '{"auths": {"artifactory.pegadaian.co.id:8083": {"auth": "$DOCKER_AU_CONFIG"}}}'
+  DOCKER_AUTH_CONFIG: '{"auths": {"artifactory.pegadaian.co.id:8084": {"auth": "$DOCKER_AU_CONFIG"}}}'
   CONTAINER_TEST_IMAGE: $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG
   PACKAGE_PATH: /go/src/gade/srv-goldcard
 
 lint:
   image:
-    name: artifactory.pegadaian.co.id:8083/dian/golangci:v1.23.1
+    name: artifactory.pegadaian.co.id:8084/dian/golangci:v1.23.1
     entrypoint: [""]
   stage: lint
   script:
@@ -20,11 +20,11 @@ lint:
 
 build:
   stage: build
-  image: artifactory.pegadaian.co.id:8083/docker:latest
+  image: artifactory.pegadaian.co.id:8084/docker:latest
   services:
-    - name: artifactory.pegadaian.co.id:8083/docker:dind
-      command: ["--insecure-registry=artifactory.pegadaian.co.id:8083"]
+    - name: artifactory.pegadaian.co.id:8084/docker:dind
+      command: ["--insecure-registry=artifactory.pegadaian.co.id:8084"]
   script:
-    - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS artifactory.pegadaian.co.id:8083
+    - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS artifactory.pegadaian.co.id:8084
     - docker build --pull -t $CONTAINER_TEST_IMAGE .
     - docker push $CONTAINER_TEST_IMAGE
