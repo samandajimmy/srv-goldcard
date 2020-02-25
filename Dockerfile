@@ -9,7 +9,7 @@ WORKDIR /srv-goldcard
 ENV GO111MODULE=on
 
 # Force to download lib from nexus pgdn
-ENV GOPROXY="https://artifactory.pegadaian.co.id:8081/repository/go-group-01/"
+ENV GOPROXY="https://artifactory.pegadaian.co.id:8084/repository/go-group-01/"
 
 # COPY go.mod and go.sum files to the workspace
 COPY go.mod .
