@@ -3,7 +3,7 @@ stages:
   - build
 
 variables:
-  DOCKER_AUTH_CONFIG: '{"auths": {"artifactory.pegadaian.co.id:8084": {"auth": "$DOCKER_AU_CONFIG"}}}'
+  DOCKER_AUTH_CONFIG: '{"auths": {"artifactory.pegadaian.co.id:8084": {"auth": "$DOCKER_AU_CONFIG"},"artifactory.pegadaian.co.id:5443": {"auth": "$DOCKER_AU_CONFIG"}}}'
   IMAGE_URL: artifactory.pegadaian.co.id:5443/$CI_PROJECT_NAME:$CI_COMMIT_REF_SLUG
   PACKAGE_PATH: /go/src/gade/srv-goldcard
 
@@ -27,4 +27,5 @@ build:
   script:
     - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS artifactory.pegadaian.co.id:8084
     - docker build --pull -t $IMAGE_URL .
+    - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS artifactory.pegadaian.co.id:5443
     - docker push $IMAGE_URL

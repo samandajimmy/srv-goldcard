@@ -1,9 +1,11 @@
 FROM artifactory.pegadaian.co.id:8084/golang:1.13 as build-env
+
+# add ssl certificate
+ADD ssl_certificate.crt /usr/local/share/ca-certificates/ssl_certificate.crt
+RUN chmod 644 /usr/local/share/ca-certificates/ssl_certificate.crt && update-ca-certificates
+
 RUN apt-get update && apt-get install git
 # All these steps will be cached
-
-# add apk ca certificate
-RUN apk add ca-certificates
 
 RUN mkdir /srv-goldcard
 WORKDIR /srv-goldcard
