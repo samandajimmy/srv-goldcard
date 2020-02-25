@@ -13,6 +13,9 @@ lint:
     entrypoint: [""]
   stage: lint
   script:
+    - cp ssl_certificate.crt /usr/local/share/ca-certificates
+    - chmod 644 /usr/local/share/ca-certificates/ssl_certificate.crt && update-ca-certificates
+    - export GOPROXY="https://artifactory.pegadaian.co.id/repository/go-group-01/"
     - go mod download
     - golangci-lint run
   only:
