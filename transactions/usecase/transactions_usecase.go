@@ -25,6 +25,7 @@ func TransactionsUseCase(trxRepo transactions.Repository, trxrRepo transactions.
 
 func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl models.PayloadBRIPendingTransactions) models.ResponseErrors {
 	var errors models.ResponseErrors
+	var notif models.PdsNotification
 	trx, err := trxUS.checkAccount(c, pl)
 
 	if err != nil {
@@ -55,6 +56,12 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 		errors.SetTitle(models.ErrInsertTransactions.Error())
 		return errors
 	}
+
+	// Send notification to user in pds
+	go func() {
+		notif.GcTransaction(trx)
+		_ = trxUS.rrRepo.SendNotification(c, notif, "mobile")
+	}()
 
 	return errors
 }

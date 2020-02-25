@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"gade/srv-goldcard/logger"
 	"strings"
+	"time"
 
 	"github.com/leekchan/accounting"
 )
@@ -132,5 +133,56 @@ func (pdsNotif *PdsNotification) GcActivation(acc Account, notifType string) {
 		}
 	default:
 		logger.Make(nil, nil).Fatal("notifType could not be empty")
+	}
+}
+
+// MaskChar to replace string with x
+func (pdsNotif *PdsNotification) MaskChar(txt string, strt int, end int) string {
+	var x string
+	for i := 0; i < end-strt; i++ {
+		x += "X"
+	}
+	runes := []rune(txt)
+	return strings.ReplaceAll(txt, string(runes[strt:end]), x)
+}
+
+// TimeParser to parse date string to date and time
+func (pdsNotif *PdsNotification) TimeParser(param string) (string, string) {
+	trxDate, _ := time.Parse("2006-01-02 15:04:05", param)
+	return trxDate.Format("02-01-2006"), trxDate.Format("15:04:05")
+}
+
+// GcTransaction to send goldcard transaction notification to pds
+func (pdsNotif *PdsNotification) GcTransaction(trx Transaction) {
+	ac := accounting.Accounting{Symbol: "Rp ", Thousand: "."}
+	trxDate, trxTime := pdsNotif.TimeParser(trx.TrxDate)
+
+	pdsNotif.NotificationTitle = "Kartu Emas"
+	pdsNotif.PhoneNumber = trx.Account.PersonalInformation.HandPhoneNumber
+	pdsNotif.CIF = trx.Account.CIF
+	pdsNotif.ContentTitle = "Transaksi Kartu Emas Berhasil"
+	pdsNotif.ContentDescription = []string{"Transaksi Kartu Emas berhasil. Berikut merupakan rincian transaksi kamu."}
+	pdsNotif.NotificationDescription = "Transaksi " + ac.FormatMoney(trx.Nominal) + " Berhasil"
+	pdsNotif.ContentList = []ContentList{
+		{
+			Key:   "Tanggal",
+			Value: trxDate,
+		},
+		{
+			Key:   "Waktu",
+			Value: trxTime,
+		},
+		{
+			Key:   "Id Transaksi",
+			Value: pdsNotif.MaskChar(trx.RefTrx, 6, 12),
+		},
+		{
+			Key:   "Jumlah Transaksi",
+			Value: ac.FormatMoney(trx.Nominal),
+		},
+		{
+			Key:   "Tempat",
+			Value: trx.Description,
+		},
 	}
 }
