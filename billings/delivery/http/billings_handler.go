@@ -22,6 +22,9 @@ func NewBillingsHandler(echoGroup models.EchoGroup, bl billings.UseCase) {
 		billingsUseCase: bl,
 	}
 
+	// End Point For BRI
+	echoGroup.API.POST("/billings/summary/bri", handler.BRIPegadaianBillings)
+
 	// End Point For External
 	echoGroup.API.GET("/billings/statements", handler.billingStatement)
 }
@@ -56,6 +59,37 @@ func (bhn *BillingsHandler) billingStatement(c echo.Context) error {
 	bhn.response.SetResponse(responseData, &bhn.respErrors)
 
 	return c.JSON(getStatusCode(err), bhn.response)
+}
+
+// BRIPegadaianBillings a handler to post pegadaian billings from bri
+func (bhn *BillingsHandler) BRIPegadaianBillings(c echo.Context) error {
+	var pbpb models.PayloadBRIPegadaianBillings
+	bhn.response, bhn.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pbpb); err != nil {
+		bhn.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		bhn.response.SetResponse("", &bhn.respErrors)
+
+		return bhn.response.Body(c, err)
+	}
+
+	if err := c.Validate(pbpb); err != nil {
+		bhn.respErrors.SetTitle(err.Error())
+		bhn.response.SetResponse("", &bhn.respErrors)
+
+		return bhn.response.Body(c, err)
+	}
+
+	err := bhn.billingsUseCase.PostBRIPegadaianBillings(c, pbpb)
+
+	if err.Title != "" {
+		bhn.response.SetResponse("", &err)
+
+		return bhn.response.Body(c, nil)
+	}
+
+	bhn.response.SetResponse("", &err)
+	return bhn.response.Body(c, nil)
 }
 
 func getStatusCode(err error) int {
