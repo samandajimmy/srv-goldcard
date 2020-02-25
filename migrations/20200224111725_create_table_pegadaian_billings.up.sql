@@ -1,7 +1,7 @@
 -- create table pegadaian_billings
 CREATE TABLE IF NOT EXISTS pegadaian_billings (
     id SERIAL PRIMARY KEY NOT NULL,
-    ref_id VARCHAR(100),
+    ref_id VARCHAR(255),
     billing_date TIMESTAMP,
     file_name VARCHAR(100),
     file_base64 TEXT,

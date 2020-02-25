@@ -9,6 +9,7 @@ import (
 
 // Billing is a struct to store billing data
 type Billing struct {
+	ID          int64     `json:"id"`
 	AccountId   int64     `json:"accountId"`
 	Amount      int64     `json:"amount"`
 	GoldAmount  float64   `json:"goldAmount"`
@@ -23,6 +24,7 @@ type Billing struct {
 
 // BillingTransaction is a struct to store billing transaction data
 type BillingTransaction struct {
+	ID          int64       `json:"id"`
 	TrxId       int64       `json:"trxId"`
 	BillId      int64       `json:"billId"`
 	UpdatedAt   time.Time   `json:"updatedAt"`
@@ -33,6 +35,7 @@ type BillingTransaction struct {
 
 // BillingPayment is a struct to store billing payment data
 type BillingPayment struct {
+	ID          int64       `json:"id"`
 	TrxId       int64       `json:"trxId"`
 	BillId      int64       `json:"billId"`
 	UpdatedAt   time.Time   `json:"updatedAt"`
@@ -51,6 +54,7 @@ type BillingStatement struct {
 
 // PegadaianBilling is a struct to store pegadaian billings data
 type PegadaianBilling struct {
+	ID            int64     `json:"id"`
 	RefID         string    `json:"refID"`
 	FileName      string    `json:"fileName"`
 	BillingDate   string    `json:"billingDate"`
