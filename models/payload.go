@@ -191,7 +191,8 @@ type PayloadOccupation struct {
 // PayloadActivations a struct to store all payload for activations
 type PayloadActivations struct {
 	ExpDate           string `json:"expDate" validate:"required"`
-	LastSixDigits     string `json:"lastSixDigits" validate:"required"`
+	FirstSixDigits    string `json:"firstSixDigits" validate:"required"`
+	LastFourDigits    string `json:"lastFourDigits" validate:"required"`
 	ApplicationNumber string `json:"applicationNumber" validate:"required"`
 }
 

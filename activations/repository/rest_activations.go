@@ -64,9 +64,11 @@ func (ra *restActivations) ActivationsToCore(c echo.Context, acc models.Account)
 func (ra *restActivations) ActivationsToBRI(c echo.Context, acc models.Account, pa models.PayloadActivations) error {
 	respBRI := api.BriResponse{}
 	requestDataBRI := map[string]interface{}{
-		"briXkey":       acc.BrixKey,
-		"expDate":       pa.ExpDate,
-		"lastSixDigits": pa.LastSixDigits,
+		"briXkey":        acc.BrixKey,
+		"expDate":        pa.ExpDate,
+		"lastFourDigits": pa.LastFourDigits,
+		"firstSixDigits": pa.FirstSixDigits,
+		"dob":            acc.PersonalInformation.BirthDate,
 	}
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
 	errBRI := api.RetryableBriPost(c, "/v1/cobranding/card/activation", reqBRIBody.RequestData, &respBRI)
