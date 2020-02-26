@@ -153,3 +153,25 @@ func (PSQLBill *psqlBillings) GetBillingPrintDateParam(c echo.Context) (string, 
 
 	return newPrm.Value, nil
 }
+
+func (PSQLBill *psqlBillings) PostPegadaianBillings(c echo.Context, pgdBil models.PegadaianBilling) error {
+	query := `INSERT INTO pegadaian_billings (ref_id, billing_date, file_name, file_base64, file_extension, created_at)
+	VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
+	stmt, err := PSQLBill.Conn.Prepare(query)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	_, err = stmt.Exec(pgdBil.RefID, pgdBil.BillingDate, pgdBil.FileName, pgdBil.FileBase64, pgdBil.FileExtension, pgdBil.CreatedAt)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}

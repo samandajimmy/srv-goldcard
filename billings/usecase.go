@@ -9,4 +9,5 @@ import (
 // UseCase represent the product requirements usecases
 type UseCase interface {
 	GetBillingStatement(c echo.Context, pl models.PayloadAccNumber) (models.BillingStatement, error)
+	PostBRIPegadaianBillings(c echo.Context, pbpb models.PayloadBRIPegadaianBillings) models.ResponseErrors
 }

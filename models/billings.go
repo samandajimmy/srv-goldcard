@@ -9,6 +9,7 @@ import (
 
 // Billing is a struct to store billing data
 type Billing struct {
+	ID          int64     `json:"id"`
 	AccountId   int64     `json:"accountId"`
 	Amount      int64     `json:"amount"`
 	GoldAmount  float64   `json:"goldAmount"`
@@ -23,6 +24,7 @@ type Billing struct {
 
 // BillingTransaction is a struct to store billing transaction data
 type BillingTransaction struct {
+	ID          int64       `json:"id"`
 	TrxId       int64       `json:"trxId"`
 	BillId      int64       `json:"billId"`
 	UpdatedAt   time.Time   `json:"updatedAt"`
@@ -33,6 +35,7 @@ type BillingTransaction struct {
 
 // BillingPayment is a struct to store billing payment data
 type BillingPayment struct {
+	ID          int64       `json:"id"`
 	TrxId       int64       `json:"trxId"`
 	BillId      int64       `json:"billId"`
 	UpdatedAt   time.Time   `json:"updatedAt"`
@@ -49,6 +52,18 @@ type BillingStatement struct {
 	BillingAmount     int64  `json:"billingAmount"`
 }
 
+// PegadaianBilling is a struct to store pegadaian billings data
+type PegadaianBilling struct {
+	ID            int64     `json:"id"`
+	RefID         string    `json:"refID"`
+	FileName      string    `json:"fileName"`
+	BillingDate   string    `json:"billingDate"`
+	FileBase64    string    `json:"fileBase64"`
+	FileExtension string    `json:"fileExtension"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+}
+
 // MappingBillingAccount is a struct to mapping billing account data
 func (bill *Billing) MappingAccountNumberToBilling(c echo.Context, pl PayloadAccNumber) error {
 	bill.Account.AccountNumber = pl.AccountNumber
@@ -62,6 +77,18 @@ func (bill *Billing) MapBillingStatementResponse(c echo.Context, dueDate int, mi
 	billStmt.BillingDueDate = bill.BillingDate.AddDate(0, 0, dueDate).Format("2006-01-02")
 	billStmt.BillingMinPayment = int64(math.Ceil(float64(bill.Amount) * minPay))
 	billStmt.BillingPrintDate = bill.BillingDate.Format("2006-01-02")
+
+	return nil
+}
+
+// MappingPegadaianBilling is a function to mapping pegadaian billing
+func (pgdBil *PegadaianBilling) MappingPegadaianBilling(c echo.Context, pl PayloadBRIPegadaianBillings) error {
+	pgdBil.RefID = pl.RefID
+	pgdBil.BillingDate = pl.BillingDate
+	pgdBil.FileName = pl.FileName
+	pgdBil.FileBase64 = pl.FileBase64
+	pgdBil.FileExtension = pl.FileExtension
+	pgdBil.CreatedAt = time.Now()
 
 	return nil
 }

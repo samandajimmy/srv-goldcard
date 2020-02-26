@@ -244,3 +244,12 @@ type ResponseHistoryTransactions struct {
 type PayloadAccNumber struct {
 	AccountNumber string `json:"accountNumber" validate:"required"`
 }
+
+// PayloadBRIPegadaianBillings a struct to store all payload for post pegadaian billing from BRI
+type PayloadBRIPegadaianBillings struct {
+	BillingDate   string `json:"billingDate" validate:"required"`
+	FileBase64    string `json:"fileBase64" validate:"required"`
+	FileExtension string `json:"fileExtension" validate:"required"`
+	FileName      string `json:"fileName" validate:"required"`
+	RefID         string `json:"refID" validate:"required"`
+}
