@@ -11,6 +11,7 @@ type Requirements struct {
 	SaldoMinEfektif   float64 `json:"saldo_min_efektif"`
 	SaldoTabunganEmas string  `json:"saldo_tabungan_emas"`
 	Umur              int64   `json:"umur"`
+	UmurMenikah       int64   `json:"umur_menikah"`
 }
 
 // RequirementsValue represent value of Requirements struct
@@ -24,4 +25,5 @@ var RequirementsValue = Requirements{
 	SaldoMinEfektif:   0.1,
 	SaldoTabunganEmas: "1",
 	Umur:              21,
+	UmurMenikah:       17,
 }
