@@ -229,6 +229,7 @@ type PayloadHistoryTransactions struct {
 
 // ListHistoryTransactions struct to store list history transactions
 type ListHistoryTransactions struct {
+	RefTrx      string `json:"refTrx"`
 	Nominal     int64  `json:"nominal"`
 	TrxDate     string `json:"trxDate"`
 	Description string `json:"description"`
