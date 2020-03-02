@@ -74,3 +74,10 @@ func DateIsNotEqual(date1, date2 time.Time) bool {
 	y2, m2, d2 := date2.Date()
 	return y1 != y2 || m1 != m2 || d1 != d2
 }
+
+// ParseDate is a function parse date from DD-MM-YYYY to YYYY-MM-DD
+func ParseDate(data string) string {
+	date, _ := time.Parse("02-01-2006", data)
+
+	return date.Format(DateFormat)
+}

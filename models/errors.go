@@ -173,6 +173,9 @@ var (
 
 	// ErrValidateBase64 to store error decode base64
 	ErrValidateBase64 = errors.New("Format file harus dalam bentuk base64")
+
+	// ErrBirthDateNotMatch to store error birth date if not match
+	ErrBirthDateNotMatch = errors.New("Tanggal lahir yang dimasukan tidak sesuai")
 )
 
 // DynamicErr to return parameterize errors

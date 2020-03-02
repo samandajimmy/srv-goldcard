@@ -128,6 +128,13 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 		return respActNil, models.ErrMappingData
 	}
 
+	// validate birth date if not equal
+	errBOD := aUsecase.validateBirthDate(acc, pa)
+
+	if errBOD.Title != "" {
+		return respActNil, errors.New(errBOD.Title)
+	}
+
 	// Inquiry activation
 	if models.DateIsNotEqual(acc.Card.UpdatedAt, time.Now()) {
 		appNumber := models.PayloadAppNumber{
@@ -271,4 +278,16 @@ func (aUsecase *activationsUseCase) checkApplication(c echo.Context, pl interfac
 	}
 
 	return acc, nil
+}
+
+func (aUsecase *activationsUseCase) validateBirthDate(acc models.Account, pa models.PayloadActivations) models.ResponseErrors {
+	var errors models.ResponseErrors
+	birthDate := models.ParseDate(pa.BirthDate)
+
+	if acc.PersonalInformation.BirthDate != birthDate {
+		errors.SetTitle(models.ErrBirthDateNotMatch.Error())
+		return errors
+	}
+
+	return errors
 }

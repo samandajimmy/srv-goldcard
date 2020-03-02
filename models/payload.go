@@ -193,6 +193,7 @@ type PayloadActivations struct {
 	ExpDate           string `json:"expDate" validate:"required"`
 	FirstSixDigits    string `json:"firstSixDigits" validate:"required"`
 	LastFourDigits    string `json:"lastFourDigits" validate:"required"`
+	BirthDate         string `json:"birthDate" validate:"required"`
 	ApplicationNumber string `json:"applicationNumber" validate:"required"`
 }
 

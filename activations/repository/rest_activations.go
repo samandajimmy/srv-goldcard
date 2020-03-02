@@ -68,8 +68,9 @@ func (ra *restActivations) ActivationsToBRI(c echo.Context, acc models.Account, 
 		"expDate":        pa.ExpDate,
 		"lastFourDigits": pa.LastFourDigits,
 		"firstSixDigits": pa.FirstSixDigits,
-		"dob":            acc.PersonalInformation.BirthDate,
+		"birthDate":      models.ParseDate(pa.BirthDate),
 	}
+
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
 	errBRI := api.RetryableBriPost(c, "/v1/cobranding/card/activation", reqBRIBody.RequestData, &respBRI)
 
