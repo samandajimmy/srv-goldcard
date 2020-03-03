@@ -8,6 +8,8 @@ import (
 
 var (
 	accStatusActive = "active"
+
+	appendXCardNumber = "xxxxxx"
 )
 
 // Account is a struct to store account data
@@ -93,7 +95,7 @@ func (acc *Account) MappingAddressData(c echo.Context, pl PayloadAddress) error 
 
 // MappingCardActivationsData a function to map all data activations
 func (acc *Account) MappingCardActivationsData(c echo.Context, pa PayloadActivations) error {
-	acc.Card.CardNumber = pa.FirstSixDigits + "xxxxxx" + pa.LastFourDigits
+	acc.Card.CardNumber = pa.FirstSixDigits + appendXCardNumber + pa.LastFourDigits
 	acc.Card.ValidUntil = pa.ExpDate
 	acc.Application.Status = AppStatusActive
 	acc.Card.Status = cardStatusActive
