@@ -73,6 +73,10 @@ func PdsPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
 
 	res := resp.(*PdsResponse)
 
+	if res.Status != "success" {
+		r.StatusCode = http.StatusBadRequest
+	}
+
 	go func() {
 		_ = _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, pds.API, reqBody, resp)
 	}()

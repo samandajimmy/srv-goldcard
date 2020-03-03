@@ -13,9 +13,6 @@ import (
 )
 
 var (
-	// SwitchingRCInquiryAllow RC 14
-	SwitchingRCInquiryAllow = "14"
-
 	// SwitchingIsRecalculate represent recalculate open goldcard if STL > 1.15%
 	SwitchingIsRecalculate = "1"
 
@@ -166,6 +163,10 @@ func SwitchingPost(c echo.Context, body interface{}, path string, response inter
 	}
 
 	res := response.(*SwitchingResponse)
+
+	if res.ResponseCode != APIRCSuccess {
+		r.StatusCode = http.StatusBadRequest
+	}
 
 	go func() {
 		_ = _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, switching.API, body, response)
