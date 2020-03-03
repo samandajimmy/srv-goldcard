@@ -1,1 +1,1 @@
-DROP IF EXISTS disputed_transactions;
+DROP TABLE IF EXISTS disputed_transactions;
