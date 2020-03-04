@@ -27,7 +27,7 @@ func NewPsqlTransactionsRepository(Conn *sql.DB, DBpg *pg.DB) transactions.Repos
 func (PSQLTrx *psqlTransactionsRepository) GetAllTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) (models.ResponseHistoryTransactions, error) {
 	trx := models.ResponseHistoryTransactions{}
 
-	_, err := PSQLTrx.DBpg.Query(&trx.ListHistoryTransactions, `SELECT t.nominal, t.trx_date, t.description FROM transactions t 
+	_, err := PSQLTrx.DBpg.Query(&trx.ListHistoryTransactions, `SELECT t.ref_trx, t.nominal, t.trx_date, t.description FROM transactions t 
 		LEFT JOIN accounts a ON a.id = t.account_id WHERE a.account_number = ? ORDER BY t.created_at`,
 		pt.AccountNumber)
 
@@ -98,7 +98,7 @@ func (PSQLTrx *psqlTransactionsRepository) GetPgTransactionsHistory(c echo.Conte
 	trx := models.ResponseHistoryTransactions{}
 	offset := (pt.Pagination.Page - 1) * pt.Pagination.Limit
 
-	_, err := PSQLTrx.DBpg.Query(&trx.ListHistoryTransactions, `SELECT t.nominal, t.trx_date, t.description FROM transactions t 
+	_, err := PSQLTrx.DBpg.Query(&trx.ListHistoryTransactions, `SELECT t.ref_trx, t.nominal, t.trx_date, t.description FROM transactions t 
 		LEFT JOIN accounts a ON a.id = t.account_id  WHERE a.account_number = ? ORDER BY t.created_at LIMIT ? OFFSET ?`,
 		pt.AccountNumber, pt.Pagination.Limit, offset)
 
