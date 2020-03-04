@@ -5,6 +5,7 @@ import (
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -63,11 +64,22 @@ func (ra *restActivations) ActivationsToCore(c echo.Context, acc models.Account)
 
 func (ra *restActivations) ActivationsToBRI(c echo.Context, acc models.Account, pa models.PayloadActivations) error {
 	respBRI := api.BriResponse{}
-	requestDataBRI := map[string]interface{}{
-		"briXkey":       acc.BrixKey,
-		"expDate":       pa.ExpDate,
-		"lastSixDigits": pa.LastSixDigits,
+	date, err := time.Parse(models.DDMMYYYY, pa.BirthDate)
+
+	if err != nil {
+		return err
 	}
+
+	birthDate := date.Format(models.DateFormatDef)
+
+	requestDataBRI := map[string]interface{}{
+		"briXkey":        acc.BrixKey,
+		"expDate":        pa.ExpDate,
+		"lastFourDigits": pa.LastFourDigits,
+		"firstSixDigits": pa.FirstSixDigits,
+		"birthDate":      birthDate,
+	}
+
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
 	errBRI := api.RetryableBriPost(c, "/v1/cobranding/card/activation", reqBRIBody.RequestData, &respBRI)
 

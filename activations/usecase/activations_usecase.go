@@ -166,6 +166,27 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 	return models.RespActivations{AccountNumber: acc.AccountNumber}, nil
 }
 
+func (aUsecase *activationsUseCase) ValidateActivation(c echo.Context, pa models.PayloadActivations) models.ResponseErrors {
+	var errors models.ResponseErrors
+	// get account and check app number
+	acc, err := aUsecase.checkApplication(c, pa)
+
+	if err != nil {
+		errors.SetTitle(err.Error())
+		return errors
+	}
+
+	// validate birth date if not equal
+	err = aUsecase.validateBirthDate(acc, pa)
+
+	if err != nil {
+		errors.SetTitleCode("11", err.Error(), models.ErrPostActivationsFailed.Error())
+		return errors
+	}
+
+	return errors
+}
+
 func (aUsecase *activationsUseCase) afterActivationGoldcard(c echo.Context, acc *models.Account, pa models.PayloadActivations, errActCore chan error) error {
 	var notif models.PdsNotification
 	accNumber, _ := uuid.NewRandom()
@@ -271,4 +292,20 @@ func (aUsecase *activationsUseCase) checkApplication(c echo.Context, pl interfac
 	}
 
 	return acc, nil
+}
+
+func (aUsecase *activationsUseCase) validateBirthDate(acc models.Account, pa models.PayloadActivations) error {
+	date, err := time.Parse(models.DDMMYYYY, pa.BirthDate)
+
+	if err != nil {
+		return err
+	}
+
+	birthDate := date.Format(models.DateFormatDef)
+
+	if acc.PersonalInformation.BirthDate != birthDate {
+		return models.ErrBirthDateNotMatch
+	}
+
+	return nil
 }

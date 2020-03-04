@@ -64,7 +64,7 @@ func (pa *psqlActivations) UpdateGoldLimit(c echo.Context, card models.Card) err
 func (act *psqlActivations) GetAccountByAppNumber(c echo.Context, acc *models.Account) error {
 	newAcc := models.Account{}
 	docs := []models.Document{}
-	err := act.DBpg.Model(&newAcc).Relation("Application").Relation("Card").
+	err := act.DBpg.Model(&newAcc).Relation("Application").Relation("Card").Relation("PersonalInformation").
 		Where("application_number = ?", acc.Application.ApplicationNumber).
 		Where("application.status = ?", models.AppStatusSent).Select()
 
