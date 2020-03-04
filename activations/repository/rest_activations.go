@@ -39,7 +39,7 @@ func (ra *restActivations) GetDetailGoldUser(c echo.Context, accNumber string) (
 	return r.ResponseData, nil
 }
 
-func (ra *restActivations) ActivationsToCore(c echo.Context, acc models.Account) error {
+func (ra *restActivations) ActivationsToCore(c echo.Context, acc *models.Account) error {
 	respSwitching := api.SwitchingResponse{}
 	requestDataSwitching := map[string]interface{}{
 		"cif":        acc.CIF,
@@ -58,6 +58,8 @@ func (ra *restActivations) ActivationsToCore(c echo.Context, acc models.Account)
 		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc}))
 		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc})
 	}
+
+	acc.AccountNumber = respSwitching.ResponseData["noRekPembayaran"].(string)
 
 	return nil
 }

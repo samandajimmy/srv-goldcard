@@ -17,6 +17,6 @@ type Repository interface {
 // RestRepository represent the rest activations repository contract
 type RestRepository interface {
 	GetDetailGoldUser(c echo.Context, accNumber string) (map[string]interface{}, error)
-	ActivationsToCore(c echo.Context, acc models.Account) error
+	ActivationsToCore(c echo.Context, acc *models.Account) error
 	ActivationsToBRI(c echo.Context, acc models.Account, pa models.PayloadActivations) error
 }

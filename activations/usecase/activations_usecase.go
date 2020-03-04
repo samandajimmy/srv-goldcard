@@ -10,7 +10,6 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -146,7 +145,7 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 
 	go func() {
 		// Activations to core
-		err = aUsecase.arRepo.ActivationsToCore(c, acc)
+		err = aUsecase.arRepo.ActivationsToCore(c, &acc)
 
 		if err != nil {
 			errActCore <- err
@@ -189,8 +188,6 @@ func (aUsecase *activationsUseCase) ValidateActivation(c echo.Context, pa models
 
 func (aUsecase *activationsUseCase) afterActivationGoldcard(c echo.Context, acc *models.Account, pa models.PayloadActivations, errActCore chan error) error {
 	var notif models.PdsNotification
-	accNumber, _ := uuid.NewRandom()
-	acc.AccountNumber = accNumber.String()
 	errActBri := make(chan error)
 	errActUpdate := make(chan error)
 	errActivation := make(chan error)
@@ -270,6 +267,7 @@ func (aUsecase *activationsUseCase) afterActivationGoldcard(c echo.Context, acc 
 	}()
 
 	if err := <-errActivation; err != nil {
+		logger.Make(c, nil).Debug(err)
 		return err
 	}
 

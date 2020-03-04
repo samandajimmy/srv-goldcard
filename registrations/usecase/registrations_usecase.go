@@ -193,8 +193,9 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 		return err
 	}
 
-	// Validation response
-	if r.ResponseCode != api.SwitchingRCInquiryAllow {
+	if r.ResponseCode != api.APIRCSuccess {
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode, r.ResponseDesc}))
+
 		return models.ErrInquiryReg
 	}
 
