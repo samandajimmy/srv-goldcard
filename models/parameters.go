@@ -27,11 +27,11 @@ var (
 	// DateTimeFormatMillisecond to store a date time format of timestamp to millisecond
 	DateTimeFormatMillisecond = "2006-01-02 15:04:05.000"
 
-	// DateFormat to store a date format of timestamp
-	DateFormat = "2006-01-02"
+	// DateFormatDef to store a date format of timestamp
+	DateFormatDef = "2006-01-02"
 
-	// DateFormatPDS to strore a date format for DDMMYYY (default pds)
-	DateFormatPDS = "02-01-2006"
+	// DDMMYYYY to strore a date format for DDMMYYYY
+	DDMMYYYY = "02-01-2006"
 
 	// DateFormatRegex to store a regex of dd/mm/yyyy date format
 	DateFormatRegex = "(^\\d{4}\\-(0[1-9]|1[012])\\-(0[1-9]|[12][0-9]|3[01])$)"

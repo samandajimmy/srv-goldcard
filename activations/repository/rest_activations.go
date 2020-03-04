@@ -64,13 +64,13 @@ func (ra *restActivations) ActivationsToCore(c echo.Context, acc models.Account)
 
 func (ra *restActivations) ActivationsToBRI(c echo.Context, acc models.Account, pa models.PayloadActivations) error {
 	respBRI := api.BriResponse{}
-	date, err := time.Parse(models.DateFormatPDS, pa.BirthDate)
+	date, err := time.Parse(models.DDMMYYYY, pa.BirthDate)
 
 	if err != nil {
 		return err
 	}
 
-	birthDate := date.Format(models.DateFormat)
+	birthDate := date.Format(models.DateFormatDef)
 
 	requestDataBRI := map[string]interface{}{
 		"briXkey":        acc.BrixKey,
