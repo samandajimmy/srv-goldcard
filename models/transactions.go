@@ -14,22 +14,24 @@ const (
 
 // Transaction is a struct to store transaction data
 type Transaction struct {
-	ID          int64     `json:"id"`
-	AccountId   int64     `json:"accountId"`
-	RefTrxPgdn  string    `json:"refTrxPgdn"`
-	RefTrx      string    `json:"refTrx"`
-	Nominal     int64     `json:"nominal"`
-	GoldNominal float64   `json:"goldNominal"`
-	Type        string    `json:"type"`
-	Status      string    `json:"status"`
-	Balance     int64     `json:"balance"`
-	GoldBalance float64   `json:"goldBalance"`
-	Methods     string    `json:"methods"`
-	TrxDate     string    `json:"trxDate"`
-	Description string    `json:"description"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-	CreatedAt   time.Time `json:"createdAt"`
-	Account     Account   `json:"account"`
+	ID            int64     `json:"id"`
+	AccountId     int64     `json:"accountId"`
+	RefTrxPgdn    string    `json:"refTrxPgdn"`
+	RefTrx        string    `json:"refTrx"`
+	Nominal       int64     `json:"nominal"`
+	GoldNominal   float64   `json:"goldNominal"`
+	Type          string    `json:"type"`
+	Status        string    `json:"status"`
+	Balance       int64     `json:"balance"`
+	GoldBalance   float64   `json:"goldBalance"`
+	Methods       string    `json:"methods"`
+	TrxDate       string    `json:"trxDate"`
+	Description   string    `json:"description"`
+	CompareID     string    `json:"compareId"`
+	TransactionID string    `json:"transactionId"`
+	UpdatedAt     time.Time `json:"updatedAt"`
+	CreatedAt     time.Time `json:"createdAt"`
+	Account       Account   `json:"account"`
 }
 
 type BRICardBalance struct {
@@ -45,7 +47,7 @@ func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPending
 
 	trx.AccountId = trans.Account.ID
 	trx.RefTrxPgdn = refTrxPg
-	trx.RefTrx = pl.TransactionId
+	trx.TransactionID = pl.TransactionId
 	trx.Nominal = pl.Amount
 	trx.GoldNominal = goldNominal
 	trx.Type = typeTrxCredit
