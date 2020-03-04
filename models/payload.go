@@ -203,6 +203,7 @@ type PayloadBRIPendingTransactions struct {
 	Amount         int64  `json:"amount" validate:"required"`
 	CurrencyAmount string `json:"currencyAmount" validate:"required"`
 	TrxDesc        string `json:"trxDesc" validate:"required"`
+	AuthCode       string `json:"authCode" validate:"required"`
 }
 
 // Payload ResActivations atruct to store all payload for success response activation

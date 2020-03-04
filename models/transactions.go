@@ -56,6 +56,7 @@ func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPending
 	trx.GoldBalance = float64(goldBalance)
 	trx.TrxDate = pl.TrxDateTime
 	trx.Description = pl.TrxDesc
+	trx.CompareID = pl.AuthCode
 
 	return nil
 }
