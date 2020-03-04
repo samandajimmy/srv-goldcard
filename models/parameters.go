@@ -30,6 +30,9 @@ var (
 	// DateFormat to store a date format of timestamp
 	DateFormat = "2006-01-02"
 
+	// DateFormatPDS to strore a date format for DDMMYYY (default pds)
+	DateFormatPDS = "02-01-2006"
+
 	// DateFormatRegex to store a regex of dd/mm/yyyy date format
 	DateFormatRegex = "(^\\d{4}\\-(0[1-9]|1[012])\\-(0[1-9]|[12][0-9]|3[01])$)"
 
@@ -73,11 +76,4 @@ func DateIsNotEqual(date1, date2 time.Time) bool {
 	y1, m1, d1 := date1.Date()
 	y2, m2, d2 := date2.Date()
 	return y1 != y2 || m1 != m2 || d1 != d2
-}
-
-// ParseDate is a function parse date from DD-MM-YYYY to YYYY-MM-DD
-func ParseDate(data string) string {
-	date, _ := time.Parse("02-01-2006", data)
-
-	return date.Format(DateFormat)
 }

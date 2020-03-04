@@ -295,7 +295,13 @@ func (aUsecase *activationsUseCase) checkApplication(c echo.Context, pl interfac
 }
 
 func (aUsecase *activationsUseCase) validateBirthDate(acc models.Account, pa models.PayloadActivations) error {
-	birthDate := models.ParseDate(pa.BirthDate)
+	date, err := time.Parse(models.DateFormatPDS, pa.BirthDate)
+
+	if err != nil {
+		return err
+	}
+
+	birthDate := date.Format(models.DateFormat)
 
 	if acc.PersonalInformation.BirthDate != birthDate {
 		return models.ErrBirthDateNotMatch
