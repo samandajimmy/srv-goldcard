@@ -1,0 +1,5 @@
+ALTER TABLE transactions
+ADD COLUMN compare_id VARCHAR(100) DEFAULT NULL;
+
+ALTER TABLE transactions
+ADD COLUMN transaction_id VARCHAR(100) DEFAULT NULL;

@@ -67,11 +67,11 @@ func (PSQLTrx *psqlTransactionsRepository) PostTransactions(c echo.Context, trx 
 	trx.CreatedAt = time.Now()
 	var nilFilters []string
 	stmts := []*gcdb.PipelineStmt{
-		gcdb.NewPipelineStmt(`INSERT INTO transactions (account_id, ref_trx_pgdn, ref_trx, nominal, gold_nominal,
-			type, status, balance, gold_balance, description, created_at, trx_date)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 ,$10, $11, $12) RETURNING account_id;`,
-			nilFilters, trx.AccountId, trx.RefTrxPgdn, trx.RefTrx, trx.Nominal, trx.GoldNominal, trx.Type, trx.Status, trx.Balance,
-			trx.GoldBalance, trx.Description, time.Now(), trx.TrxDate),
+		gcdb.NewPipelineStmt(`INSERT INTO transactions (account_id, ref_trx_pgdn, transaction_id, nominal, gold_nominal,
+			type, status, balance, gold_balance, description, compare_id, created_at, trx_date)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 ,$10, $11, $12, $13) RETURNING account_id;`,
+			nilFilters, trx.AccountId, trx.RefTrxPgdn, trx.TransactionID, trx.Nominal, trx.GoldNominal, trx.Type, trx.Status, trx.Balance,
+			trx.GoldBalance, trx.Description, trx.CompareID, time.Now(), trx.TrxDate),
 
 		gcdb.NewPipelineStmt(`UPDATE cards c 
 			set balance = $1, gold_balance = $2, updated_at = $3
