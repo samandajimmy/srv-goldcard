@@ -35,20 +35,17 @@ func (br *BriResponse) SetRC() {
 		return
 	}
 
-	code, ok := br.Status["code"].(string)
-
-	if !ok {
+	if _, ok := br.Status["code"].(string); !ok {
 		logger.Make(nil, nil).Fatal(models.ErrSetVar)
 	}
 
-	desc, ok := br.Status["desc"].(string)
+	br.ResponseCode = br.Status["code"].(string)
 
-	if !ok {
+	if _, ok := br.Status["desc"].(string); !ok {
 		logger.Make(nil, nil).Fatal(models.ErrSetVar)
 	}
 
-	br.ResponseCode = code
-	br.ResponseMessage = desc
+	br.ResponseMessage = br.Status["desc"].(string)
 }
 
 // BriRequest struct to store request payload BRI API needed
@@ -278,6 +275,10 @@ func (bri *APIbri) setAccessToken() error {
 
 	if err != nil {
 		return err
+	}
+
+	if _, ok := response["access_token"].(string); !ok {
+		return models.ErrSetVar
 	}
 
 	bri.AccessToken = response["access_token"].(string)

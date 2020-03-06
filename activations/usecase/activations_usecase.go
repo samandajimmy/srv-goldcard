@@ -73,6 +73,11 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 		return errors
 	}
 
+	if _, ok := userDetail["saldoEfektif"].(string); !ok {
+		errors.SetTitle(models.ErrSetVar.Error())
+		return errors
+	}
+
 	goldEffBalance, err := strconv.ParseFloat(userDetail["saldoEfektif"].(string), 64)
 
 	if err != nil {

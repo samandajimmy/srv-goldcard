@@ -59,6 +59,12 @@ func (ra *restActivations) ActivationsToCore(c echo.Context, acc *models.Account
 		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc})
 	}
 
+	if _, ok := respSwitching.ResponseData["noRekPembayaran"].(string); !ok {
+		logger.Make(c, nil).Debug(models.ErrSetVar)
+
+		return models.ErrSetVar
+	}
+
 	acc.AccountNumber = respSwitching.ResponseData["noRekPembayaran"].(string)
 
 	return nil

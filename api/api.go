@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"gade/srv-goldcard/logger"
+	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/retry"
 	"net/http"
 	"net/url"
@@ -107,6 +109,11 @@ func (api *API) requestURLEncoded(method string, body interface{}) (*http.Reques
 	}
 
 	for key, value := range mapData {
+		if _, ok := value.(string); !ok {
+			logger.Make(nil, nil).Debug(models.ErrSetVar)
+			continue
+		}
+
 		params.Set(key, value.(string))
 	}
 

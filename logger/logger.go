@@ -41,6 +41,7 @@ func Init() {
 // Make is to get a log parameter
 func Make(c echo.Context, payload interface{}) *logrus.Entry {
 	var rl requestLogger
+
 	logrus.SetReportCaller(true)
 
 	if c != nil {

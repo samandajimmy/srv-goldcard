@@ -48,6 +48,12 @@ func (rr *restRegistrations) GetCurrentGoldSTL(c echo.Context) (int64, error) {
 		return hargaEmas, nil
 	}
 
+	if _, ok := r.ResponseData["hargaEmas"].(string); !ok {
+		logger.Make(c, nil).Debug(models.ErrSetVar)
+
+		return 0, models.ErrSetVar
+	}
+
 	currSTL, err := strconv.ParseInt(r.ResponseData["hargaEmas"].(string), 10, 64)
 
 	if err != nil {

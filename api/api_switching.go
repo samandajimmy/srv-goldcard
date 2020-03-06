@@ -138,6 +138,10 @@ func (switc *APIswitching) setAccessTokenSwitching() error {
 		return err
 	}
 
+	if _, ok := response["access_token"].(string); !ok {
+		return models.ErrSetVar
+	}
+
 	switc.AccessToken = response["access_token"].(string)
 
 	return nil
