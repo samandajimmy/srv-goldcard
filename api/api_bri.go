@@ -19,10 +19,6 @@ import (
 	"github.com/labstack/echo"
 )
 
-var (
-	whitelistedEndpoints = []string{"/v1/cobranding/deduplication"}
-)
-
 // BriResponse struct to store response from BRI API
 type BriResponse struct {
 	ResponseCode    string                   `json:"responseCode"`
@@ -293,14 +289,4 @@ func (bri APIbri) getUnorderedURLQuery(queryParams url.Values) string {
 	return "path=" + queryParams.Get("path") + "&verb=" + queryParams.Get("verb") +
 		"&token=" + queryParams.Get("token") + "&timestamp=" + queryParams.Get("timestamp") +
 		"&body=" + queryParams.Get("body")
-}
-
-func isWhitelisted(str string) bool {
-	for _, ep := range whitelistedEndpoints {
-		if str == ep {
-			return true
-		}
-	}
-
-	return false
 }

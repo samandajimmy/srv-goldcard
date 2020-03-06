@@ -24,6 +24,8 @@ type API struct {
 var (
 	// APIRCSuccess represents response code success
 	APIRCSuccess = "00"
+
+	whitelistedEndpoints = []string{"/v1/cobranding/deduplication", "/goldcard/inquiry"}
 )
 
 // NewAPI for create new client request
@@ -151,4 +153,14 @@ func (api *API) stringURL() string {
 	URLStr, _ := url.QueryUnescape(api.Host.String())
 
 	return URLStr
+}
+
+func isWhitelisted(str string) bool {
+	for _, ep := range whitelistedEndpoints {
+		if str == ep {
+			return true
+		}
+	}
+
+	return false
 }

@@ -24,8 +24,6 @@ var (
 
 	// SwitchingRCInquiryAllow RC 14
 	SwitchingRCInquiryAllow = "14"
-
-	whitelistedEndpoints = []string{"/goldcard/inquiry"}
 )
 
 // SwitchingResponse struct represents a response for API Switching
@@ -169,7 +167,7 @@ func SwitchingPost(c echo.Context, body interface{}, path string, response inter
 
 	res := response.(*SwitchingResponse)
 
-	if res.ResponseCode != APIRCSuccess && !isWhitelisted(endpoint) {
+	if res.ResponseCode != APIRCSuccess && !isWhitelisted(path) {
 		r.StatusCode = http.StatusBadRequest
 	}
 
