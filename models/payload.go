@@ -38,9 +38,8 @@ type PayloadSavingAccount struct {
 
 // PayloadCardLimit a struct to store all payload for card limit
 type PayloadCardLimit struct {
-	ApplicationNumber string  `json:"applicationNumber" validate:"required"`
-	CardLimit         int64   `json:"cardLimit" validate:"required"`
-	GoldLimit         float64 `json:"goldLimit" validate:"required"`
+	ApplicationNumber string `json:"applicationNumber" validate:"required"`
+	CardLimit         int64  `json:"cardLimit" validate:"required"`
 }
 
 // PayloadAddress a struct to store all payload for user address

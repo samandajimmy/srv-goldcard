@@ -199,8 +199,15 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 		return models.ErrInquiryReg
 	}
 
+	// get current STL
+	currStl, err := reg.rrr.GetCurrentGoldSTL(c)
+
+	if err != nil {
+		return models.ErrGetCurrSTL
+	}
+
 	acc.Card.CardLimit = pl.CardLimit
-	acc.Card.GoldLimit = pl.GoldLimit
+	acc.Card.GoldLimit = acc.Card.ConvertMoneyToGold(pl.CardLimit, currStl) // convert limit to gold with current STL
 	err = reg.regRepo.UpdateCardLimit(c, acc)
 
 	if err != nil {
