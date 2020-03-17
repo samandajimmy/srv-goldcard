@@ -77,6 +77,15 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	// set npwp
 	acc.PersonalInformation.SetNPWP(pl.Npwp)
 
+	// set gold saving slip Base64
+	base64, err := GenerateGoldSavingPDF(pl)
+
+	if err != nil {
+		return err
+	}
+
+	pl.GoldSavingSlipBase64 = base64
+
 	// application documents
 	acc.Application.SetDocument(pl)
 

@@ -1,8 +1,12 @@
 package models
 
 import (
+	"bytes"
+	"encoding/base64"
 	"math"
 	"time"
+
+	"github.com/jung-kurt/gofpdf"
 )
 
 var (
@@ -76,4 +80,24 @@ func DateIsNotEqual(date1, date2 time.Time) bool {
 	y1, m1, d1 := date1.Date()
 	y2, m2, d2 := date2.Date()
 	return y1 != y2 || m1 != m2 || d1 != d2
+}
+
+func GenerateGoldSavingPDF(pl PayloadPersonalInformation) (string, error) {
+	var buf bytes.Buffer
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 16)
+
+	// CellFormat(width, height, text, border, position after, align, fill, link, linkStr)
+	pdf.CellFormat(190, 7, "Welcome to golangcode.com", "0", 0, "CM", false, 0, "")
+
+	err := pdf.Output(&buf)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Convert to base64
+	pdfBase64 := base64.StdEncoding.EncodeToString(buf.Bytes())
+	return pdfBase64, nil
 }

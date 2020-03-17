@@ -21,6 +21,9 @@ const (
 	// DefAppDocFileExt is to store var default application document file ext
 	DefAppDocFileExt = "jpg"
 
+	// PdfAppDocFileExt is to store var pdf application document file ext
+	PdfAppDocFileExt = "pdf"
+
 	// DefAppDocType is to store var default application document type
 	DefAppDocType = "D"
 )
@@ -66,10 +69,19 @@ var (
 		"failed":                "FailedDate",
 	}
 	mapDocType = map[string]string{
-		"KtpImageBase64":    "ktp",
-		"NpwpImageBase64":   "npwp",
-		"SelfieImageBase64": "selfie",
+		"KtpImageBase64":       "ktp",
+		"NpwpImageBase64":      "npwp",
+		"SelfieImageBase64":    "selfie",
+		"GoldSavingSlipBase64": "slip_te",
 	}
+
+	mapFileExt = map[string]string{
+		"KtpImageBase64":       DefAppDocFileExt,
+		"NpwpImageBase64":      DefAppDocFileExt,
+		"SelfieImageBase64":    DefAppDocFileExt,
+		"GoldSavingSlipBase64": PdfAppDocFileExt,
+	}
+
 	// MapBRIDocType to store map values of BRI DOC type
 	MapBRIDocType = map[string]string{
 		"ktp":    "A",
@@ -122,7 +134,7 @@ func (app *Applications) GetStatusDateKey() string {
 // SetDocument to set application document array
 func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 	var emptyDocs []Document
-	docNames := []string{"KtpImageBase64", "NpwpImageBase64", "SelfieImageBase64"}
+	docNames := []string{"KtpImageBase64", "NpwpImageBase64", "SelfieImageBase64", "GoldSavingSlipBase64"}
 	r := reflect.ValueOf(pl)
 	currDoc := app.Documents
 	app.Documents = emptyDocs
@@ -139,7 +151,7 @@ func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 		if doc.ID == 0 {
 			doc = Document{
 				FileName:      pl.Nik + "-" + mapDocType[docName],
-				FileExtension: DefAppDocFileExt,
+				FileExtension: mapFileExt[docName],
 				Type:          mapDocType[docName],
 				ApplicationID: app.ID,
 			}
