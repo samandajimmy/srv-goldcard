@@ -176,13 +176,13 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.PayloadCardLimit) error {
 	// get account by appNumber
 	acc, err := reg.checkApplication(c, pl)
-	r := api.SwitchingResponse{}
 
 	if err != nil {
 		return err
 	}
 
 	// Gold Card inquiry Registrations to core
+	r := api.SwitchingResponse{}
 	body := map[string]interface{}{
 		"noRek": acc.Application.SavingAccount,
 	}

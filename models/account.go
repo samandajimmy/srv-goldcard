@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	accStatusActive = "active"
+	AccStatusActive = "active"
 
 	appendXCardNumber = "xxxxxx"
 )
@@ -99,7 +99,7 @@ func (acc *Account) MappingCardActivationsData(c echo.Context, pa PayloadActivat
 	acc.Card.ValidUntil = pa.ExpDate
 	acc.Application.Status = AppStatusActive
 	acc.Card.Status = cardStatusActive
-	acc.Status = accStatusActive
+	acc.Status = AccStatusActive
 
 	return nil
 }

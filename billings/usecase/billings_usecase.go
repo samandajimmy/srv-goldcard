@@ -21,47 +21,27 @@ func BillingsUseCase(bRepo billings.Repository, tUseCase transactions.UseCase) b
 }
 
 func (billUS *billingsUseCase) GetBillingStatement(c echo.Context, pl models.PayloadAccNumber) (models.BillingStatement, error) {
-	var billStmt models.BillingStatement
+	// check account
 	acc, err := billUS.tUseCase.CheckAccountByAccountNumber(c, pl)
 
 	if err != nil {
-		return billStmt, err
-	}
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return billStmt, err
+		return models.BillingStatement{}, err
 	}
 
 	// Get goldcard account billing
 	bill := models.Billing{Account: acc}
-	err = billUS.bRepo.GetBilling(c, &bill)
+	err = billUS.bRepo.GetBillingInquiry(c, &bill)
 
 	if err != nil {
-		return billStmt, err
+		return models.BillingStatement{}, models.ErrNoBilling
 	}
 
-	// Get minimum payment parameters
-	minPayParam, err := billUS.bRepo.GetMinPaymentParam(c)
-
-	if err != nil {
-		return billStmt, err
-	}
-
-	// Get billing due date parameters
-	dueDateParam, err := billUS.bRepo.GetDueDateParam(c)
-
-	if err != nil {
-		return billStmt, err
-	}
-
-	err = bill.MapBillingStatementResponse(c, dueDateParam, minPayParam, &billStmt)
-
-	if err != nil {
-		return billStmt, err
-	}
-
-	return billStmt, nil
+	return models.BillingStatement{
+		BillingAmount:     bill.Amount,
+		BillingPrintDate:  bill.BillingDate.Format("2006-01-02"),
+		BillingDueDate:    bill.BillingDueDate.Format("2006-01-02"),
+		BillingMinPayment: int64(bill.MinimumPayment),
+	}, nil
 }
 
 func (billUS *billingsUseCase) PostBRIPegadaianBillings(c echo.Context, pbpb models.PayloadBRIPegadaianBillings) models.ResponseErrors {
@@ -104,9 +84,4 @@ func (billUS *billingsUseCase) ValidateBase64(c echo.Context, data string) error
 	}
 
 	return nil
-}
-
-// ProductRequirements represent to get all product requirements
-func (billings *billingsUseCase) ProductRequirements(c echo.Context) (models.Requirements, error) {
-	return models.RequirementsValue, nil
 }

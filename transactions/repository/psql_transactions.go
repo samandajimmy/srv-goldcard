@@ -2,12 +2,10 @@ package repository
 
 import (
 	"database/sql"
-	gcdb "gade/srv-goldcard/database"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/transactions"
 	"math"
-	"strconv"
 	"time"
 
 	"github.com/go-pg/pg/v9"
@@ -42,48 +40,30 @@ func (PSQLTrx *psqlTransactionsRepository) GetAllTransactionsHistory(c echo.Cont
 
 }
 
-func (PSQLTrx *psqlTransactionsRepository) GetAccountByBrixKey(c echo.Context, trx *models.Transaction) error {
-	newAcc := models.Account{}
-	err := PSQLTrx.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").Relation("Card").
-		Where("brixkey = ?", trx.Account.BrixKey).Select()
+func (PSQLTrx *psqlTransactionsRepository) GetTrxAccountByBrixKey(c echo.Context, brixkey string) (models.Transaction, error) {
+	acc := models.Account{}
+	trx := models.Transaction{}
+	err := PSQLTrx.DBpg.Model(&acc).Relation("Application").Relation("PersonalInformation").Relation("Card").
+		Where("brixkey = ?", brixkey).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
 
-		return err
+		return trx, err
 	}
-
-	newTrx := models.Transaction{Account: newAcc}
 
 	if err == pg.ErrNoRows {
-		return models.ErrGetAccByBrixkey
+		return trx, models.ErrGetAccByBrixkey
 	}
 
-	*trx = newTrx
-	return nil
+	trx.Account = acc
+	trx.AccountId = acc.ID
+	return trx, nil
 }
 
 func (PSQLTrx *psqlTransactionsRepository) PostTransactions(c echo.Context, trx models.Transaction) error {
 	trx.CreatedAt = time.Now()
-	var nilFilters []string
-	stmts := []*gcdb.PipelineStmt{
-		gcdb.NewPipelineStmt(`INSERT INTO transactions (account_id, ref_trx_pgdn, transaction_id, nominal, gold_nominal,
-			type, status, balance, gold_balance, description, compare_id, created_at, trx_date)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9 ,$10, $11, $12, $13) RETURNING account_id;`,
-			nilFilters, trx.AccountId, trx.RefTrxPgdn, trx.TransactionID, trx.Nominal, trx.GoldNominal, trx.Type, trx.Status, trx.Balance,
-			trx.GoldBalance, trx.Description, trx.CompareID, time.Now(), trx.TrxDate),
-
-		gcdb.NewPipelineStmt(`UPDATE cards c 
-			set balance = $1, gold_balance = $2, updated_at = $3
-			FROM accounts a 
-			WHERE a.card_id = c.id
-			AND a.id = `+strconv.Itoa(int(trx.AccountId))+` RETURNING c.id;`,
-			nilFilters, trx.Balance, trx.GoldBalance, time.Now()),
-	}
-
-	err := gcdb.WithTransaction(PSQLTrx.Conn, func(tx gcdb.Transaction) error {
-		return gcdb.RunPipelineQueryRow(tx, stmts...)
-	})
+	err := PSQLTrx.DBpg.Insert(&trx)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
@@ -142,7 +122,8 @@ func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Cont
 	newAcc := models.Account{}
 	err := PSQLTrx.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
 		Relation("Card").
-		Where("account_number = ?", acc.AccountNumber).Select()
+		Where("account_number = ? AND account.status = ?", acc.AccountNumber, models.AccStatusActive).
+		Limit(1).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
@@ -155,5 +136,19 @@ func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Cont
 	}
 
 	*acc = newAcc
+	return nil
+}
+
+func (PSQLTrx *psqlTransactionsRepository) UpdateCardBalance(c echo.Context, card models.Card) error {
+	card.UpdatedAt = time.Now()
+	col := []string{"balance", "gold_balance", "stl_balance", "updated_at"}
+	_, err := PSQLTrx.DBpg.Model(&card).Column(col...).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
 	return nil
 }

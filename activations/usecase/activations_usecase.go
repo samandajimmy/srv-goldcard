@@ -55,7 +55,7 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 		return errors
 	}
 
-	appliedStl := acc.Card.CurrentSTL
+	appliedStl := acc.Card.StlLimit
 	deficitStl := appliedStl - currStl
 
 	if deficitStl <= 0 {
@@ -98,7 +98,8 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 
 	acc.Card.GoldLimit = currGoldLimit
 	acc.Card.GoldBalance = currGoldLimit
-	acc.Card.CurrentSTL = currStl
+	acc.Card.StlLimit = currStl
+	acc.Card.StlBalance = currStl
 	// recalculate open goldcard registrations
 	err = aUsecase.rrRepo.OpenGoldcard(c, acc, true)
 

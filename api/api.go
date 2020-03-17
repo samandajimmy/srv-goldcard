@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -22,6 +23,8 @@ type API struct {
 	Endpoint    string
 	ctx         echo.Context
 }
+
+const defRTO = 30 * time.Second
 
 var (
 	// APIRCSuccess represents response code success
@@ -39,8 +42,10 @@ func NewAPI(c echo.Context, baseURL string, contentType string) (API, error) {
 	}
 
 	return API{
-		Host:        url,
-		HTTPClient:  &http.Client{},
+		Host: url,
+		HTTPClient: &http.Client{
+			Timeout: defRTO,
+		},
 		ContentType: contentType,
 		ctx:         c,
 	}, nil
