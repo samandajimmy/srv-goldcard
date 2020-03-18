@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"encoding/base64"
 	"gade/srv-goldcard/billings"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -50,14 +49,6 @@ func (billUS *billingsUseCase) GetBillingStatement(c echo.Context, pl models.Pay
 func (billUS *billingsUseCase) PostBRIPegadaianBillings(c echo.Context, pbpb models.PayloadBRIPegadaianBillings) models.ResponseErrors {
 	var errors models.ResponseErrors
 	var pgdBill models.PegadaianBilling
-
-	// validate base64 file payload
-	if err := billUS.ValidateBase64(c, pbpb.FileBase64); err != nil {
-		errors.SetTitle(models.ErrValidateBase64.Error())
-
-		return errors
-	}
-
 	err := pgdBill.MappingPegadaianBilling(c, pbpb)
 
 	if err != nil {
@@ -78,20 +69,8 @@ func (billUS *billingsUseCase) PostBRIPegadaianBillings(c echo.Context, pbpb mod
 	return errors
 }
 
-func (billUS *billingsUseCase) ValidateBase64(c echo.Context, data string) error {
-	_, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
-	return nil
-}
-
 func (billUS *billingsUseCase) PostBRIPaymentTransactions(c echo.Context, pl models.PayloadBRIPaymentTransactions) models.ResponseErrors {
 	var errors models.ResponseErrors
-
 	trx, err := billUS.tUseCase.CheckAccount(c, pl)
 
 	if err != nil {

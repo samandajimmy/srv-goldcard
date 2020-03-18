@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -89,6 +90,7 @@ func (cm *customMiddleware) customValidation() {
 	validator := validator.New()
 	customValidator := customValidator{}
 	_ = validator.RegisterValidation("isRequiredWith", customValidator.isRequiredWith)
+	_ = validator.RegisterValidation("base64", customValidator.base64)
 	customValidator.validator = validator
 	cm.e.Validator = &customValidator
 }
@@ -122,6 +124,7 @@ func (cm customMiddleware) jwtAuth() {
 	}))
 }
 
+// begin custom validator
 func (cv *customValidator) isRequiredWith(fl validator.FieldLevel) bool {
 	field := fl.Field()
 	otherField, _, _, _ := fl.GetStructFieldOK2()
@@ -133,6 +136,20 @@ func (cv *customValidator) isRequiredWith(fl validator.FieldLevel) bool {
 	}
 
 	return true
+}
+
+func (cv *customValidator) base64(fl validator.FieldLevel) bool {
+	field := fl.Field()
+
+	// if field is nil
+	if field.Interface() == reflect.Zero(field.Type()).Interface() {
+		return true
+	}
+
+	// check field base64 or not, if error then false
+	_, err := base64.StdEncoding.DecodeString(field.Interface().(string))
+
+	return err == nil
 }
 
 func bodyParser(c echo.Context, pl *[]byte) {
