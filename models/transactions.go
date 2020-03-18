@@ -10,7 +10,7 @@ const (
 	typeTrxCredit    string = "credit"
 	typeTrxDebit     string = "debit"
 	statusTrxPending string = "pending"
-	statusTrxPosted  string = "pending"
+	statusTrxPosted  string = "posted"
 	methodTrxPayment string = "payment"
 )
 
@@ -34,6 +34,7 @@ type Transaction struct {
 	UpdatedAt     time.Time `json:"updatedAt"`
 	CreatedAt     time.Time `json:"createdAt"`
 	Account       Account   `json:"account"`
+	Source        string    `json:"source" pg:"-"`
 }
 
 type BRICardBalance struct {
@@ -64,7 +65,7 @@ func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPending
 }
 
 // MappingTransactions is a struct to mapping payment transactions data
-func (trx *Transaction) MappingPaymentTransactions(c echo.Context, pl PayloadBRIPaymentTransactions, trans Transaction, refTrxPg string, stl int64) error {
+func (trx *Transaction) MappingPaymentTransaction(c echo.Context, pl PayloadPaymentTransactions, trans Transaction, refTrxPg string, stl int64) error {
 	goldNominal := trx.Account.Card.ConvertMoneyToGold(pl.PaymentAmount, stl)
 	balance := trx.Account.Card.Balance + pl.PaymentAmount
 	goldBalance := trx.Account.Card.ConvertMoneyToGold(balance, stl)
@@ -81,6 +82,7 @@ func (trx *Transaction) MappingPaymentTransactions(c echo.Context, pl PayloadBRI
 	trx.GoldBalance = float64(goldBalance)
 	trx.TrxDate = pl.PaymentDate
 	trx.Description = pl.PaymentDesc
+	trx.Source = pl.Source
 
 	return nil
 }

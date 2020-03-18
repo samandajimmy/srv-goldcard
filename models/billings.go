@@ -19,11 +19,11 @@ type Billing struct {
 	GoldAmount     float64   `json:"goldAmount"`
 	BillingDate    time.Time `json:"billingDate"`
 	BillingDueDate time.Time `json:"billingDueDate"`
-	DepthAmount    int64     `json:"depthAmount"`
-	DepthGold      float64   `json:"depthGold"`
+	DebtAmount     int64     `json:"debtAmount"`
+	DebtGold       float64   `json:"debtGold"`
 	MinimumPayment float64   `json:"minimum_payment"`
 	STL            int64     `json:"stl"`
-	DepthSTL       int64     `json:"depthStl"`
+	DebtSTL        int64     `json:"debtStl"`
 	Status         string    `json:"status"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
@@ -85,15 +85,6 @@ func (pgdBil *PegadaianBilling) MappingPegadaianBilling(c echo.Context, pl Paylo
 	pgdBil.FileBase64 = pl.FileBase64
 	pgdBil.FileExtension = pl.FileExtension
 	pgdBil.CreatedAt = time.Now()
-
-	return nil
-}
-
-// MappingBillingPayment is a function to mapping billing payment
-func (bp *BillingPayment) MappingBillingPayment(c echo.Context, trx Transaction, bil Billing) error {
-	bp.TrxId = trx.ID
-	bp.BillId = bil.ID
-	bp.CreatedAt = time.Now()
 
 	return nil
 }

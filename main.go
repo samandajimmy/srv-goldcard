@@ -88,16 +88,16 @@ func main() {
 	// USECASES
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
 	tokenUseCase := _tokenUseCase.NewTokenUseCase(tokenRepository, timeoutContext)
-	registrationsUserCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository, restRegistrationsRepo)
-	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo)
+	registrationsUseCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository, restRegistrationsRepo)
+	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo, registrationsUseCase)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
-	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, restTransactionsRepo, restRegistrationsRepo)
+	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, billingsRepository, restTransactionsRepo, restRegistrationsRepo)
 	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, restRegistrationsRepo, transactionsUseCase)
 
 	// DELIVERIES
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
 	_tokenHttpDelivery.NewTokensHandler(echoGroup, tokenUseCase)
-	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup, registrationsUserCase)
+	_registrationsHttpDelivery.NewRegistrationsHandler(echoGroup, registrationsUseCase)
 	_activationHttpDelivery.NewActivationsHandler(echoGroup, activationUserCase)
 	_transactionsHttpDelivery.NewTransactionsHandler(echoGroup, transactionsUseCase)
 	_billingsHttpDelivery.NewBillingsHandler(echoGroup, billingsUseCase)

@@ -7,7 +7,6 @@ import (
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/transactions"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -63,51 +62,6 @@ func (billUS *billingsUseCase) PostBRIPegadaianBillings(c echo.Context, pbpb mod
 	if err != nil {
 		errors.SetTitle(models.ErrInsertPegadaianBillings.Error())
 
-		return errors
-	}
-
-	return errors
-}
-
-func (billUS *billingsUseCase) PostBRIPaymentTransactions(c echo.Context, pl models.PayloadBRIPaymentTransactions) models.ResponseErrors {
-	var errors models.ResponseErrors
-	trx, err := billUS.tUseCase.CheckAccount(c, pl)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetAccByBrixkey.Error())
-		return errors
-	}
-
-	// Generate ref transactions pegadaian
-	refTrxPgdn, _ := uuid.NewRandom()
-	// Get curr STL
-	currStl, err := billUS.rrRepo.GetCurrentGoldSTL(c)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetCurrSTL.Error())
-		return errors
-	}
-
-	// populate payment transaction for insert
-	err = trx.MappingPaymentTransactions(c, pl, trx, refTrxPgdn.String(), currStl)
-
-	if err != nil {
-		errors.SetTitle(models.ErrMappingData.Error())
-		return errors
-	}
-
-	err = billUS.bRepo.PostPayments(c, trx)
-
-	if err != nil {
-		errors.SetTitle(models.ErrInsertPaymentTransactions.Error())
-		return errors
-	}
-
-	// update card balance to BRI after success receive billing payment
-	_, err = billUS.tUseCase.UpdateAndGetCardBalance(c, trx.Account)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetCardBalance.Error())
 		return errors
 	}
 

@@ -24,6 +24,9 @@ func NewTransactionsHandler(
 	// Endpoint For BRI
 	echoGroup.API.POST("/transactions/bri", handler.BRIPendingTransactions)
 
+	// Endpoint For third party
+	echoGroup.API.POST("/transactions/payment/:source", handler.paymentTransaction)
+
 	// Endpoint For PDS
 	echoGroup.API.GET("/transactions/history", handler.HistoryTransactions)
 	echoGroup.API.GET("/transactions/balance", handler.GetCardBalance)
@@ -120,4 +123,37 @@ func (th *TransactionsHandler) GetCardBalance(c echo.Context) error {
 
 	th.response.SetResponse(resp, &th.respErrors)
 	return th.response.Body(c, err)
+}
+
+func (th *TransactionsHandler) paymentTransaction(c echo.Context) error {
+	var pbpt models.PayloadPaymentTransactions
+	th.response, th.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pbpt); err != nil {
+		th.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		th.response.SetResponse("", &th.respErrors)
+
+		return th.response.Body(c, err)
+	}
+
+	// init source variable
+	pbpt.Source = c.Param("source")
+
+	if err := c.Validate(pbpt); err != nil {
+		th.respErrors.SetTitle(err.Error())
+		th.response.SetResponse("", &th.respErrors)
+
+		return th.response.Body(c, err)
+	}
+
+	err := th.transactionsUseCase.PostPaymentTransaction(c, pbpt)
+
+	if err.Title != "" {
+		th.response.SetResponse("", &err)
+
+		return th.response.Body(c, nil)
+	}
+
+	th.response.SetResponse("", &err)
+	return th.response.Body(c, nil)
 }

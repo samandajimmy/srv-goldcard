@@ -6,7 +6,6 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"strconv"
-	"time"
 
 	"github.com/go-pg/pg/v9"
 	"github.com/labstack/echo"
@@ -133,52 +132,6 @@ func (PSQLBill *psqlBillings) PostPegadaianBillings(c echo.Context, pgdBil model
 	}
 
 	_, err = stmt.Exec(pgdBil.RefID, pgdBil.BillingDate, pgdBil.FileName, pgdBil.FileBase64, pgdBil.FileExtension, pgdBil.CreatedAt)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
-	return nil
-}
-
-func (PSQLBill *psqlBillings) PostPayments(c echo.Context, trx models.Transaction) error {
-	var bilPay models.BillingPayment
-	bil := models.Billing{
-		Account: trx.Account,
-	}
-
-	// insert into transactions
-	trx.CreatedAt = time.Now()
-	err := PSQLBill.DBpg.Insert(&trx)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
-	// get last published billing to map payment transaction into billings
-	err = PSQLBill.GetBillingInquiry(c, &bil)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
-	// populate billing payment for insert
-	err = bilPay.MappingBillingPayment(c, trx, bil)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
-	// insert into billing payment then
-	err = PSQLBill.DBpg.Insert(&bilPay)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)

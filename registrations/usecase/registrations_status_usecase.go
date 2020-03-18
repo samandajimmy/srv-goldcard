@@ -9,7 +9,7 @@ import (
 	"github.com/labstack/echo"
 )
 
-func (reg *registrationsUseCase) checkApplication(c echo.Context, pl interface{}) (models.Account, error) {
+func (reg *registrationsUseCase) CheckApplication(c echo.Context, pl interface{}) (models.Account, error) {
 	r := reflect.ValueOf(pl)
 	appNumber := r.FieldByName("ApplicationNumber")
 
@@ -30,7 +30,7 @@ func (reg *registrationsUseCase) checkApplication(c echo.Context, pl interface{}
 func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadAppNumber) (models.AppStatus, error) {
 	var appStatus models.AppStatus
 	// Get account by app number
-	acc, err := reg.checkApplication(c, pl)
+	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
 		return appStatus, err

@@ -6,7 +6,6 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
-	"reflect"
 	"strconv"
 	"time"
 
@@ -14,22 +13,23 @@ import (
 )
 
 type activationsUseCase struct {
-	aRepo  activations.Repository
-	arRepo activations.RestRepository
-	rRepo  registrations.Repository
-	rrRepo registrations.RestRepository
+	aRepo    activations.Repository
+	arRepo   activations.RestRepository
+	rRepo    registrations.Repository
+	rrRepo   registrations.RestRepository
+	rUsecase registrations.UseCase
 }
 
 // ActivationUseCase represent Activation Use Case
 func ActivationUseCase(aRepo activations.Repository, arRepo activations.RestRepository,
-	rRepo registrations.Repository, rrRepo registrations.RestRepository) activations.UseCase {
-	return &activationsUseCase{aRepo, arRepo, rRepo, rrRepo}
+	rRepo registrations.Repository, rrRepo registrations.RestRepository, rUsecase registrations.UseCase) activations.UseCase {
+	return &activationsUseCase{aRepo, arRepo, rRepo, rrRepo, rUsecase}
 }
 
 func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.PayloadAppNumber) models.ResponseErrors {
 	var errors models.ResponseErrors
 	// get account and check app number
-	acc, err := aUsecase.checkApplication(c, pl)
+	acc, err := aUsecase.rUsecase.CheckApplication(c, pl)
 
 	if err != nil {
 		errors.SetTitle(err.Error())
@@ -121,7 +121,7 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 
 func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.PayloadActivations) (models.RespActivations, error) {
 	var respActNil models.RespActivations
-	acc, err := aUsecase.checkApplication(c, pa)
+	acc, err := aUsecase.rUsecase.CheckApplication(c, pa)
 
 	if err != nil {
 		return respActNil, err
@@ -174,7 +174,7 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 func (aUsecase *activationsUseCase) ValidateActivation(c echo.Context, pa models.PayloadActivations) models.ResponseErrors {
 	var errors models.ResponseErrors
 	// get account and check app number
-	acc, err := aUsecase.checkApplication(c, pa)
+	acc, err := aUsecase.rUsecase.CheckApplication(c, pa)
 
 	if err != nil {
 		errors.SetTitle(err.Error())
@@ -278,24 +278,6 @@ func (aUsecase *activationsUseCase) afterActivationGoldcard(c echo.Context, acc 
 	}
 
 	return nil
-}
-
-func (aUsecase *activationsUseCase) checkApplication(c echo.Context, pl interface{}) (models.Account, error) {
-	r := reflect.ValueOf(pl)
-	appNumber := r.FieldByName("ApplicationNumber")
-
-	if appNumber.IsZero() {
-		return models.Account{}, nil
-	}
-
-	acc := models.Account{Application: models.Applications{ApplicationNumber: appNumber.String()}}
-	err := aUsecase.aRepo.GetAccountByAppNumber(c, &acc)
-
-	if err != nil {
-		return models.Account{}, models.ErrAppNumberNotFound
-	}
-
-	return acc, nil
 }
 
 func (aUsecase *activationsUseCase) validateBirthDate(acc models.Account, pa models.PayloadActivations) error {

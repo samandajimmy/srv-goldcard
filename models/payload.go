@@ -208,7 +208,8 @@ type PayloadBRIPendingTransactions struct {
 }
 
 // PayloadBRIPaymentTransactions a struct to store all payload for payment transactions from BRI
-type PayloadBRIPaymentTransactions struct {
+type PayloadPaymentTransactions struct {
+	Source               string `json:"source" validate:"oneof=bri pgdn-core"`
 	BillingStatementDate string `json:"billingStatementDate" validate:"required"`
 	PaymentAmount        int64  `json:"paymentAmount" validate:"required"`
 	RefID                string `json:"refID" validate:"required"`
