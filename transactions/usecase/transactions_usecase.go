@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"encoding/json"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
@@ -32,6 +31,7 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 		errors.SetTitle(models.ErrGetAccByBrixkey.Error())
 		return errors
 	}
+
 	// Generate ref transactions pegadaian
 	refTrxPgdn, _ := uuid.NewRandom()
 
@@ -43,6 +43,7 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 		return errors
 	}
 
+	// mapping all trx data needed
 	err = trx.MappingTransactions(c, pl, trx, refTrxPgdn.String(), currStl)
 
 	if err != nil {
@@ -50,12 +51,22 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 		return errors
 	}
 
+	// store trx to db
 	err = trxUS.trxRepo.PostTransactions(c, trx)
 
 	if err != nil {
 		errors.SetTitle(models.ErrInsertTransactions.Error())
 		return errors
 	}
+
+	// update card balance by account
+	go func() {
+		_, err := trxUS.UpdateAndGetCardBalance(c, trx.Account)
+
+		if err != nil {
+			logger.Make(c, nil).Debug(err)
+		}
+	}()
 
 	// Send notification to user in pds
 	go func() {
@@ -86,9 +97,8 @@ func (trxUS *transactionsUseCase) checkAccount(c echo.Context, pl interface{}) (
 	r := reflect.ValueOf(pl)
 	BrixKey := r.FieldByName("BrixKey")
 
-	// Get Account by BrixKey
-	trx := models.Transaction{Account: models.Account{BrixKey: BrixKey.String()}}
-	err := trxUS.trxRepo.GetAccountByBrixKey(c, &trx)
+	// Get trx Account by BrixKey
+	trx, err := trxUS.trxRepo.GetTrxAccountByBrixKey(c, BrixKey.String())
 
 	if err != nil {
 		return models.Transaction{}, models.ErrGetAccByBrixkey
@@ -119,6 +129,7 @@ func (trxUS *transactionsUseCase) CheckAccountByAccountNumber(c echo.Context, pl
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
+
 		return models.Account{}, models.ErrGetAccByAccountNumber
 	}
 
@@ -127,32 +138,85 @@ func (trxUS *transactionsUseCase) CheckAccountByAccountNumber(c echo.Context, pl
 
 func (trxUS *transactionsUseCase) GetCardBalance(c echo.Context, pl models.PayloadAccNumber) (models.BRICardBalance, error) {
 	var briCardBal models.BRICardBalance
+	// check account number
 	acc, err := trxUS.CheckAccountByAccountNumber(c, pl)
 
 	if err != nil {
 		return briCardBal, err
 	}
 
-	// Request BRI endpoint for check card information
-	briCardInfo, err := trxUS.trxrRepo.GetBRICardInformation(c, acc)
+	// update and get card balance by account
+	card, err := trxUS.UpdateAndGetCardBalance(c, acc)
 
 	if err != nil {
 		return briCardBal, models.ErrGetCardBalance
 	}
 
-	mrshlCardInfo, err := json.Marshal(briCardInfo)
+	// mapping + return bri card balance
+	return models.BRICardBalance{
+		CurrentBalance: float64(card.Balance),
+		CreditLimit:    float64(card.CardLimit),
+	}, nil
+}
 
+func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc models.Account) (models.Card, error) {
+	// define channel buffer
+	errPromise := make(chan error)
+	briCardBal := make(chan models.BRICardBalance)
+	currStl := make(chan int64)
+
+	go func() {
+		// get balance from bank
+		cardBal, err := trxUS.trxrRepo.GetBRICardInformation(c, acc)
+
+		if err != nil {
+			briCardBal <- models.BRICardBalance{}
+			errPromise <- models.ErrGetCardBalance
+			return
+		}
+
+		briCardBal <- cardBal
+		errPromise <- nil
+	}()
+
+	go func() {
+		// get current gold price
+		stl, err := trxUS.rrRepo.GetCurrentGoldSTL(c)
+
+		if err != nil {
+			currStl <- 0
+			errPromise <- models.ErrGetCurrSTL
+			return
+		}
+
+		currStl <- stl
+		errPromise <- nil
+	}()
+
+	// get current stl, card balance and error promises
+	stl := <-currStl
+	cardBal := <-briCardBal
+	err := <-errPromise
+
+	// check error promises
 	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return briCardBal, models.ErrGetCardBalance
+		return models.Card{}, err
 	}
 
-	err = json.Unmarshal(mrshlCardInfo, &briCardBal)
+	// get gold balance
+	goldBalance := acc.Card.ConvertMoneyToGold(int64(cardBal.CurrentBalance), stl)
+
+	// define new card balances
+	acc.Card.Balance = int64(cardBal.CurrentBalance)
+	acc.Card.GoldBalance = goldBalance
+	acc.Card.StlBalance = stl
+
+	// update card balances
+	err = trxUS.trxRepo.UpdateCardBalance(c, acc.Card)
 
 	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return briCardBal, models.ErrGetCardBalance
+		return models.Card{}, models.ErrUpdateCardBalance
 	}
 
-	return briCardBal, err
+	return acc.Card, nil
 }

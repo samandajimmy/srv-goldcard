@@ -6,7 +6,6 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"strconv"
-	"time"
 
 	"github.com/go-pg/pg/v9"
 	"github.com/labstack/echo"
@@ -22,21 +21,12 @@ func NewPsqlBillingsRepository(Conn *sql.DB, dbpg *pg.DB) billings.Repository {
 	return &psqlBillings{Conn, dbpg}
 }
 
-func (PSQLBill *psqlBillings) GetBilling(c echo.Context, bill *models.Billing) error {
-	billDate, err := PSQLBill.calculateBillingMonthYear(c)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
+func (PSQLBill *psqlBillings) GetBillingInquiry(c echo.Context, bill *models.Billing) error {
 	// Get last billing published
 	newBill := models.Billing{}
-	err = PSQLBill.DBpg.Model(&newBill).Relation("Account").
-		Where("account.account_number = ?", bill.Account.AccountNumber).
-		Where("EXTRACT(MONTH FROM billing_date) = ?", billDate.Month()).
-		Where("EXTRACT(YEAR FROM billing_date) = ?", billDate.Year()).Limit(1).Select()
+	err := PSQLBill.DBpg.Model(&newBill).Relation("Account").
+		Where("account_number = ? AND billing.status = ?", bill.Account.AccountNumber, models.BillUnpaid).
+		Order("billing_date DESC").Limit(1).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
@@ -52,30 +42,6 @@ func (PSQLBill *psqlBillings) GetBilling(c echo.Context, bill *models.Billing) e
 
 	*bill = newBill
 	return nil
-}
-
-func (PSQLBill *psqlBillings) calculateBillingMonthYear(c echo.Context) (time.Time, error) {
-	// Populate billing date to filter which billing to get
-	timeNow := time.Now()
-
-	dd, err := PSQLBill.GetBillingPrintDateParam(c)
-
-	if err != nil {
-		return timeNow, err
-	}
-
-	day, err := strconv.Atoi(dd)
-
-	if err != nil {
-		return timeNow, err
-	}
-
-	// if day < 2 then it shown previous month billing (only for the 1st)
-	if timeNow.Day() < day {
-		return timeNow.AddDate(0, -1, 0), nil
-	}
-
-	return timeNow, nil
 }
 
 func (PSQLBill *psqlBillings) GetMinPaymentParam(c echo.Context) (float64, error) {

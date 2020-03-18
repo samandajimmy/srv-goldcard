@@ -69,6 +69,9 @@ var (
 	// ErrUpdateCardLimit to store updating card limit data error message
 	ErrUpdateCardLimit = errors.New("Terjadi kesalahan saat update card limit")
 
+	// ErrUpdateCardBalance to store updating card balance data error message
+	ErrUpdateCardBalance = errors.New("Terjadi kesalahan saat update saldo kartu emas")
+
 	// ErrZipcodeNotFound to store zip code not found error message
 	ErrZipcodeNotFound = errors.New("Kode pos tidak ditemukan")
 
