@@ -4,15 +4,14 @@ import (
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/productreqs"
 	"net/http"
-	"strings"
 
 	"github.com/labstack/echo"
 )
 
-var response models.Response
-
 // ProductreqsHandler represent the httphandler for Product Requirements
 type ProductreqsHandler struct {
+	response           models.Response
+	respErrors         models.ResponseErrors
 	productReqsUseCase productreqs.UseCase
 }
 
@@ -27,40 +26,17 @@ func NewProductreqsHandler(echoGroup models.EchoGroup, pu productreqs.UseCase) {
 }
 
 func (preq *ProductreqsHandler) productRequirements(c echo.Context) error {
-	response = models.Response{}
-	respErrors := &models.ResponseErrors{}
-
+	preq.response, preq.respErrors = models.NewResponse()
 	responseData, err := preq.productReqsUseCase.ProductRequirements(c)
 
 	if err != nil {
-		respErrors.SetTitle(err.Error())
-		response.SetResponse("", respErrors)
+		preq.respErrors.SetTitle(err.Error())
+		preq.response.SetResponse("", &preq.respErrors)
 
-		return c.JSON(http.StatusBadRequest, response)
+		return c.JSON(http.StatusBadRequest, preq.response)
 	}
 
-	response.SetResponse(responseData, respErrors)
+	preq.response.SetResponse(responseData, &preq.respErrors)
 
-	return c.JSON(getStatusCode(err), response)
-}
-
-func getStatusCode(err error) int {
-	if err == nil {
-		return http.StatusOK
-	}
-
-	if strings.Contains(err.Error(), "400") {
-		return http.StatusBadRequest
-	}
-
-	switch err {
-	case models.ErrInternalServerError:
-		return http.StatusInternalServerError
-	case models.ErrNotFound:
-		return http.StatusNotFound
-	case models.ErrConflict:
-		return http.StatusConflict
-	default:
-		return http.StatusOK
-	}
+	return preq.response.Body(c, nil)
 }

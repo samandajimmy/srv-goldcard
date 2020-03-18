@@ -77,9 +77,9 @@ func (billUS *billingsUseCase) PostBRIPaymentTransactions(c echo.Context, pl mod
 		errors.SetTitle(models.ErrGetAccByBrixkey.Error())
 		return errors
 	}
+
 	// Generate ref transactions pegadaian
 	refTrxPgdn, _ := uuid.NewRandom()
-
 	// Get curr STL
 	currStl, err := billUS.rrRepo.GetCurrentGoldSTL(c)
 

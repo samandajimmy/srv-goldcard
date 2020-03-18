@@ -4,7 +4,6 @@ import (
 	billings "gade/srv-goldcard/billings"
 	"gade/srv-goldcard/models"
 	"net/http"
-	"strings"
 
 	"github.com/labstack/echo"
 )
@@ -59,7 +58,7 @@ func (bhn *BillingsHandler) billingStatement(c echo.Context) error {
 
 	bhn.response.SetResponse(responseData, &bhn.respErrors)
 
-	return c.JSON(getStatusCode(err), bhn.response)
+	return bhn.response.Body(c, nil)
 }
 
 // BRIPegadaianBillings a handler to post pegadaian billings from bri
@@ -122,25 +121,4 @@ func (bhn *BillingsHandler) BRIPaymentTransactions(c echo.Context) error {
 
 	bhn.response.SetResponse("", &err)
 	return bhn.response.Body(c, nil)
-}
-
-func getStatusCode(err error) int {
-	if err == nil {
-		return http.StatusOK
-	}
-
-	if strings.Contains(err.Error(), "400") {
-		return http.StatusBadRequest
-	}
-
-	switch err {
-	case models.ErrInternalServerError:
-		return http.StatusInternalServerError
-	case models.ErrNotFound:
-		return http.StatusNotFound
-	case models.ErrConflict:
-		return http.StatusConflict
-	default:
-		return http.StatusOK
-	}
 }
