@@ -150,6 +150,9 @@ var (
 	// ErrInsertTransactions to store get failed when insert data to table transactions
 	ErrInsertTransactions = errors.New("Gagal saat memasukan data transaksi")
 
+	// ErrInsertPaymentTransactions to store get failed when insert payment data to table transactions
+	ErrInsertPaymentTransactions = errors.New("Gagal saat memasukan data pembayaran")
+
 	// ErrGetHistoryTransactions to store message failed when get data history account in table transactions
 	ErrGetHistoryTransactions = errors.New("Gagal saat mencari data history transaksi")
 

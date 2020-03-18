@@ -12,4 +12,5 @@ type Repository interface {
 	GetMinPaymentParam(c echo.Context) (float64, error)
 	GetDueDateParam(c echo.Context) (int, error)
 	PostPegadaianBillings(c echo.Context, pgdBil models.PegadaianBilling) error
+	PostPayments(c echo.Context, trx models.Transaction) error
 }

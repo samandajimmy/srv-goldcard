@@ -5,19 +5,22 @@ import (
 	"gade/srv-goldcard/billings"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
+	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/transactions"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
 type billingsUseCase struct {
 	bRepo    billings.Repository
+	rrRepo   registrations.RestRepository
 	tUseCase transactions.UseCase
 }
 
 // billingsUseCase represent billings Use Case
-func BillingsUseCase(bRepo billings.Repository, tUseCase transactions.UseCase) billings.UseCase {
-	return &billingsUseCase{bRepo, tUseCase}
+func BillingsUseCase(bRepo billings.Repository, rrRepo registrations.RestRepository, tUseCase transactions.UseCase) billings.UseCase {
+	return &billingsUseCase{bRepo, rrRepo, tUseCase}
 }
 
 func (billUS *billingsUseCase) GetBillingStatement(c echo.Context, pl models.PayloadAccNumber) (models.BillingStatement, error) {
@@ -84,4 +87,50 @@ func (billUS *billingsUseCase) ValidateBase64(c echo.Context, data string) error
 	}
 
 	return nil
+}
+
+func (billUS *billingsUseCase) PostBRIPaymentTransactions(c echo.Context, pl models.PayloadBRIPaymentTransactions) models.ResponseErrors {
+	var errors models.ResponseErrors
+
+	trx, err := billUS.tUseCase.CheckAccount(c, pl)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetAccByBrixkey.Error())
+		return errors
+	}
+	// Generate ref transactions pegadaian
+	refTrxPgdn, _ := uuid.NewRandom()
+
+	// Get curr STL
+	currStl, err := billUS.rrRepo.GetCurrentGoldSTL(c)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetCurrSTL.Error())
+		return errors
+	}
+
+	// populate payment transaction for insert
+	err = trx.MappingPaymentTransactions(c, pl, trx, refTrxPgdn.String(), currStl)
+
+	if err != nil {
+		errors.SetTitle(models.ErrMappingData.Error())
+		return errors
+	}
+
+	err = billUS.bRepo.PostPayments(c, trx)
+
+	if err != nil {
+		errors.SetTitle(models.ErrInsertPaymentTransactions.Error())
+		return errors
+	}
+
+	// update card balance to BRI after success receive billing payment
+	_, err = billUS.tUseCase.UpdateAndGetCardBalance(c, trx.Account)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetCardBalance.Error())
+		return errors
+	}
+
+	return errors
 }

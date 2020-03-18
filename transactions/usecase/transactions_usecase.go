@@ -25,7 +25,7 @@ func TransactionsUseCase(trxRepo transactions.Repository, trxrRepo transactions.
 func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl models.PayloadBRIPendingTransactions) models.ResponseErrors {
 	var errors models.ResponseErrors
 	var notif models.PdsNotification
-	trx, err := trxUS.checkAccount(c, pl)
+	trx, err := trxUS.CheckAccount(c, pl)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetAccByBrixkey.Error())
@@ -93,7 +93,7 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, pht mod
 	return result, errors
 }
 
-func (trxUS *transactionsUseCase) checkAccount(c echo.Context, pl interface{}) (models.Transaction, error) {
+func (trxUS *transactionsUseCase) CheckAccount(c echo.Context, pl interface{}) (models.Transaction, error) {
 	r := reflect.ValueOf(pl)
 	BrixKey := r.FieldByName("BrixKey")
 

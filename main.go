@@ -92,7 +92,7 @@ func main() {
 	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
 	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, restTransactionsRepo, restRegistrationsRepo)
-	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, transactionsUseCase)
+	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, restRegistrationsRepo, transactionsUseCase)
 
 	// DELIVERIES
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)

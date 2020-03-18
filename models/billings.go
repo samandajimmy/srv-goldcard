@@ -43,13 +43,11 @@ type BillingTransaction struct {
 
 // BillingPayment is a struct to store billing payment data
 type BillingPayment struct {
-	ID          int64       `json:"id"`
-	TrxId       int64       `json:"trxId"`
-	BillId      int64       `json:"billId"`
-	UpdatedAt   time.Time   `json:"updatedAt"`
-	CreatedAt   time.Time   `json:"createdAt"`
-	Transaction Transaction `json:"transaction"`
-	Billing     Billing     `json:"billing"`
+	ID        int64     `json:"id"`
+	TrxId     int64     `json:"trxId"`
+	BillId    int64     `json:"billId"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 // BillingStatement is a struct to store response for billing inquiry
@@ -87,6 +85,15 @@ func (pgdBil *PegadaianBilling) MappingPegadaianBilling(c echo.Context, pl Paylo
 	pgdBil.FileBase64 = pl.FileBase64
 	pgdBil.FileExtension = pl.FileExtension
 	pgdBil.CreatedAt = time.Now()
+
+	return nil
+}
+
+// MappingBillingPayment is a function to mapping billing payment
+func (bp *BillingPayment) MappingBillingPayment(c echo.Context, trx Transaction, bil Billing) error {
+	bp.TrxId = trx.ID
+	bp.BillId = bil.ID
+	bp.CreatedAt = time.Now()
 
 	return nil
 }

@@ -7,9 +7,11 @@ import (
 )
 
 const (
-	typeTrxCredit string = "credit"
-
+	typeTrxCredit    string = "credit"
+	typeTrxDebit     string = "debit"
 	statusTrxPending string = "pending"
+	statusTrxPosted  string = "pending"
+	methodTrxPayment string = "payment"
 )
 
 // Transaction is a struct to store transaction data
@@ -57,6 +59,28 @@ func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPending
 	trx.TrxDate = pl.TrxDateTime
 	trx.Description = pl.TrxDesc
 	trx.CompareID = pl.AuthCode
+
+	return nil
+}
+
+// MappingTransactions is a struct to mapping payment transactions data
+func (trx *Transaction) MappingPaymentTransactions(c echo.Context, pl PayloadBRIPaymentTransactions, trans Transaction, refTrxPg string, stl int64) error {
+	goldNominal := trx.Account.Card.ConvertMoneyToGold(pl.PaymentAmount, stl)
+	balance := trx.Account.Card.Balance + pl.PaymentAmount
+	goldBalance := trx.Account.Card.ConvertMoneyToGold(balance, stl)
+
+	trx.AccountId = trans.Account.ID
+	trx.RefTrxPgdn = refTrxPg
+	trx.RefTrx = pl.RefID
+	trx.Nominal = pl.PaymentAmount
+	trx.GoldNominal = goldNominal
+	trx.Type = typeTrxDebit
+	trx.Status = statusTrxPosted
+	trx.Methods = methodTrxPayment
+	trx.Balance = int64(balance)
+	trx.GoldBalance = float64(goldBalance)
+	trx.TrxDate = pl.PaymentDate
+	trx.Description = pl.PaymentDesc
 
 	return nil
 }
