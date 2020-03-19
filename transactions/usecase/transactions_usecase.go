@@ -7,6 +7,7 @@ import (
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/transactions"
 	"reflect"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
@@ -297,4 +298,42 @@ func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc mo
 	}
 
 	return acc.Card, nil
+}
+
+func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, ppi models.PayloadPaymentInquiry) models.ResponseErrors {
+	var errors models.ResponseErrors
+
+	// Get Account by Account Number
+	acc, err := trxUS.CheckAccountByAccountNumber(c, ppi)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
+		return errors
+	}
+
+	// get billings by account
+	bill := models.Billing{Account: acc}
+	err = trxUS.billRepo.GetBillingInquiry(c, &bill)
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		errors.SetTitleCode("11", models.ErrNoBilling.Error(), "")
+		return errors
+	}
+
+	// check over payment
+	if bill.DebtAmount < ppi.PaymentAmount {
+		errors.SetTitleCode("22", models.ErrOverPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
+		return errors
+	}
+
+	// check payment less than 10% remaining payment
+	if bill.DebtAmount == bill.Amount && ppi.PaymentAmount < bill.DebtAmount/10 {
+		errors.SetTitleCode("22", models.ErrMinimumPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
+		return errors
+	}
+
+	return errors
 }
