@@ -26,6 +26,8 @@ func NewBillingsHandler(echoGroup models.EchoGroup, bl billings.UseCase) {
 
 	// End Point For External
 	echoGroup.API.GET("/billings/statements", handler.billingStatement)
+
+	echoGroup.API.POST("/billings/payment-inquiry", handler.paymentInquiry)
 }
 
 func (bhn *BillingsHandler) billingStatement(c echo.Context) error {
@@ -57,6 +59,36 @@ func (bhn *BillingsHandler) billingStatement(c echo.Context) error {
 
 	bhn.response.SetResponse(responseData, &bhn.respErrors)
 
+	return bhn.response.Body(c, nil)
+}
+
+func (bhn *BillingsHandler) paymentInquiry(c echo.Context) error {
+	var ppi models.PayloadPaymentInquiry
+	bhn.response, bhn.respErrors = models.NewResponse()
+
+	if err := c.Bind(&ppi); err != nil {
+		bhn.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		bhn.response.SetResponse("", &bhn.respErrors)
+
+		return bhn.response.Body(c, err)
+	}
+
+	if err := c.Validate(ppi); err != nil {
+		bhn.respErrors.SetTitle(err.Error())
+		bhn.response.SetResponse("", &bhn.respErrors)
+
+		return bhn.response.Body(c, err)
+	}
+
+	err := bhn.billingsUseCase.PaymentInquiry(c, ppi)
+
+	if err.Title != "" {
+		bhn.response.SetResponse("", &err)
+
+		return bhn.response.Body(c, nil)
+	}
+
+	bhn.response.SetResponse("", &err)
 	return bhn.response.Body(c, nil)
 }
 

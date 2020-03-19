@@ -1,11 +1,14 @@
 package usecase
 
 import (
+	"encoding/base64"
+	"fmt"
 	"gade/srv-goldcard/billings"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/transactions"
+	"strconv"
 
 	"github.com/labstack/echo"
 )
@@ -62,6 +65,59 @@ func (billUS *billingsUseCase) PostBRIPegadaianBillings(c echo.Context, pbpb mod
 	if err != nil {
 		errors.SetTitle(models.ErrInsertPegadaianBillings.Error())
 
+		return errors
+	}
+
+	return errors
+}
+
+func (billUS *billingsUseCase) ValidateBase64(c echo.Context, data string) error {
+	_, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (billings *billingsUseCase) PaymentInquiry(c echo.Context, ppi models.PayloadPaymentInquiry) models.ResponseErrors {
+	var errors models.ResponseErrors
+
+	// Get Account by Account Number
+	acc, err := billings.tUseCase.CheckAccountByAccountNumber(c, ppi)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
+		return errors
+	}
+
+	fmt.Println("---------------------------------------------")
+	fmt.Println(acc)
+	fmt.Println("---------------------------------------------")
+
+	// get billings by account
+	bill := models.Billing{Account: acc}
+	err = billings.bRepo.GetBillingInquiry(c, &bill)
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		errors.SetTitleCode("11", models.ErrNoBilling.Error(), "")
+		return errors
+	}
+
+	// check over payment
+	if bill.DebtAmount < ppi.PaymentAmount {
+		errors.SetTitleCode("22", models.ErrOverPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
+		return errors
+	}
+
+	// check payment less than 10% remaining payment
+	if bill.DebtAmount == bill.Amount && ppi.PaymentAmount < bill.DebtAmount/10 {
+		errors.SetTitleCode("22", models.ErrMinimumPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
 		return errors
 	}
 
