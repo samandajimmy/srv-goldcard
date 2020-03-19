@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"encoding/base64"
-	"fmt"
 	"gade/srv-goldcard/billings"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -94,10 +93,6 @@ func (billings *billingsUseCase) PaymentInquiry(c echo.Context, ppi models.Paylo
 		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
 		return errors
 	}
-
-	fmt.Println("---------------------------------------------")
-	fmt.Println(acc)
-	fmt.Println("---------------------------------------------")
 
 	// get billings by account
 	bill := models.Billing{Account: acc}
