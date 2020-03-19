@@ -31,7 +31,7 @@ func NewTransactionsHandler(
 	echoGroup.API.GET("/transactions/history", handler.HistoryTransactions)
 	echoGroup.API.GET("/transactions/balance", handler.GetCardBalance)
 
-	echoGroup.API.POST("/transactions/payment/inquiry", handler.paymentInquiry)
+	echoGroup.API.POST("/transactions/payment/inquiry", handler.PaymentInquiry)
 }
 
 // Registrations a handler to handle goldcard registrations
@@ -160,7 +160,7 @@ func (th *TransactionsHandler) paymentTransaction(c echo.Context) error {
 	return th.response.Body(c, nil)
 }
 
-func (th *TransactionsHandler) paymentInquiry(c echo.Context) error {
+func (th *TransactionsHandler) PaymentInquiry(c echo.Context) error {
 	var ppi models.PayloadPaymentInquiry
 	th.response, th.respErrors = models.NewResponse()
 
