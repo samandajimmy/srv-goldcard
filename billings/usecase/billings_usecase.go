@@ -1,10 +1,10 @@
 package usecase
 
 import (
-	"encoding/base64"
 	"gade/srv-goldcard/billings"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
+	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/transactions"
 
 	"github.com/labstack/echo"
@@ -12,12 +12,13 @@ import (
 
 type billingsUseCase struct {
 	bRepo    billings.Repository
+	rrRepo   registrations.RestRepository
 	tUseCase transactions.UseCase
 }
 
 // billingsUseCase represent billings Use Case
-func BillingsUseCase(bRepo billings.Repository, tUseCase transactions.UseCase) billings.UseCase {
-	return &billingsUseCase{bRepo, tUseCase}
+func BillingsUseCase(bRepo billings.Repository, rrRepo registrations.RestRepository, tUseCase transactions.UseCase) billings.UseCase {
+	return &billingsUseCase{bRepo, rrRepo, tUseCase}
 }
 
 func (billUS *billingsUseCase) GetBillingStatement(c echo.Context, pl models.PayloadAccNumber) (models.BillingStatement, error) {
@@ -47,14 +48,6 @@ func (billUS *billingsUseCase) GetBillingStatement(c echo.Context, pl models.Pay
 func (billUS *billingsUseCase) PostBRIPegadaianBillings(c echo.Context, pbpb models.PayloadBRIPegadaianBillings) models.ResponseErrors {
 	var errors models.ResponseErrors
 	var pgdBill models.PegadaianBilling
-
-	// validate base64 file payload
-	if err := billUS.ValidateBase64(c, pbpb.FileBase64); err != nil {
-		errors.SetTitle(models.ErrValidateBase64.Error())
-
-		return errors
-	}
-
 	err := pgdBill.MappingPegadaianBilling(c, pbpb)
 
 	if err != nil {
@@ -73,15 +66,4 @@ func (billUS *billingsUseCase) PostBRIPegadaianBillings(c echo.Context, pbpb mod
 	}
 
 	return errors
-}
-
-func (billUS *billingsUseCase) ValidateBase64(c echo.Context, data string) error {
-	_, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
-	return nil
 }

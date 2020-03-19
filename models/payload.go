@@ -208,6 +208,17 @@ type PayloadBRIPendingTransactions struct {
 	AuthCode       string `json:"authCode" validate:"required"`
 }
 
+// PayloadBRIPaymentTransactions a struct to store all payload for payment transactions from BRI
+type PayloadPaymentTransactions struct {
+	Source               string `json:"source" validate:"oneof=bri pgdn-core"`
+	BillingStatementDate string `json:"billingStatementDate" validate:"required"`
+	PaymentAmount        int64  `json:"paymentAmount" validate:"required"`
+	RefID                string `json:"refID" validate:"required"`
+	BrixKey              string `json:"brixKey" validate:"required"`
+	PaymentDate          string `json:"paymentDate" validate:"required"`
+	PaymentDesc          string `json:"paymentDesc" validate:"required"`
+}
+
 // Payload ResActivations atruct to store all payload for success response activation
 type RespActivations struct {
 	AccountNumber string `json:"accountNumber"`
@@ -252,7 +263,7 @@ type PayloadAccNumber struct {
 // PayloadBRIPegadaianBillings a struct to store all payload for post pegadaian billing from BRI
 type PayloadBRIPegadaianBillings struct {
 	BillingDate   string `json:"billingDate" validate:"required"`
-	FileBase64    string `json:"fileBase64" validate:"required"`
+	FileBase64    string `json:"fileBase64" validate:"required,base64"`
 	FileExtension string `json:"fileExtension" validate:"required"`
 	FileName      string `json:"fileName" validate:"required"`
 	RefID         string `json:"refID" validate:"required"`

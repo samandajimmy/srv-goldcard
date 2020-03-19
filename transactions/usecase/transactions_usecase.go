@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"gade/srv-goldcard/billings"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
@@ -13,28 +14,31 @@ import (
 
 type transactionsUseCase struct {
 	trxRepo  transactions.Repository
+	billRepo billings.Repository
 	trxrRepo transactions.RestRepository
 	rrRepo   registrations.RestRepository
 }
 
 // TransactionsUseCase represent Transactions Use Case
-func TransactionsUseCase(trxRepo transactions.Repository, trxrRepo transactions.RestRepository, rrRepo registrations.RestRepository) transactions.UseCase {
-	return &transactionsUseCase{trxRepo, trxrRepo, rrRepo}
+func TransactionsUseCase(trxRepo transactions.Repository, billRepo billings.Repository,
+	trxrRepo transactions.RestRepository, rrRepo registrations.RestRepository) transactions.UseCase {
+	return &transactionsUseCase{trxRepo, billRepo, trxrRepo, rrRepo}
 }
 
 func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl models.PayloadBRIPendingTransactions) models.ResponseErrors {
 	var errors models.ResponseErrors
 	var notif models.PdsNotification
-	trx, err := trxUS.checkAccount(c, pl)
+	acc, err := trxUS.CheckAccountByBrixkey(c, pl)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetAccByBrixkey.Error())
 		return errors
 	}
 
+	// init account trx
+	trx := models.Transaction{AccountId: acc.ID, Account: acc}
 	// Generate ref transactions pegadaian
 	refTrxPgdn, _ := uuid.NewRandom()
-
 	// Get curr STL
 	currStl, err := trxUS.rrRepo.GetCurrentGoldSTL(c)
 
@@ -77,6 +81,80 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 	return errors
 }
 
+func (trxUS *transactionsUseCase) PostPaymentTransaction(c echo.Context, pl models.PayloadPaymentTransactions) models.ResponseErrors {
+	// TODO: do we need push notif or email?
+	// TODO: do we need push to core?
+	// TODO: we need to add function update billing status when bill is fully paid?
+	// TODO: do we need to concurrent to optim response time?
+	var errors models.ResponseErrors
+	acc, err := trxUS.CheckAccountByBrixkey(c, pl)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetAccByBrixkey.Error())
+		return errors
+	}
+
+	// init account trx
+	trx := models.Transaction{AccountId: acc.ID, Account: acc}
+	// Generate ref transactions pegadaian
+	refTrxPgdn, _ := uuid.NewRandom()
+	// Get curr STL
+	currStl, err := trxUS.rrRepo.GetCurrentGoldSTL(c)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetCurrSTL.Error())
+		return errors
+	}
+
+	// populate payment transaction for insert
+	err = trx.MappingPaymentTransaction(c, pl, trx, refTrxPgdn.String(), currStl)
+
+	if err != nil {
+		errors.SetTitle(models.ErrMappingData.Error())
+		return errors
+	}
+
+	// init current billing
+	bill := models.Billing{
+		Account: acc,
+	}
+
+	// get last published billing to map payment transaction into billings
+	err = trxUS.billRepo.GetBillingInquiry(c, &bill)
+
+	if err != nil {
+		errors.SetTitle(err.Error())
+		return errors
+	}
+
+	// prepare billing debt
+	// get debt amount
+	bill.DebtAmount = bill.DebtAmount - trx.Nominal
+	// get debt gold amount
+	bill.DebtGold = bill.Account.Card.ConvertMoneyToGold(bill.DebtAmount, currStl)
+	// set debt stl
+	bill.DebtSTL = currStl
+
+	// insert payment transaction
+	err = trxUS.trxRepo.PostPayment(c, trx, bill)
+
+	if err != nil {
+		errors.SetTitle(models.ErrInsertPaymentTransactions.Error())
+		return errors
+	}
+
+	// update card balance to BRI after success receive billing payment
+	go func() {
+		_, err = trxUS.UpdateAndGetCardBalance(c, trx.Account)
+
+		if err != nil {
+			logger.Make(c, nil).Debug(err)
+		}
+	}()
+
+	return errors
+}
+
 func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, pht models.PayloadHistoryTransactions) (interface{}, models.ResponseErrors) {
 	var errors models.ResponseErrors
 	if pht.Pagination.Limit != 0 {
@@ -91,20 +169,6 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, pht mod
 	}
 
 	return result, errors
-}
-
-func (trxUS *transactionsUseCase) checkAccount(c echo.Context, pl interface{}) (models.Transaction, error) {
-	r := reflect.ValueOf(pl)
-	BrixKey := r.FieldByName("BrixKey")
-
-	// Get trx Account by BrixKey
-	trx, err := trxUS.trxRepo.GetTrxAccountByBrixKey(c, BrixKey.String())
-
-	if err != nil {
-		return models.Transaction{}, models.ErrGetAccByBrixkey
-	}
-
-	return trx, nil
 }
 
 func (trxUS *transactionsUseCase) GetPgTransactionsHistory(c echo.Context, pht models.PayloadHistoryTransactions) (interface{}, models.ResponseErrors) {
@@ -131,6 +195,20 @@ func (trxUS *transactionsUseCase) CheckAccountByAccountNumber(c echo.Context, pl
 		logger.Make(c, nil).Debug(err)
 
 		return models.Account{}, models.ErrGetAccByAccountNumber
+	}
+
+	return acc, nil
+}
+
+func (trxUS *transactionsUseCase) CheckAccountByBrixkey(c echo.Context, pl interface{}) (models.Account, error) {
+	r := reflect.ValueOf(pl)
+	BrixKey := r.FieldByName("BrixKey")
+
+	// Get trx Account by BrixKey
+	acc, err := trxUS.trxRepo.GetAccountByBrixKey(c, BrixKey.String())
+
+	if err != nil {
+		return models.Account{}, models.ErrGetAccByBrixkey
 	}
 
 	return acc, nil

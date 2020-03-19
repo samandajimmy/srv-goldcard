@@ -19,11 +19,11 @@ type Billing struct {
 	GoldAmount     float64   `json:"goldAmount"`
 	BillingDate    time.Time `json:"billingDate"`
 	BillingDueDate time.Time `json:"billingDueDate"`
-	DepthAmount    int64     `json:"depthAmount"`
-	DepthGold      float64   `json:"depthGold"`
+	DebtAmount     int64     `json:"debtAmount"`
+	DebtGold       float64   `json:"debtGold"`
 	MinimumPayment float64   `json:"minimum_payment"`
 	STL            int64     `json:"stl"`
-	DepthSTL       int64     `json:"depthStl"`
+	DebtSTL        int64     `json:"debtStl"`
 	Status         string    `json:"status"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
@@ -43,13 +43,11 @@ type BillingTransaction struct {
 
 // BillingPayment is a struct to store billing payment data
 type BillingPayment struct {
-	ID          int64       `json:"id"`
-	TrxId       int64       `json:"trxId"`
-	BillId      int64       `json:"billId"`
-	UpdatedAt   time.Time   `json:"updatedAt"`
-	CreatedAt   time.Time   `json:"createdAt"`
-	Transaction Transaction `json:"transaction"`
-	Billing     Billing     `json:"billing"`
+	ID        int64     `json:"id"`
+	TrxId     int64     `json:"trxId"`
+	BillId    int64     `json:"billId"`
+	UpdatedAt time.Time `json:"updatedAt"`
+	CreatedAt time.Time `json:"createdAt"`
 }
 
 // BillingStatement is a struct to store response for billing inquiry

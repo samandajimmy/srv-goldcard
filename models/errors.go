@@ -150,6 +150,9 @@ var (
 	// ErrInsertTransactions to store get failed when insert data to table transactions
 	ErrInsertTransactions = errors.New("Gagal saat memasukan data transaksi")
 
+	// ErrInsertPaymentTransactions to store get failed when insert payment data to table transactions
+	ErrInsertPaymentTransactions = errors.New("Gagal saat memasukan data pembayaran")
+
 	// ErrGetHistoryTransactions to store message failed when get data history account in table transactions
 	ErrGetHistoryTransactions = errors.New("Gagal saat mencari data history transaksi")
 
@@ -173,9 +176,6 @@ var (
 
 	// ErrInsertPegadaianBillings to store get failed when insert data to table pegadaian billings
 	ErrInsertPegadaianBillings = errors.New("Gagal saat memasukan data tagihan pegadaian")
-
-	// ErrValidateBase64 to store error decode base64
-	ErrValidateBase64 = errors.New("Format file harus dalam bentuk base64")
 
 	// ErrBirthDateNotMatch to store error birth date if not match
 	ErrBirthDateNotMatch = errors.New("Tanggal lahir yang dimasukan tidak sesuai")

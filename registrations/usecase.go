@@ -16,4 +16,5 @@ type UseCase interface {
 	FinalRegistration(c echo.Context, pl models.PayloadAppNumber) error
 	GetAppStatus(c echo.Context, pl models.PayloadAppNumber) (models.AppStatus, error)
 	PostOccupation(echo.Context, models.PayloadOccupation) error
+	CheckApplication(c echo.Context, pl interface{}) (models.Account, error)
 }

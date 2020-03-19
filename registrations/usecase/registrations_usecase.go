@@ -28,7 +28,7 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAd
 	}
 
 	// get account by appNumber
-	acc, err := reg.checkApplication(c, pl)
+	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAd
 
 func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models.PayloadRegistration) (models.RespRegistration, error) {
 	var respRegNil models.RespRegistration
-	acc, err := reg.checkApplication(c, payload)
+	acc, err := reg.CheckApplication(c, payload)
 
 	if err != nil && err != models.ErrAppNumberNotFound {
 		return respRegNil, err
@@ -129,7 +129,7 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 	}
 
 	// get account by appNumber
-	acc, err := reg.checkApplication(c, pl)
+	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
 		return err
@@ -175,7 +175,7 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 
 func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.PayloadCardLimit) error {
 	// get account by appNumber
-	acc, err := reg.checkApplication(c, pl)
+	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
 		return err
@@ -230,7 +230,7 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.PayloadOccupation) error {
 	var city string
 	var zipcode string
-	acc, err := reg.checkApplication(c, pl)
+	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
 		return err
@@ -267,7 +267,7 @@ func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.Payloa
 
 func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.PayloadSavingAccount) error {
 	// get account by appNumber
-	acc, err := reg.checkApplication(c, pl)
+	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
 		return err
@@ -292,7 +292,7 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 }
 
 func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber) error {
-	acc, err := reg.checkApplication(c, pl)
+	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
 		return err
@@ -338,7 +338,7 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		acc.Application.CurrentStep = models.AppStepCompleted
 		_ = reg.regRepo.UpdateAppStatus(c, acc.Application)
 		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
-		accChannel, _ := reg.checkApplication(c, pl)
+		accChannel, _ := reg.CheckApplication(c, pl)
 		accChan <- accChannel
 	}()
 
