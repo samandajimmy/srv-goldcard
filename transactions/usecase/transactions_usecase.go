@@ -84,6 +84,7 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 func (trxUS *transactionsUseCase) PostPaymentTransaction(c echo.Context, pl models.PayloadPaymentTransactions) models.ResponseErrors {
 	// TODO: do we need push notif or email?
 	// TODO: do we need push to core?
+	// TODO: we need to add function update billing status when bill is fully paid?
 	// TODO: do we need to concurrent to optim response time?
 	var errors models.ResponseErrors
 	acc, err := trxUS.CheckAccountByBrixkey(c, pl)
