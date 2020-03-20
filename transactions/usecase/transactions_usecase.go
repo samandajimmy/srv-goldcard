@@ -307,8 +307,6 @@ func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, ppi models.Payl
 	acc, err := trxUS.CheckAccountByAccountNumber(c, ppi)
 
 	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
 		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
 		return errors
 	}
@@ -317,8 +315,6 @@ func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, ppi models.Payl
 	bill := models.Billing{Account: acc}
 	err = trxUS.billRepo.GetBillingInquiry(c, &bill)
 	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
 		errors.SetTitleCode("11", models.ErrNoBilling.Error(), "")
 		return errors
 	}

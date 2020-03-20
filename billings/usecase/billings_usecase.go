@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"encoding/base64"
 	"gade/srv-goldcard/billings"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -67,15 +66,4 @@ func (billUS *billingsUseCase) PostBRIPegadaianBillings(c echo.Context, pbpb mod
 	}
 
 	return errors
-}
-
-func (billUS *billingsUseCase) ValidateBase64(c echo.Context, data string) error {
-	_, err := base64.StdEncoding.DecodeString(data)
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
-	return nil
 }
