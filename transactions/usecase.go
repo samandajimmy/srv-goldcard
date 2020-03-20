@@ -15,4 +15,5 @@ type UseCase interface {
 	CheckAccountByBrixkey(c echo.Context, pl interface{}) (models.Account, error)
 	UpdateAndGetCardBalance(c echo.Context, acc models.Account) (models.Card, error)
 	PostPaymentTransaction(c echo.Context, pl models.PayloadPaymentTransactions) models.ResponseErrors
+	PaymentInquiry(c echo.Context, ppi models.PayloadPaymentInquiry) models.ResponseErrors
 }

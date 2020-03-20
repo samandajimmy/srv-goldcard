@@ -260,6 +260,12 @@ type PayloadAccNumber struct {
 	AccountNumber string `json:"accountNumber" validate:"required"`
 }
 
+// PayloadPaymentInquiry a struct to store all payload for payment inquiry
+type PayloadPaymentInquiry struct {
+	AccountNumber string `json:"accountNumber" validate:"required"`
+	PaymentAmount int64  `json:"paymentAmount" validate:"required"`
+}
+
 // PayloadBRIPegadaianBillings a struct to store all payload for post pegadaian billing from BRI
 type PayloadBRIPegadaianBillings struct {
 	BillingDate   string `json:"billingDate" validate:"required"`
