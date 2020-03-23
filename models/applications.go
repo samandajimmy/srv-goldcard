@@ -73,6 +73,7 @@ var (
 		"NpwpImageBase64":      "npwp",
 		"SelfieImageBase64":    "selfie",
 		"GoldSavingSlipBase64": "slip_te",
+		"AppFormBase64":        "app_form",
 	}
 
 	mapFileExt = map[string]string{
@@ -80,13 +81,22 @@ var (
 		"NpwpImageBase64":      DefAppDocFileExt,
 		"SelfieImageBase64":    DefAppDocFileExt,
 		"GoldSavingSlipBase64": PdfAppDocFileExt,
+		"AppFormBase64":        PdfAppDocFileExt,
 	}
 
 	// MapBRIDocType to store map values of BRI DOC type
 	MapBRIDocType = map[string]string{
-		"ktp":    "A",
-		"npwp":   "G",
-		"selfie": "P",
+		"ktp":      "A",
+		"npwp":     "G",
+		"selfie":   "P",
+		"slip_te":  "D",
+		"app_form": "Z",
+	}
+
+	// MapBRIExtBase64File to store BRI ext Base64 file
+	MapBRIExtBase64File = map[string]string{
+		"jpg": "data:image/jpeg;base64,",
+		"pdf": "data:application/pdf;base64,",
 	}
 )
 
@@ -134,7 +144,7 @@ func (app *Applications) GetStatusDateKey() string {
 // SetDocument to set application document array
 func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 	var emptyDocs []Document
-	docNames := []string{"KtpImageBase64", "NpwpImageBase64", "SelfieImageBase64", "GoldSavingSlipBase64"}
+	docNames := []string{"KtpImageBase64", "NpwpImageBase64", "SelfieImageBase64", "GoldSavingSlipBase64", "AppFormBase64"}
 	r := reflect.ValueOf(pl)
 	currDoc := app.Documents
 	app.Documents = emptyDocs
@@ -174,6 +184,14 @@ func (app *Applications) getCurrentDoc(currDocs []Document, docType string) Docu
 
 func (app *Applications) getStatus(msg string) string {
 	switch strings.ToLower(msg) {
+	case "application approved", "application on review", "application final approval", "rescheduling delivery":
+		return "card_processed"
+	case "on printing", "ready to deliver", "on deliver":
+		return "card_send"
+	case "application rejected":
+		return "failed" // TODO: not related naming status
+	case "card suspended":
+		return "inactive" // TODO: not related naming status
 	case "delivered":
 		return "card_sent"
 	default:

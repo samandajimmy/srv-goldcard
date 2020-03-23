@@ -162,6 +162,9 @@ var (
 	// ErrCoreEODStatus to store down time core servive
 	ErrCoreEODStatus = errors.New("Mohon maaf, Layanan sedang tidak tersedia")
 
+	// ErrGetBilling to store get billing statement error message
+	ErrGetBilling = errors.New("Terjadi kesalahan ketika memuat data tagihan")
+
 	// ErrNoBilling to store get billing statement error message
 	ErrNoBilling = errors.New("Anda belum memiliki tagihan")
 

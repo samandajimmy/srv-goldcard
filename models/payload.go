@@ -87,6 +87,7 @@ type PayloadPersonalInformation struct {
 	NpwpImageBase64      string `json:"npwpImageBase64,omitempty"`
 	SelfieImageBase64    string `json:"selfieImageBase64,omitempty" validate:"required"`
 	GoldSavingSlipBase64 string `json:"goldSavingSlipBase64,omitempty"`
+	AppFormBase64        string `json:"appFormBase64,omitempty"`
 	Province             string `json:"province,omitempty" validate:"required"`
 	Subdistrict          string `json:"subdistrict,omitempty" validate:"required"`
 	Village              string `json:"village,omitempty" validate:"required"`

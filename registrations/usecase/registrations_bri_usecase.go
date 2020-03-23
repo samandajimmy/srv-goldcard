@@ -85,7 +85,7 @@ func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, brixkey string, do
 		DocType:    models.MapBRIDocType[doc.Type],
 		FileName:   doc.FileName,
 		FileExt:    doc.FileExtension,
-		Base64file: "data:image/jpeg;base64," + doc.FileBase64,
+		Base64file: models.MapBRIExtBase64File[doc.FileExtension] + doc.FileBase64,
 	}
 
 	resp := api.BriResponse{}

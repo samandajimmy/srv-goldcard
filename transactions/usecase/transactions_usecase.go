@@ -233,8 +233,8 @@ func (trxUS *transactionsUseCase) GetCardBalance(c echo.Context, pl models.Paylo
 
 	// mapping + return bri card balance
 	return models.BRICardBalance{
-		CurrentBalance: float64(card.Balance),
-		CreditLimit:    float64(card.CardLimit),
+		AvailableCredit: card.Balance,
+		CreditLimit:     float64(card.CardLimit),
 	}, nil
 }
 
@@ -283,10 +283,10 @@ func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc mo
 	}
 
 	// get gold balance
-	goldBalance := acc.Card.ConvertMoneyToGold(int64(cardBal.CurrentBalance), stl)
+	goldBalance := acc.Card.ConvertMoneyToGold(cardBal.AvailableCredit, stl)
 
 	// define new card balances
-	acc.Card.Balance = int64(cardBal.CurrentBalance)
+	acc.Card.Balance = cardBal.AvailableCredit
 	acc.Card.GoldBalance = goldBalance
 	acc.Card.StlBalance = stl
 

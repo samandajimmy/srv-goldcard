@@ -33,8 +33,12 @@ func (billUS *billingsUseCase) GetBillingStatement(c echo.Context, pl models.Pay
 	bill := models.Billing{Account: acc}
 	err = billUS.bRepo.GetBillingInquiry(c, &bill)
 
-	if err != nil {
-		return models.BillingStatement{}, models.ErrNoBilling
+	if err == models.ErrNoBilling {
+		return models.BillingStatement{}, nil
+	}
+
+	if err != nil && err != models.ErrNoBilling {
+		return models.BillingStatement{}, models.ErrGetBilling
 	}
 
 	return models.BillingStatement{
