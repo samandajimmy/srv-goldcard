@@ -38,8 +38,9 @@ type Transaction struct {
 }
 
 type BRICardBalance struct {
-	CurrentBalance float64 `json:"currentBalance"`
-	CreditLimit    float64 `json:"creditLimit"`
+	CurrentBalance  float64 `json:"currentBalance"`
+	CreditLimit     float64 `json:"creditLimit"`
+	AvailableCredit int64   `json:"availableCredit"`
 }
 
 // MappingTransactions is a struct to mapping transactions data
