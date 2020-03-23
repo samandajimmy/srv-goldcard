@@ -34,6 +34,7 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 
 	// validate bri register specification
 	err := pl.ValidateBRIRegisterSpecification()
+
 	if err != nil {
 		logger.Make(c, nil).Debug(models.ErrValidateBRIRegSpec)
 

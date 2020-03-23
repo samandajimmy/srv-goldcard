@@ -1,7 +1,5 @@
 package models
 
-import "strings"
-
 var (
 	// UseExistingAddress is var to store use existing address status
 	UseExistingAddress int64
@@ -278,67 +276,39 @@ type PayloadBRIPegadaianBillings struct {
 	RefID         string `json:"refID" validate:"required"`
 }
 
+// ValidateBRIRegisterSpecification a function to validate registration specification to BRI
 func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
-	plBRIReg.FirstName = plBRIReg.StringLimiter(plBRIReg.FirstName, 15)
-	plBRIReg.LastName = plBRIReg.StringLimiter(plBRIReg.LastName, 14)
-	plBRIReg.CardName = plBRIReg.StringLimiter(plBRIReg.CardName, 19)
-	plBRIReg.Nik = plBRIReg.StringLimiter(plBRIReg.Nik, 30)
-	plBRIReg.Npwp = plBRIReg.StringLimiter(plBRIReg.Npwp, 15)
-	plBRIReg.BirthPlace = plBRIReg.StringLimiter(plBRIReg.BirthPlace, 20)
-	plBRIReg.BirthDate = plBRIReg.StringLimiter(plBRIReg.BirthDate, 30)
-	plBRIReg.AddressLine1 = plBRIReg.StringLimiter(plBRIReg.AddressLine1, 30)
-	plBRIReg.AddressLine2 = plBRIReg.StringLimiter(plBRIReg.AddressLine2, 30)
-	plBRIReg.AddressLine3 = plBRIReg.StringLimiter(plBRIReg.AddressLine3, 30)
-	plBRIReg.AddressCity = plBRIReg.StringLimiter(plBRIReg.AddressCity, 28)
-	plBRIReg.Nationality = plBRIReg.StringLimiter(plBRIReg.Nationality, 3)
-	plBRIReg.MotherName = plBRIReg.StringLimiter(plBRIReg.MotherName, 30)
-	plBRIReg.HandPhoneNumber = plBRIReg.StringLimiter(plBRIReg.HandPhoneNumber, 13)
-	plBRIReg.HomePhoneArea = plBRIReg.StringLimiter(plBRIReg.HomePhoneArea, 5)
-	plBRIReg.HomePhoneNumber = plBRIReg.StringLimiter(plBRIReg.HomePhoneNumber, 10)
-	plBRIReg.Email = plBRIReg.StringLimiter(plBRIReg.Email, 50)
-	plBRIReg.Company = plBRIReg.StringLimiter(plBRIReg.Company, 25)
-	plBRIReg.JobTitle = plBRIReg.StringLimiter(plBRIReg.JobTitle, 30)
-	plBRIReg.OfficeAddress1 = plBRIReg.StringLimiter(plBRIReg.OfficeAddress1, 30)
-	plBRIReg.OfficeAddress2 = plBRIReg.StringLimiter(plBRIReg.OfficeAddress2, 30)
-	plBRIReg.OfficeAddress3 = plBRIReg.StringLimiter(plBRIReg.OfficeAddress3, 30)
-	plBRIReg.OfficeCity = plBRIReg.StringLimiter(plBRIReg.OfficeCity, 30)
-	plBRIReg.OfficePhone = plBRIReg.StringLimiter(plBRIReg.OfficePhone, 13)
-	plBRIReg.EmergencyName = plBRIReg.StringLimiter(plBRIReg.EmergencyName, 30)
-	plBRIReg.EmergencyAddress1 = plBRIReg.StringLimiter(plBRIReg.EmergencyAddress1, 100)
-	plBRIReg.EmergencyAddress2 = plBRIReg.StringLimiter(plBRIReg.EmergencyAddress2, 100)
-	plBRIReg.EmergencyAddress3 = plBRIReg.StringLimiter(plBRIReg.EmergencyAddress3, 100)
-	plBRIReg.EmergencyCity = plBRIReg.StringLimiter(plBRIReg.EmergencyCity, 50)
-	plBRIReg.EmergencyPhoneNumber = plBRIReg.StringLimiter(plBRIReg.EmergencyPhoneNumber, 13)
-	plBRIReg.ProductRequest = plBRIReg.StringLimiter(plBRIReg.ProductRequest, 30)
+	plBRIReg.FirstName = StringLimiter(plBRIReg.FirstName, 15)
+	plBRIReg.LastName = StringLimiter(plBRIReg.LastName, 14)
+	plBRIReg.CardName = StringLimiter(plBRIReg.CardName, 19)
+	plBRIReg.Nik = StringLimiter(plBRIReg.Nik, 30)
+	plBRIReg.Npwp = StringLimiter(plBRIReg.Npwp, 15)
+	plBRIReg.BirthPlace = StringLimiter(plBRIReg.BirthPlace, 20)
+	plBRIReg.BirthDate = StringLimiter(plBRIReg.BirthDate, 30)
+	plBRIReg.AddressLine1 = StringLimiter(plBRIReg.AddressLine1, 30)
+	plBRIReg.AddressLine2 = StringLimiter(plBRIReg.AddressLine2, 30)
+	plBRIReg.AddressLine3 = StringLimiter(plBRIReg.AddressLine3, 30)
+	plBRIReg.AddressCity = StringLimiter(plBRIReg.AddressCity, 28)
+	plBRIReg.Nationality = StringLimiter(plBRIReg.Nationality, 3)
+	plBRIReg.MotherName = StringLimiter(plBRIReg.MotherName, 30)
+	plBRIReg.HandPhoneNumber = StringLimiter(plBRIReg.HandPhoneNumber, 13)
+	plBRIReg.HomePhoneArea = StringLimiter(plBRIReg.HomePhoneArea, 5)
+	plBRIReg.HomePhoneNumber = StringLimiter(plBRIReg.HomePhoneNumber, 10)
+	plBRIReg.Email = StringLimiter(plBRIReg.Email, 50)
+	plBRIReg.Company = StringLimiter(plBRIReg.Company, 25)
+	plBRIReg.JobTitle = StringLimiter(plBRIReg.JobTitle, 30)
+	plBRIReg.OfficeAddress1 = StringLimiter(plBRIReg.OfficeAddress1, 30)
+	plBRIReg.OfficeAddress2 = StringLimiter(plBRIReg.OfficeAddress2, 30)
+	plBRIReg.OfficeAddress3 = StringLimiter(plBRIReg.OfficeAddress3, 30)
+	plBRIReg.OfficeCity = StringLimiter(plBRIReg.OfficeCity, 30)
+	plBRIReg.OfficePhone = StringLimiter(plBRIReg.OfficePhone, 13)
+	plBRIReg.EmergencyName = StringLimiter(plBRIReg.EmergencyName, 30)
+	plBRIReg.EmergencyAddress1 = StringLimiter(plBRIReg.EmergencyAddress1, 100)
+	plBRIReg.EmergencyAddress2 = StringLimiter(plBRIReg.EmergencyAddress2, 100)
+	plBRIReg.EmergencyAddress3 = StringLimiter(plBRIReg.EmergencyAddress3, 100)
+	plBRIReg.EmergencyCity = StringLimiter(plBRIReg.EmergencyCity, 50)
+	plBRIReg.EmergencyPhoneNumber = StringLimiter(plBRIReg.EmergencyPhoneNumber, 13)
+	plBRIReg.ProductRequest = StringLimiter(plBRIReg.ProductRequest, 30)
 
 	return nil
-}
-
-func (plBRIReg *PayloadBriRegister) StringLimiter(str string, value int) string {
-	var result string
-	var curLen int = 0
-	arrStr := strings.Split(str, " ")
-
-	for i := 0; i < len(arrStr); i++ {
-		if i == 0 && len(arrStr[0]) > value {
-			result += arrStr[0][:value]
-			result = strings.TrimSpace(result)
-			break
-		}
-
-		if i == 0 && len(arrStr[0]) <= value {
-			result += arrStr[0]
-			curLen = len(result)
-			continue
-		}
-
-		if curLen+len(arrStr[i]) <= value {
-			result += " " + arrStr[i]
-			curLen = len(result)
-			continue
-		}
-
-		break
-	}
-	return result
 }
