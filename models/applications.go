@@ -89,6 +89,11 @@ var (
 		"selfie":  "P",
 		"slip_te": "D",
 	}
+
+	MapBRIExtBase64File = map[string]string{
+		"jpg": "data:image/jpeg;base64,",
+		"pdf": "data:application/pdf;base64,",
+	}
 )
 
 // Applications is a struct to store application data
