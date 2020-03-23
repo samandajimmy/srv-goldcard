@@ -57,6 +57,10 @@ func (bhn *BillingsHandler) billingStatement(c echo.Context) error {
 
 	bhn.response.SetResponse(responseData, &bhn.respErrors)
 
+	if (responseData == models.BillingStatement{}) {
+		bhn.response.SetResponse("", &bhn.respErrors)
+	}
+
 	return bhn.response.Body(c, nil)
 }
 
