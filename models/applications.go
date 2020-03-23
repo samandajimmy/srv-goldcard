@@ -84,9 +84,10 @@ var (
 
 	// MapBRIDocType to store map values of BRI DOC type
 	MapBRIDocType = map[string]string{
-		"ktp":    "A",
-		"npwp":   "G",
-		"selfie": "P",
+		"ktp":     "A",
+		"npwp":    "G",
+		"selfie":  "P",
+		"slip_te": "D",
 	}
 )
 
