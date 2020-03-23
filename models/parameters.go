@@ -92,7 +92,27 @@ func GenerateGoldSavingPDF(pl PayloadPersonalInformation) (string, error) {
 	pdf.SetFont("Arial", "B", 16)
 
 	// CellFormat(width, height, text, border, position after, align, fill, link, linkStr)
-	pdf.CellFormat(190, 7, "Welcome to golangcode.com", "0", 0, "CM", false, 0, "")
+	pdf.CellFormat(190, 7, "TEST", "0", 0, "CM", false, 0, "")
+
+	err := pdf.Output(&buf)
+
+	if err != nil {
+		return "", err
+	}
+
+	// Convert to base64
+	pdfBase64 := base64.StdEncoding.EncodeToString(buf.Bytes())
+	return pdfBase64, nil
+}
+
+func GenerateAppFormPDF(pl PayloadPersonalInformation) (string, error) {
+	var buf bytes.Buffer
+	pdf := gofpdf.New("P", "mm", "A4", "")
+	pdf.AddPage()
+	pdf.SetFont("Arial", "B", 16)
+
+	// CellFormat(width, height, text, border, position after, align, fill, link, linkStr)
+	pdf.CellFormat(190, 7, "TEST", "0", 0, "CM", false, 0, "")
 
 	err := pdf.Output(&buf)
 

@@ -73,6 +73,7 @@ var (
 		"NpwpImageBase64":      "npwp",
 		"SelfieImageBase64":    "selfie",
 		"GoldSavingSlipBase64": "slip_te",
+		"AppFormBase64":        "app_form",
 	}
 
 	mapFileExt = map[string]string{
@@ -80,14 +81,16 @@ var (
 		"NpwpImageBase64":      DefAppDocFileExt,
 		"SelfieImageBase64":    DefAppDocFileExt,
 		"GoldSavingSlipBase64": PdfAppDocFileExt,
+		"AppFormBase64":        PdfAppDocFileExt,
 	}
 
 	// MapBRIDocType to store map values of BRI DOC type
 	MapBRIDocType = map[string]string{
-		"ktp":     "A",
-		"npwp":    "G",
-		"selfie":  "P",
-		"slip_te": "D",
+		"ktp":      "A",
+		"npwp":     "G",
+		"selfie":   "P",
+		"slip_te":  "D",
+		"app_form": "Z",
 	}
 
 	MapBRIExtBase64File = map[string]string{
@@ -140,17 +143,13 @@ func (app *Applications) GetStatusDateKey() string {
 // SetDocument to set application document array
 func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 	var emptyDocs []Document
-	docNames := []string{"KtpImageBase64", "NpwpImageBase64", "SelfieImageBase64", "GoldSavingSlipBase64"}
+	docNames := []string{"KtpImageBase64", "NpwpImageBase64", "SelfieImageBase64", "GoldSavingSlipBase64", "AppFormBase64"}
 	r := reflect.ValueOf(pl)
 	currDoc := app.Documents
 	app.Documents = emptyDocs
 
 	for _, docName := range docNames {
 		base64 := reflect.Indirect(r).FieldByName(docName)
-
-		if base64.IsZero() {
-			continue
-		}
 
 		doc := app.getCurrentDoc(currDoc, mapDocType[docName])
 
@@ -161,6 +160,12 @@ func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 				Type:          mapDocType[docName],
 				ApplicationID: app.ID,
 			}
+		}
+
+		if docName == "NpwpImageBase64" && base64.IsZero() {
+			doc.FileBase64 = DefaultBase64NPWP
+			app.Documents = append(app.Documents, doc)
+			continue
 		}
 
 		doc.FileBase64 = base64.String()
