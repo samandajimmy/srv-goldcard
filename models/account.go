@@ -78,13 +78,26 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.SetNPWP(pl.Npwp)
 
 	// set gold saving slip Base64
-	base64, err := GenerateGoldSavingPDF(pl)
+	slipBase64, err := GenerateGoldSavingPDF(pl)
 
 	if err != nil {
 		return err
 	}
 
-	pl.GoldSavingSlipBase64 = base64
+	// set App Form Base64
+	appFormBase64, err := GenerateAppFormPDF(pl)
+
+	if err != nil {
+		return err
+	}
+
+	pl.GoldSavingSlipBase64 = slipBase64
+	pl.AppFormBase64 = appFormBase64
+
+	// set default base64 to NPWP image if empty
+	if pl.NpwpImageBase64 == "" {
+		pl.NpwpImageBase64 = defDocBase64
+	}
 
 	// application documents
 	acc.Application.SetDocument(pl)
