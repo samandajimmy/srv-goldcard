@@ -163,7 +163,7 @@ func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 		}
 
 		if docName == "NpwpImageBase64" && base64.IsZero() {
-			doc.FileBase64 = DefaultBase64NPWP
+			doc.FileBase64 = defDocBase64
 			app.Documents = append(app.Documents, doc)
 			continue
 		}
