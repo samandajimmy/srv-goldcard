@@ -295,7 +295,7 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.HandPhoneNumber = plBRIReg.StringLimiter(plBRIReg.HandPhoneNumber, 13)
 	plBRIReg.HomePhoneArea = plBRIReg.StringLimiter(plBRIReg.HomePhoneArea, 5)
 	plBRIReg.HomePhoneNumber = plBRIReg.StringLimiter(plBRIReg.HomePhoneNumber, 10)
-	plBRIReg.Email = plBRIReg.StringLimiter(plBRIReg.CardName, 50)
+	plBRIReg.Email = plBRIReg.StringLimiter(plBRIReg.Email, 50)
 	plBRIReg.Company = plBRIReg.StringLimiter(plBRIReg.Company, 25)
 	plBRIReg.JobTitle = plBRIReg.StringLimiter(plBRIReg.JobTitle, 30)
 	plBRIReg.OfficeAddress1 = plBRIReg.StringLimiter(plBRIReg.OfficeAddress1, 30)
