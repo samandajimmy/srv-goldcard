@@ -84,6 +84,9 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 		return err
 	}
 
+	if pl.NpwpImageBase64 == "" {
+		pl.NpwpImageBase64 = DefaultBase64NPWP
+	}
 	pl.GoldSavingSlipBase64 = base64
 
 	// application documents
