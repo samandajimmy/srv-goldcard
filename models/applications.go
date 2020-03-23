@@ -151,6 +151,10 @@ func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 	for _, docName := range docNames {
 		base64 := reflect.Indirect(r).FieldByName(docName)
 
+		if base64.IsZero() {
+			continue
+		}
+
 		doc := app.getCurrentDoc(currDoc, mapDocType[docName])
 
 		if doc.ID == 0 {
@@ -160,12 +164,6 @@ func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 				Type:          mapDocType[docName],
 				ApplicationID: app.ID,
 			}
-		}
-
-		if docName == "NpwpImageBase64" && base64.IsZero() {
-			doc.FileBase64 = defDocBase64
-			app.Documents = append(app.Documents, doc)
-			continue
 		}
 
 		doc.FileBase64 = base64.String()

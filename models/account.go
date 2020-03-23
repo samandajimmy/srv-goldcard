@@ -94,6 +94,11 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	pl.GoldSavingSlipBase64 = slipBase64
 	pl.AppFormBase64 = appFormBase64
 
+	// set default base64 to NPWP image if empty
+	if pl.NpwpImageBase64 == "" {
+		pl.NpwpImageBase64 = defDocBase64
+	}
+
 	// application documents
 	acc.Application.SetDocument(pl)
 
