@@ -1,5 +1,7 @@
 package models
 
+import "strings"
+
 var (
 	// UseExistingAddress is var to store use existing address status
 	UseExistingAddress int64
@@ -273,4 +275,69 @@ type PayloadBRIPegadaianBillings struct {
 	FileExtension string `json:"fileExtension" validate:"required"`
 	FileName      string `json:"fileName" validate:"required"`
 	RefID         string `json:"refID" validate:"required"`
+}
+
+func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
+	plBRIReg.FirstName = plBRIReg.StringLimiter(plBRIReg.FirstName, 15)
+	plBRIReg.LastName = plBRIReg.StringLimiter(plBRIReg.LastName, 14)
+	plBRIReg.CardName = plBRIReg.StringLimiter(plBRIReg.CardName, 19)
+	plBRIReg.Nik = plBRIReg.StringLimiter(plBRIReg.Nik, 30)
+	plBRIReg.Npwp = plBRIReg.StringLimiter(plBRIReg.Npwp, 15)
+	plBRIReg.BirthPlace = plBRIReg.StringLimiter(plBRIReg.BirthPlace, 20)
+	plBRIReg.BirthDate = plBRIReg.StringLimiter(plBRIReg.BirthDate, 30)
+	plBRIReg.AddressLine1 = plBRIReg.StringLimiter(plBRIReg.AddressLine1, 30)
+	plBRIReg.AddressLine2 = plBRIReg.StringLimiter(plBRIReg.AddressLine2, 30)
+	plBRIReg.AddressLine3 = plBRIReg.StringLimiter(plBRIReg.AddressLine3, 30)
+	plBRIReg.AddressCity = plBRIReg.StringLimiter(plBRIReg.AddressCity, 28)
+	plBRIReg.Nationality = plBRIReg.StringLimiter(plBRIReg.Nationality, 3)
+	plBRIReg.MotherName = plBRIReg.StringLimiter(plBRIReg.MotherName, 30)
+	plBRIReg.HandPhoneNumber = plBRIReg.StringLimiter(plBRIReg.HandPhoneNumber, 13)
+	plBRIReg.HomePhoneArea = plBRIReg.StringLimiter(plBRIReg.HomePhoneArea, 5)
+	plBRIReg.HomePhoneNumber = plBRIReg.StringLimiter(plBRIReg.HomePhoneNumber, 10)
+	plBRIReg.Email = plBRIReg.StringLimiter(plBRIReg.CardName, 50)
+	plBRIReg.Company = plBRIReg.StringLimiter(plBRIReg.Company, 25)
+	plBRIReg.JobTitle = plBRIReg.StringLimiter(plBRIReg.JobTitle, 30)
+	plBRIReg.OfficeAddress1 = plBRIReg.StringLimiter(plBRIReg.OfficeAddress1, 30)
+	plBRIReg.OfficeAddress2 = plBRIReg.StringLimiter(plBRIReg.OfficeAddress2, 30)
+	plBRIReg.OfficeAddress3 = plBRIReg.StringLimiter(plBRIReg.OfficeAddress3, 30)
+	plBRIReg.OfficeCity = plBRIReg.StringLimiter(plBRIReg.OfficeCity, 30)
+	plBRIReg.OfficePhone = plBRIReg.StringLimiter(plBRIReg.OfficePhone, 13)
+	plBRIReg.EmergencyName = plBRIReg.StringLimiter(plBRIReg.EmergencyName, 30)
+	plBRIReg.EmergencyAddress1 = plBRIReg.StringLimiter(plBRIReg.EmergencyAddress1, 100)
+	plBRIReg.EmergencyAddress2 = plBRIReg.StringLimiter(plBRIReg.EmergencyAddress2, 100)
+	plBRIReg.EmergencyAddress3 = plBRIReg.StringLimiter(plBRIReg.EmergencyAddress3, 100)
+	plBRIReg.EmergencyCity = plBRIReg.StringLimiter(plBRIReg.EmergencyCity, 50)
+	plBRIReg.EmergencyPhoneNumber = plBRIReg.StringLimiter(plBRIReg.EmergencyPhoneNumber, 13)
+	plBRIReg.ProductRequest = plBRIReg.StringLimiter(plBRIReg.ProductRequest, 30)
+
+	return nil
+}
+
+func (plBRIReg *PayloadBriRegister) StringLimiter(str string, value int) string {
+	var result string
+	var curLen int = 0
+	arrStr := strings.Split(str, " ")
+
+	for i := 0; i < len(arrStr); i++ {
+		if i == 0 && len(arrStr[0]) > value {
+			result += arrStr[0][:value]
+			result = strings.TrimSpace(result)
+			break
+		}
+
+		if i == 0 && len(arrStr[0]) <= value {
+			result += arrStr[0]
+			curLen = len(result)
+			continue
+		}
+
+		if curLen+len(arrStr[i]) <= value {
+			result += " " + arrStr[i]
+			curLen = len(result)
+			continue
+		}
+
+		break
+	}
+	return result
 }

@@ -32,9 +32,17 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 		return nil
 	}
 
+	// validate bri register specification
+	err := pl.ValidateBRIRegisterSpecification()
+	if err != nil {
+		logger.Make(c, nil).Debug(models.ErrValidateBRIRegSpec)
+
+		return models.ErrValidateBRIRegSpec
+	}
+
 	resp := api.BriResponse{}
 	reqBody := api.BriRequest{RequestData: pl}
-	err := api.RetryableBriPost(c, "/v1/cobranding/register", reqBody, &resp)
+	err = api.RetryableBriPost(c, "/v1/cobranding/register", reqBody, &resp)
 
 	if err != nil {
 		return err
