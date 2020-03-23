@@ -93,6 +93,7 @@ var (
 		"app_form": "Z",
 	}
 
+	// MapBRIExtBase64File to store BRI ext Base64 file
 	MapBRIExtBase64File = map[string]string{
 		"jpg": "data:image/jpeg;base64,",
 		"pdf": "data:application/pdf;base64,",
