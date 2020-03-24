@@ -126,39 +126,60 @@ func GenerateAppFormPDF(pl PayloadPersonalInformation) (string, error) {
 	return pdfBase64, nil
 }
 
-// StringLimiter is a function to limit the size of string according to given length
-// by cutting the at the end of completed word at the last whitespace
-func StringLimiter(str string, length int) string {
+// StringNameFormatter is a function to limit the size of string according to given length
+// by shorten the given string
+func StringNameFormatter(name string, length int) string {
 	var result string
-	var curLen int = 0
-	arrStr := strings.Split(str, " ")
+	arrStr := strings.Split(name, " ")
+	arrLen := len(arrStr)
 
-	for i, strValue := range arrStr {
-		// if the string only consist one word and it surpass the length param
-		// then it return slices of the first string
-		if i == 0 && len(strValue) > length {
-			result += strValue[:length]
-			result = strings.TrimSpace(result)
+	// if length of name is enough then just return
+	if len(name) <= length {
+		return name
+	}
+
+	// if its only one word
+	if arrLen == 1 {
+		result = arrStr[0]
+	}
+
+	// if length of words is enough then just return
+	// note that var result could be filled / not
+	if len(result) >= length {
+		return result[:length]
+	}
+
+	// init string result
+	result = name
+
+	for _, word := range arrStr {
+		// break if length of result is enough
+		// why using "<", because we will add a space after the loop
+		if len(result) < length {
 			break
 		}
 
-		// if the string only consist more than one word and it doesnt surpass the length param
-		// then the first word will be appended to result variable
-		if i == 0 && len(strValue) <= length {
-			result += strValue
-			curLen = len(result)
-			continue
-		}
-
-		// append the second string and the further to result variable prefixed with whitespace
-		// until it doesnt surpass the length param
-		if curLen+len(strValue)+1 <= length {
-			result += " " + strValue
-			curLen = len(result)
-			continue
-		}
-
-		break
+		// take first char of word and replace itself
+		result = strings.ReplaceAll(result, word+" ", strings.ToUpper(word[:1])+".")
 	}
+
+	for i := arrLen - 1; i > 0; i-- {
+		// put the prev word back if its still too long
+		// why using ">=", because we will add a space after the loop
+		if len(result) >= length {
+			result = strings.ReplaceAll(result, arrStr[i-1][:1]+"."+arrStr[i], arrStr[i-1])
+		}
+	}
+
+	// get last dot "." index
+	lastDotAfterIdx := strings.LastIndex(result, ".") + 1
+	// add space
+	result = result[:lastDotAfterIdx] + " " + result[lastDotAfterIdx:]
+
+	// the last attempt if its still not enough hard cut it out
+	if len(result) > length {
+		result = result[:length]
+	}
+
 	return result
 }

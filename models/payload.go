@@ -278,9 +278,9 @@ type PayloadBRIPegadaianBillings struct {
 
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI
 func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
-	plBRIReg.FirstName = StringLimiter(plBRIReg.FirstName, 15)
-	plBRIReg.LastName = StringLimiter(plBRIReg.LastName, 14)
-	plBRIReg.CardName = StringLimiter(plBRIReg.CardName, 19)
+	plBRIReg.FirstName = StringNameFormatter(plBRIReg.FirstName, 15)
+	plBRIReg.LastName = StringNameFormatter(plBRIReg.LastName, 14)
+	plBRIReg.CardName = StringNameFormatter(plBRIReg.CardName, 19)
 	plBRIReg.Nik = plBRIReg.Nik[:30]
 	plBRIReg.Npwp = plBRIReg.Npwp[:15]
 	plBRIReg.BirthPlace = plBRIReg.BirthPlace[:20]
@@ -290,7 +290,7 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.AddressLine3 = plBRIReg.AddressLine3[:30]
 	plBRIReg.AddressCity = plBRIReg.AddressCity[:28]
 	plBRIReg.Nationality = plBRIReg.Nationality[:3]
-	plBRIReg.MotherName = StringLimiter(plBRIReg.MotherName, 30)
+	plBRIReg.MotherName = StringNameFormatter(plBRIReg.MotherName, 30)
 	plBRIReg.HandPhoneNumber = plBRIReg.HandPhoneNumber[:13]
 	plBRIReg.HomePhoneArea = plBRIReg.HomePhoneArea[:5]
 	plBRIReg.HomePhoneNumber = plBRIReg.HomePhoneNumber[:10]
@@ -302,7 +302,7 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.OfficeAddress3 = plBRIReg.OfficeAddress3[:30]
 	plBRIReg.OfficeCity = plBRIReg.OfficeCity[:30]
 	plBRIReg.OfficePhone = plBRIReg.OfficePhone[:13]
-	plBRIReg.EmergencyName = StringLimiter(plBRIReg.EmergencyName, 30)
+	plBRIReg.EmergencyName = StringNameFormatter(plBRIReg.EmergencyName, 30)
 	plBRIReg.EmergencyAddress1 = plBRIReg.EmergencyAddress1[:100]
 	plBRIReg.EmergencyAddress2 = plBRIReg.EmergencyAddress2[:100]
 	plBRIReg.EmergencyAddress3 = plBRIReg.EmergencyAddress3[:100]
