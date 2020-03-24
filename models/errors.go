@@ -63,6 +63,9 @@ var (
 	// ErrUpdateRegData to store updating registration data error message
 	ErrUpdateRegData = errors.New("Terjadi kesalahan saat update data pengajuan")
 
+	// ErrValidateBRIRegSpec to store bri register specification data error message
+	ErrValidateBRIRegSpec = errors.New("Terjadi kesalahan memvalidasi spesifikasi data pengajuan ke BRI")
+
 	// ErrUpdateOccData to store updating occupation data error message
 	ErrUpdateOccData = errors.New("Terjadi kesalahan saat update data pekerjaan")
 

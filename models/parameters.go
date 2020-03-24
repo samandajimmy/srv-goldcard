@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/base64"
 	"math"
+	"strings"
 	"time"
 
 	"github.com/jung-kurt/gofpdf"
@@ -123,4 +124,62 @@ func GenerateAppFormPDF(pl PayloadPersonalInformation) (string, error) {
 	// Convert to base64
 	pdfBase64 := base64.StdEncoding.EncodeToString(buf.Bytes())
 	return pdfBase64, nil
+}
+
+// StringNameFormatter is a function to limit the size of string according to given length
+// by shorten the given string
+func StringNameFormatter(name string, length int) string {
+	var result string
+	arrStr := strings.Split(name, " ")
+	arrLen := len(arrStr)
+
+	// if length of name is enough then just return
+	if len(name) <= length {
+		return name
+	}
+
+	// if its only one word
+	if arrLen == 1 {
+		result = arrStr[0]
+	}
+
+	// if length of words is enough then just return
+	// note that var result could be filled / not
+	if len(result) >= length {
+		return result[:length]
+	}
+
+	// init string result
+	result = name
+
+	for _, word := range arrStr {
+		// break if length of result is enough
+		// why using "<", because we will add a space after the loop
+		if len(result) < length {
+			break
+		}
+
+		// take first char of word and replace itself
+		result = strings.ReplaceAll(result, word+" ", strings.ToUpper(word[:1])+".")
+	}
+
+	for i := arrLen - 1; i > 0; i-- {
+		// put the prev word back if its still too long
+		// why using ">=", because we will add a space after the loop
+		if len(result) >= length {
+			result = strings.ReplaceAll(result, arrStr[i-1][:1]+"."+arrStr[i], arrStr[i-1])
+		}
+	}
+
+	// get last dot "." index
+	lastDotAfterIdx := strings.LastIndex(result, ".") + 1
+	// add space
+	result = result[:lastDotAfterIdx] + " " + result[lastDotAfterIdx:]
+
+	// the last attempt if its still not enough hard cut it out
+	if len(result) > length {
+		result = result[:length]
+	}
+
+	return result
 }

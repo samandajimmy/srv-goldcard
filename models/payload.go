@@ -275,3 +275,40 @@ type PayloadBRIPegadaianBillings struct {
 	FileName      string `json:"fileName" validate:"required"`
 	RefID         string `json:"refID" validate:"required"`
 }
+
+// ValidateBRIRegisterSpecification a function to validate registration specification to BRI
+func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
+	plBRIReg.FirstName = StringNameFormatter(plBRIReg.FirstName, 15)
+	plBRIReg.LastName = StringNameFormatter(plBRIReg.LastName, 14)
+	plBRIReg.CardName = StringNameFormatter(plBRIReg.CardName, 19)
+	plBRIReg.Nik = plBRIReg.Nik[:30]
+	plBRIReg.Npwp = plBRIReg.Npwp[:15]
+	plBRIReg.BirthPlace = plBRIReg.BirthPlace[:20]
+	plBRIReg.BirthDate = plBRIReg.BirthDate[:30]
+	plBRIReg.AddressLine1 = plBRIReg.AddressLine1[:30]
+	plBRIReg.AddressLine2 = plBRIReg.AddressLine2[:30]
+	plBRIReg.AddressLine3 = plBRIReg.AddressLine3[:30]
+	plBRIReg.AddressCity = plBRIReg.AddressCity[:28]
+	plBRIReg.Nationality = plBRIReg.Nationality[:3]
+	plBRIReg.MotherName = StringNameFormatter(plBRIReg.MotherName, 30)
+	plBRIReg.HandPhoneNumber = plBRIReg.HandPhoneNumber[:13]
+	plBRIReg.HomePhoneArea = plBRIReg.HomePhoneArea[:5]
+	plBRIReg.HomePhoneNumber = plBRIReg.HomePhoneNumber[:10]
+	plBRIReg.Email = plBRIReg.Email[:50]
+	plBRIReg.Company = plBRIReg.Company[:25]
+	plBRIReg.JobTitle = plBRIReg.JobTitle[:30]
+	plBRIReg.OfficeAddress1 = plBRIReg.OfficeAddress1[:30]
+	plBRIReg.OfficeAddress2 = plBRIReg.OfficeAddress2[:30]
+	plBRIReg.OfficeAddress3 = plBRIReg.OfficeAddress3[:30]
+	plBRIReg.OfficeCity = plBRIReg.OfficeCity[:30]
+	plBRIReg.OfficePhone = plBRIReg.OfficePhone[:13]
+	plBRIReg.EmergencyName = StringNameFormatter(plBRIReg.EmergencyName, 30)
+	plBRIReg.EmergencyAddress1 = plBRIReg.EmergencyAddress1[:100]
+	plBRIReg.EmergencyAddress2 = plBRIReg.EmergencyAddress2[:100]
+	plBRIReg.EmergencyAddress3 = plBRIReg.EmergencyAddress3[:100]
+	plBRIReg.EmergencyCity = plBRIReg.EmergencyCity[:50]
+	plBRIReg.EmergencyPhoneNumber = plBRIReg.EmergencyPhoneNumber[:13]
+	plBRIReg.ProductRequest = plBRIReg.ProductRequest[:30]
+
+	return nil
+}
