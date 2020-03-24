@@ -126,6 +126,15 @@ func GenerateAppFormPDF(pl PayloadPersonalInformation) (string, error) {
 	return pdfBase64, nil
 }
 
+// StringCutter to force or hard cut any sentences
+func StringCutter(sentence string, length int) string {
+	if len(sentence) <= length {
+		return sentence
+	}
+
+	return sentence[:length]
+}
+
 // StringNameFormatter is a function to limit the size of string according to given length
 // by shorten the given string
 func StringNameFormatter(name string, length int) string {
