@@ -318,13 +318,13 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	accChan := make(chan models.Account)
 
 	go func() {
-		err := reg.rrr.OpenGoldcard(c, acc, false)
+		// err := reg.rrr.OpenGoldcard(c, acc, false)
 
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			errAppCore <- err
-			return
-		}
+		// if err != nil {
+		// 	logger.Make(c, nil).Debug(err)
+		// 	errAppCore <- err
+		// 	return
+		// }
 
 		errAppCore <- nil
 	}()
