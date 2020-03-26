@@ -17,12 +17,13 @@ func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, p
 	}
 
 	// upload document to BRI API
-	err = reg.uploadAppDocs(c, acc)
+	go func() {
+		err := reg.uploadAppDocs(c, acc)
 
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return err
-	}
+		if len(err) > 0 {
+			logger.Make(c, nil).Debug(err[0])
+		}
+	}()
 
 	return nil
 }
@@ -65,15 +66,19 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 	return nil
 }
 
-func (reg *registrationsUseCase) uploadAppDocs(c echo.Context, acc *models.Account) error {
+func (reg *registrationsUseCase) uploadAppDocs(c echo.Context, acc *models.Account) []error {
+	// concurrently upload application documents to BRI
+	var errors []error
+
 	for _, doc := range acc.Application.Documents {
-		// concurrently upload application documents to BRI
-		go func(doc models.Document) {
-			_ = reg.uploadAppDoc(c, acc.BrixKey, doc)
-		}(doc)
+		err := reg.uploadAppDoc(c, acc.BrixKey, doc)
+
+		if err != nil {
+			errors = append(errors, err)
+		}
 	}
 
-	return nil
+	return errors
 }
 
 func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, brixkey string, doc models.Document) error {
