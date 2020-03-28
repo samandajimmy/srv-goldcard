@@ -95,8 +95,6 @@ func (PSQLTrx *psqlTransactionsRepository) GetPgTransactionsHistory(c echo.Conte
 		trx.IsLastPage = true
 	}
 
-	logger.MakeStructToJSON(trx)
-
 	return trx, nil
 }
 
