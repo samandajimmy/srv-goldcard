@@ -23,24 +23,6 @@ func NewPsqlTransactionsRepository(Conn *sql.DB, DBpg *pg.DB) transactions.Repos
 	return &psqlTransactionsRepository{Conn, DBpg}
 }
 
-func (PSQLTrx *psqlTransactionsRepository) GetAllTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) (models.ResponseHistoryTransactions, error) {
-	trx := models.ResponseHistoryTransactions{}
-
-	_, err := PSQLTrx.DBpg.Query(&trx.ListHistoryTransactions, `SELECT t.ref_trx, t.nominal, t.trx_date, t.description FROM transactions t 
-		LEFT JOIN accounts a ON a.id = t.account_id WHERE a.account_number = ? ORDER BY t.created_at`,
-		pt.AccountNumber)
-
-	if err != nil && err != pg.ErrNoRows {
-		logger.Make(c, nil).Debug(err)
-
-		return trx, err
-	}
-
-	trx.IsLastPage = true
-	return trx, nil
-
-}
-
 func (PSQLTrx *psqlTransactionsRepository) GetAccountByBrixKey(c echo.Context, brixkey string) (models.Account, error) {
 	acc := models.Account{}
 	err := PSQLTrx.DBpg.Model(&acc).Relation("Application").Relation("PersonalInformation").
@@ -72,48 +54,48 @@ func (PSQLTrx *psqlTransactionsRepository) PostTransactions(c echo.Context, trx 
 	return nil
 }
 
-func (PSQLTrx *psqlTransactionsRepository) GetPgTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) (models.ResponseHistoryTransactions, error) {
-	trx := models.ResponseHistoryTransactions{}
-	offset := (pt.Pagination.Page - 1) * pt.Pagination.Limit
+func (PSQLTrx *psqlTransactionsRepository) GetPgTransactionsHistory(c echo.Context, acc models.Account, plListTrx models.PayloadListTrx) (models.ResponseListTrx, error) {
+	trx := models.ResponseListTrx{}
+	pagination := plListTrx.Pagination
+	offset := (pagination.Page - 1) * pagination.Limit
 
-	_, err := PSQLTrx.DBpg.Query(&trx.ListHistoryTransactions, `SELECT t.ref_trx, t.nominal, t.trx_date, t.description FROM transactions t 
-		LEFT JOIN accounts a ON a.id = t.account_id  WHERE a.account_number = ? ORDER BY t.created_at LIMIT ? OFFSET ?`,
-		pt.AccountNumber, pt.Pagination.Limit, offset)
+	// count all data
+	totalCount, err := PSQLTrx.DBpg.Model(&trx.ListTrx).
+		Where("account_id = ?", acc.ID).
+		Count()
 
 	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
 		return trx, err
 	}
 
-	// get total data transactions
-	total, err := PSQLTrx.getTotalTransactions(c, pt)
+	if pagination.Limit == 0 {
+		pagination.Limit = int64(totalCount)
+		trx.IsLastPage = true
+	}
+
+	// get the transactions
+	err = PSQLTrx.DBpg.Model(&trx.ListTrx).
+		Where("account_id = ?", acc.ID).
+		Limit(int(pagination.Limit)).Offset(int(offset)).
+		Order("trx_date desc", "id asc").
+		Select()
 
 	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
 		return trx, err
 	}
 
 	// flag isLastPage
-	totalPage := total / float64(pt.Pagination.Limit)
-	if float64(pt.Pagination.Page) == math.Ceil(totalPage) {
-		trx.IsLastPage = true
+	totalPage := float64(totalCount) / float64(pagination.Limit)
 
-		return trx, nil
+	if float64(pagination.Page) == math.Ceil(totalPage) {
+		trx.IsLastPage = true
 	}
 
 	return trx, nil
-}
-
-func (PSQLTrx *psqlTransactionsRepository) getTotalTransactions(c echo.Context, pt models.PayloadHistoryTransactions) (float64, error) {
-	var count float64
-
-	_, err := PSQLTrx.DBpg.Query(&count, `SELECT count(t.id) FROM transactions t 
-		LEFT JOIN accounts a ON a.id = t.account_id WHERE a.account_number = ?`,
-		pt.AccountNumber)
-
-	if err != nil && err != pg.ErrNoRows {
-		return count, err
-	}
-
-	return count, err
 }
 
 func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Context, acc *models.Account) error {

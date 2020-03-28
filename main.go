@@ -44,6 +44,8 @@ import (
 var ech *echo.Echo
 
 func init() {
+	loc, _ := time.LoadLocation("Asia/Jakarta")
+	time.Local = loc
 	ech = echo.New()
 	ech.Debug = true
 	loadEnv()

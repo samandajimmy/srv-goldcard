@@ -66,24 +66,24 @@ func (th *TransactionsHandler) BRIPendingTransactions(c echo.Context) error {
 }
 
 func (th *TransactionsHandler) HistoryTransactions(c echo.Context) error {
-	var pht models.PayloadHistoryTransactions
+	var plListTrx models.PayloadListTrx
 	th.response, th.respErrors = models.NewResponse()
 
-	if err := c.Bind(&pht); err != nil {
+	if err := c.Bind(&plListTrx); err != nil {
 		th.respErrors.SetTitle(models.MessageUnprocessableEntity)
 		th.response.SetResponse("", &th.respErrors)
 
 		return th.response.Body(c, err)
 	}
 
-	if err := c.Validate(pht); err != nil {
+	if err := c.Validate(plListTrx); err != nil {
 		th.respErrors.SetTitle(err.Error())
 		th.response.SetResponse("", &th.respErrors)
 
 		return th.response.Body(c, err)
 	}
 
-	result, err := th.transactionsUseCase.GetTransactionsHistory(c, pht)
+	result, err := th.transactionsUseCase.GetTransactionsHistory(c, plListTrx)
 
 	if err.Title != "" {
 		th.response.SetResponse("", &err)

@@ -156,28 +156,23 @@ func (trxUS *transactionsUseCase) PostPaymentTransaction(c echo.Context, pl mode
 	return errors
 }
 
-func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, pht models.PayloadHistoryTransactions) (interface{}, models.ResponseErrors) {
+func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListTrx models.PayloadListTrx) (interface{}, models.ResponseErrors) {
 	var errors models.ResponseErrors
-	if pht.Pagination.Limit != 0 {
-		return trxUS.GetPgTransactionsHistory(c, pht)
+
+	// Get Account by Account Number
+	acc, err := trxUS.CheckAccountByAccountNumber(c, plListTrx)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
+
+		return models.ResponseListTrx{}, errors
 	}
 
-	result, err := trxUS.trxRepo.GetAllTransactionsHistory(c, pht)
+	result, err := trxUS.trxRepo.GetPgTransactionsHistory(c, acc, plListTrx)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
-		return result, errors
-	}
 
-	return result, errors
-}
-
-func (trxUS *transactionsUseCase) GetPgTransactionsHistory(c echo.Context, pht models.PayloadHistoryTransactions) (interface{}, models.ResponseErrors) {
-	var errors models.ResponseErrors
-	result, err := trxUS.trxRepo.GetPgTransactionsHistory(c, pht)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
 		return result, errors
 	}
 

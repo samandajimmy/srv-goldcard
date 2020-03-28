@@ -41,12 +41,9 @@ COPY --from=build-env /srv-goldcard/migrations /migrations
 # add apk ca certificate
 RUN apk add ca-certificates
 
-# set timezone
+# set timezon
 RUN apk add tzdata
-RUN ls /usr/share/zoneinfo
 RUN cp /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
-RUN echo "Asia/Jakarta" > /etc/timezone
-RUN apk del tzdata
 
 EXPOSE 8084
 ENTRYPOINT ["sh", "/srv-goldcard/entrypoint.sh"]
