@@ -79,7 +79,7 @@ func (PSQLTrx *psqlTransactionsRepository) GetPgTransactionsHistory(c echo.Conte
 	err = PSQLTrx.DBpg.Model(&trx.ListTrx).
 		Where("account_id = ?", acc.ID).
 		Limit(int(pagination.Limit)).Offset(int(offset)).
-		Order("trx_date asc", "id asc").
+		Order("trx_date desc", "id asc").
 		Select()
 
 	if err != nil && err != pg.ErrNoRows {
