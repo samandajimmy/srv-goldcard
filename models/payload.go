@@ -233,27 +233,13 @@ type PayloadBriGetCardInformation struct {
 // PaginationPayload struct to store pagination payload
 type PaginationPayload struct {
 	Limit int64 `json:"limit"`
-	Page  int64 `json:"page"`
+	Page  int64 `json:"page" validate:"required"`
 }
 
-// PayloadHistoryTransactions struct to store request history transactions
-type PayloadHistoryTransactions struct {
+// PayloadListTrx struct to store request history transactions
+type PayloadListTrx struct {
 	AccountNumber string            `json:"accountNumber" validate:"required"`
-	Pagination    PaginationPayload `json:"pagination" validate:"required"`
-}
-
-// ListHistoryTransactions struct to store list history transactions
-type ListHistoryTransactions struct {
-	RefTrx      string `json:"refTrx"`
-	Nominal     int64  `json:"nominal"`
-	TrxDate     string `json:"trxDate"`
-	Description string `json:"description"`
-}
-
-// ResponseHistoryTransactions struct to store response history transactions
-type ResponseHistoryTransactions struct {
-	IsLastPage              bool                      `json:"isLastPage"`
-	ListHistoryTransactions []ListHistoryTransactions `json:"listHistoryTransactions"`
+	Pagination    PaginationPayload `json:"pagination"`
 }
 
 // PayloadAccNumber a struct to store all payload for transactions

@@ -37,6 +37,23 @@ type Transaction struct {
 	Source        string    `json:"source" pg:"-"`
 }
 
+// ListTrx struct to store list history transactions
+type ListTrx struct {
+	// nolint
+	tableName struct{} `pg:"transactions"`
+
+	RefTrx      string `json:"refTrx"`
+	Nominal     int64  `json:"nominal"`
+	TrxDate     string `json:"trxDate"`
+	Description string `json:"description"`
+}
+
+// ResponseListTrx struct to store response history transactions
+type ResponseListTrx struct {
+	IsLastPage bool      `json:"isLastPage"`
+	ListTrx    []ListTrx `json:"listHistoryTransactions"`
+}
+
 type BRICardBalance struct {
 	CurrentBalance  float64 `json:"currentBalance"`
 	CreditLimit     float64 `json:"creditLimit"`

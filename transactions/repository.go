@@ -9,8 +9,7 @@ import (
 // Repository represent the transactions Repository
 type Repository interface {
 	GetAccountByBrixKey(c echo.Context, brixkey string) (models.Account, error)
-	GetAllTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) (models.ResponseHistoryTransactions, error)
-	GetPgTransactionsHistory(c echo.Context, pt models.PayloadHistoryTransactions) (models.ResponseHistoryTransactions, error)
+	GetPgTransactionsHistory(c echo.Context, acc models.Account, plListTrx models.PayloadListTrx) (models.ResponseListTrx, error)
 	PostTransactions(c echo.Context, trx models.Transaction) error
 	GetAccountByAccountNumber(c echo.Context, acc *models.Account) error
 	UpdateCardBalance(c echo.Context, card models.Card) error
