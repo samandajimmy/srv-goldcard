@@ -116,6 +116,8 @@ type Applications struct {
 	CardSentDate             time.Time  `json:"cardSentDate,omitempty"`
 	FailedDate               time.Time  `json:"failedDate,omitempty"`
 	Documents                []Document `json:"documents" pg:"-"`
+	Error                    bool       `json:"error"`
+	ProcessID                string     `json:"processId"`
 	CreatedAt                time.Time  `json:"createdAt"`
 	UpdatedAt                time.Time  `json:"updatedAt"`
 }

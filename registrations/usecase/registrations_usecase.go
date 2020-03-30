@@ -4,6 +4,7 @@ import (
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
+	"gade/srv-goldcard/process_handler"
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/retry"
 
@@ -14,11 +15,12 @@ import (
 type registrationsUseCase struct {
 	regRepo registrations.Repository
 	rrr     registrations.RestRepository
+	phUC    process_handler.UseCase
 }
 
 // RegistrationsUseCase represent Registrations Use Case
-func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.RestRepository) registrations.UseCase {
-	return &registrationsUseCase{regRepo, rrr}
+func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.RestRepository, phUC process_handler.UseCase) registrations.UseCase {
+	return &registrationsUseCase{regRepo, rrr, phUC}
 }
 
 func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAddress) error {
@@ -321,11 +323,12 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		err := reg.rrr.OpenGoldcard(c, acc, false)
 
 		if err != nil {
+			go reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, "Application", "CoreOpenGC-Error", true)
 			logger.Make(c, nil).Debug(err)
 			errAppCore <- err
 			return
 		}
-
+		go reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, "Application", "CoreOpenGC-Sukses", false)
 		errAppCore <- nil
 	}()
 

@@ -192,3 +192,12 @@ func StringNameFormatter(name string, length int) string {
 
 	return result
 }
+
+func Contains(arr []string, x string) bool {
+	for _, n := range arr {
+		if x == n {
+			return true
+		}
+	}
+	return false
+}

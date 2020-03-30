@@ -469,6 +469,19 @@ func (regis *psqlRegistrationsRepository) GetCoreServiceStatus(c echo.Context) e
 	return nil
 }
 
+func (regis *psqlRegistrationsRepository) UpdateAppError(c echo.Context, appNumber, processID string, errStatus bool) error {
+	var app models.Applications
+	err := regis.DBpg.Model(app).
+		Set("process_id = ?", app.ProcessID, "error = ?", app.Error, "updated_at = ?", time.Now()).
+		Where("application_number = ?", appNumber)
+
+	if err != nil {
+		return nil
+	}
+
+	return nil
+}
+
 func (regis *psqlRegistrationsRepository) insertAppDocument(c echo.Context, doc models.Document) error {
 	doc.CreatedAt = time.Now()
 	err := regis.DBpg.Insert(&doc)
