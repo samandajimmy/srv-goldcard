@@ -169,7 +169,7 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 	var plRegister models.PayloadBriRegister
 	var pi models.PersonalInformation
 
-	query := `select acc.product_request, acc.billing_cycle, acc.card_deliver, c.card_name,
+	query := `select acc.product_request, acc.billing_cycle, acc.card_deliver, c.card_name, c.card_limit, 
 		pi.first_name, pi.last_name, pi.hand_phone_number, pi.email, pi.npwp, pi.nik, pi.birth_place,
 		pi.birth_date, pi.nationality, pi.sex, pi.education, pi.marital_status, pi.mother_name,
 		pi.home_phone_area, pi.home_phone_number, pi.home_status, pi.stayed_since, pi.child, o.job_bidang_usaha,

@@ -167,6 +167,7 @@ type PayloadBriRegister struct {
 	ProductRequest       string `json:"productRequest" validate:"required"`
 	BillingCycle         int64  `json:"billingCycle" validate:"required"`
 	CardDeliver          int64  `json:"cardDeliver" validate:"required"`
+	Limit                int64  `json:"limit" validate:"required" pg:"card_limit"`
 }
 
 // PayloadOccupation to store response occupation
