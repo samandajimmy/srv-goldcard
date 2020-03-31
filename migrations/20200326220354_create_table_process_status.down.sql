@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS process_status;
+DROP TABLE IF EXISTS process_statuses;
 
 ALTER TABLE applications
 DROP COLUMN process_id;

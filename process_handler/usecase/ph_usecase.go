@@ -29,13 +29,14 @@ func (ph *processHandUseCase) ProcHandFinalApp(c echo.Context, applicationNumber
 		processID = uuid.String()
 	}
 
-	err := ph.PostProcessHandler(c, processID, processType, status)
+	err := ph.regRepo.UpdateAppError(c, applicationNumber, processID, errStatus)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 	}
+
 	go func() {
-		err = ph.regRepo.UpdateAppError(c, applicationNumber, processID, errStatus)
+		err = ph.PostProcessHandler(c, processID, processType, status)
 
 		if err != nil {
 			logger.Make(c, nil).Debug(err)
@@ -43,12 +44,27 @@ func (ph *processHandUseCase) ProcHandFinalApp(c echo.Context, applicationNumber
 	}()
 }
 
-func (ph *processHandUseCase) PostProcessHandler(c echo.Context, processID, processType, status string) error {
-	var ps models.ProcessStatus
+func (ph *processHandUseCase) StatProcessCheck(c echo.Context, processID, status string) (bool, error) {
+	ps := models.ProcessStatus{}
+
 	ps, err := ph.phRepo.GetProcessHandler(processID)
 
 	if err != nil {
-		return err
+		logger.Make(c, nil).Debug(err)
+		return false, err
+	}
+
+	res := models.Contains(ps.Status, status)
+
+	return res, nil
+}
+
+func (ph *processHandUseCase) PostProcessHandler(c echo.Context, processID, processType, status string) error {
+	ps := models.ProcessStatus{}
+	ps, err := ph.phRepo.GetProcessHandler(processID)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
 	}
 
 	if ps.ProcessID == "" {
@@ -56,6 +72,7 @@ func (ph *processHandUseCase) PostProcessHandler(c echo.Context, processID, proc
 		err := ps.MapInsertProcessStatus(processID, processType, status)
 
 		if err != nil {
+			logger.Make(c, nil).Debug(err)
 			return err
 		}
 
@@ -63,6 +80,7 @@ func (ph *processHandUseCase) PostProcessHandler(c echo.Context, processID, proc
 		err = ph.phRepo.PostProcessHandler(ps)
 
 		if err != nil {
+			logger.Make(c, nil).Debug(err)
 			return err
 		}
 
@@ -73,6 +91,7 @@ func (ph *processHandUseCase) PostProcessHandler(c echo.Context, processID, proc
 	err = ps.MapUpdateProcessStatus(status)
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
 		return nil
 	}
 
@@ -80,6 +99,7 @@ func (ph *processHandUseCase) PostProcessHandler(c echo.Context, processID, proc
 	err = ph.phRepo.PutProcessHandler(ps)
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
 		return err
 	}
 

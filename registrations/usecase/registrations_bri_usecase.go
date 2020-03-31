@@ -12,17 +12,30 @@ func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, p
 	err := reg.briRegister(c, acc, pl)
 
 	if err != nil {
+		go reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, models.AppProcType, models.FinalRegBRIRegisErr, true)
 		logger.Make(c, nil).Debug(err)
 		return err
 	}
 
+	reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, models.AppProcType, models.FinalRegBRIRegisSuc, false)
+
 	// upload document to BRI API
 	go func() {
+		// Check is success
+		success, _ := reg.phUC.StatProcessCheck(c, acc.Application.ProcessID, models.FinalRegBRIUploadDocSuc)
+
+		if success {
+			return
+		}
+
 		err := reg.uploadAppDocs(c, acc)
 
 		if len(err) > 0 {
+			go reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, models.AppProcType, models.FinalRegBRIUploadDocErr, true)
 			logger.Make(c, nil).Debug(err[0])
 		}
+
+		reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, models.AppProcType, models.FinalRegBRIUploadDocSuc, false)
 	}()
 
 	return nil
@@ -30,6 +43,13 @@ func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, p
 
 func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account, pl models.PayloadBriRegister) error {
 	if acc.BrixKey != "" {
+		return nil
+	}
+
+	// Check is success
+	success, _ := reg.phUC.StatProcessCheck(c, acc.Application.ProcessID, models.FinalRegBRIRegisSuc)
+
+	if success {
 		return nil
 	}
 

@@ -26,6 +26,7 @@ func (psqlPH *psqlProcHandler) GetProcessHandler(processID string) (models.Proce
 	if err != nil {
 		return ps, err
 	}
+
 	return ps, nil
 }
 

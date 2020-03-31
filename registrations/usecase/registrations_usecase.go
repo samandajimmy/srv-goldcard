@@ -320,15 +320,23 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	accChan := make(chan models.Account)
 
 	go func() {
-		err := reg.rrr.OpenGoldcard(c, acc, false)
+		// Check is success
+		success, _ := reg.phUC.StatProcessCheck(c, acc.Application.ProcessID, models.FinalRegCoreOpenSuc)
+
+		if success {
+			errAppCore <- nil
+			return
+		}
+
+		err = reg.rrr.OpenGoldcard(c, acc, false)
 
 		if err != nil {
-			go reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, "Application", "CoreOpenGC-Error", true)
+			go reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, models.AppProcType, models.FinalRegCoreOpenErr, true)
 			logger.Make(c, nil).Debug(err)
 			errAppCore <- err
 			return
 		}
-		go reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, "Application", "CoreOpenGC-Sukses", false)
+		reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, models.AppProcType, models.FinalRegCoreOpenSuc, false)
 		errAppCore <- nil
 	}()
 
