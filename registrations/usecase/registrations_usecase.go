@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -386,9 +385,20 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		errAppCore <- nil
 	}()
 
-	fmt.Println("errAppCore")
-	fmt.Println(fn)
-	fmt.Println("errAppCore")
+	// concurrently update application status and current_step
+	go func() {
+		acc.Application.SetStatus(models.AppStatusProcessed)
+		acc.Application.CurrentStep = models.AppStepCompleted
+		_ = reg.regRepo.UpdateAppStatus(c, acc.Application)
+		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
+		accChannel, err := reg.CheckApplication(c, pl)
+
+		if err != nil {
+			accChan <- models.Account{}
+		}
+
+		accChan <- accChannel
+	}()
 
 	// channeling after core open goldcard finish
 	err = fn(c, &acc, briPl, accChan, errAppBri, errAppCore)
@@ -396,35 +406,35 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	if err != nil {
 		return err
 	}
-	// concurrently update application status and current_step
-	go func() {
-		acc.Application.SetStatus(models.AppStatusProcessed)
-		acc.Application.CurrentStep = models.AppStepCompleted
-		_ = reg.regRepo.UpdateAppStatus(c, acc.Application)
-		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
-		accChannel, _ := reg.CheckApplication(c, pl)
-		accChan <- accChannel
-	}()
+
 	return nil
 }
+
 func (reg *registrationsUseCase) FinalRegistrationPdsApi(c echo.Context, pl models.PayloadAppNumber) error {
 	err := reg.FinalRegistration(c, pl, reg.concurrentlyAfterOpenGoldcard)
+
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
+
 func (reg *registrationsUseCase) FinalRegistrationScheduler(c echo.Context, pl models.PayloadAppNumber) error {
 	err := reg.FinalRegistration(c, pl, reg.afterOpenGoldcard)
+
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
+
 func (reg *registrationsUseCase) concurrentlyAfterOpenGoldcard(c echo.Context, acc *models.Account,
 	briPl models.PayloadBriRegister, accChan chan models.Account, errAppBri, errAppCore chan error) error {
 	go func() {
 		_ = reg.afterOpenGoldcard(c, acc, briPl, accChan, errAppBri, errAppCore)
 	}()
+
 	return nil
 }
