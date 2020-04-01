@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jung-kurt/gofpdf"
+	"github.com/labstack/echo"
 )
 
 var (
@@ -201,3 +202,5 @@ func Contains(arr []string, x string) bool {
 	}
 	return false
 }
+
+type FuncAfterGC func(c echo.Context, acc *Account, briPl PayloadBriRegister, accChan chan Account, errAppBri, errAppCore chan error) error

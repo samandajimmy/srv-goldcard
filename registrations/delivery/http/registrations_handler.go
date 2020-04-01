@@ -213,7 +213,7 @@ func (reg *RegistrationsHandler) final(c echo.Context) error {
 		return reg.response.Body(c, err)
 	}
 
-	err := reg.registrationsUseCase.FinalRegistration(c, pl)
+	err := reg.registrationsUseCase.FinalRegistrationScheduler(c, pl)
 
 	if err != nil {
 		reg.respErrors.SetTitle(err.Error())

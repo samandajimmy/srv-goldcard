@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"fmt"
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -293,56 +294,108 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 	return nil
 }
 
-func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber) error {
-	acc, err := reg.CheckApplication(c, pl)
+// func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber) error {
+// 	acc, err := reg.CheckApplication(c, pl)
 
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	// get account by appNumber
+// 	briPl, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
+
+// 	if err != nil {
+// 		return models.ErrAppData
+// 	}
+
+// 	// validasi bri register payload
+// 	if err := c.Validate(briPl); err != nil {
+// 		logger.Make(c, nil).Debug(err)
+
+// 		return err
+// 	}
+
+// 	// open and lock gold limit to core
+// 	errAppBri := make(chan error)
+// 	errAppCore := make(chan error)
+// 	accChan := make(chan models.Account)
+
+// 	go func() {
+// 		// Check is success
+// 		success, _ := reg.phUC.StatProcessCheck(c, acc.Application.ProcessID, models.FinalRegCoreOpenSuc)
+
+// 		if success {
+// 			errAppCore <- nil
+// 			return
+// 		}
+
+// 		err = reg.rrr.OpenGoldcard(c, acc, false)
+
+// 		if err != nil {
+// 			go reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, models.AppProcType, models.FinalRegCoreOpenErr, true)
+// 			logger.Make(c, nil).Debug(err)
+// 			errAppCore <- err
+// 			return
+// 		}
+// 		reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, models.AppProcType, models.FinalRegCoreOpenSuc, false)
+// 		errAppCore <- nil
+// 	}()
+
+// 	// channeling after core open goldcard finish
+// 	go reg.afterOpenGoldcard(c, &acc, briPl, accChan, errAppBri, errAppCore)
+
+// 	// concurrently update application status and current_step
+// 	go func() {
+// 		acc.Application.SetStatus(models.AppStatusProcessed)
+// 		acc.Application.CurrentStep = models.AppStepCompleted
+// 		_ = reg.regRepo.UpdateAppStatus(c, acc.Application)
+// 		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
+// 		accChannel, _ := reg.CheckApplication(c, pl)
+// 		accChan <- accChannel
+// 	}()
+
+// 	return nil
+// }
+
+func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber, fn models.FuncAfterGC) error {
+	acc, err := reg.CheckApplication(c, pl)
 	if err != nil {
 		return err
 	}
-
 	// get account by appNumber
 	briPl, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
-
 	if err != nil {
 		return models.ErrAppData
 	}
-
 	// validasi bri register payload
 	if err := c.Validate(briPl); err != nil {
 		logger.Make(c, nil).Debug(err)
-
 		return err
 	}
-
 	// open and lock gold limit to core
 	errAppBri := make(chan error)
 	errAppCore := make(chan error)
 	accChan := make(chan models.Account)
-
 	go func() {
-		// Check is success
-		success, _ := reg.phUC.StatProcessCheck(c, acc.Application.ProcessID, models.FinalRegCoreOpenSuc)
-
-		if success {
-			errAppCore <- nil
-			return
-		}
-
 		err = reg.rrr.OpenGoldcard(c, acc, false)
-
 		if err != nil {
-			go reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, models.AppProcType, models.FinalRegCoreOpenErr, true)
 			logger.Make(c, nil).Debug(err)
 			errAppCore <- err
-			return
+			// return
 		}
-		reg.phUC.ProcHandFinalApp(c, acc.Application.ApplicationNumber, acc.Application.ProcessID, models.AppProcType, models.FinalRegCoreOpenSuc, false)
 		errAppCore <- nil
 	}()
 
-	// channeling after core open goldcard finish
-	go reg.afterOpenGoldcard(c, &acc, briPl, accChan, errAppBri, errAppCore)
+	fmt.Println("errAppCore")
+	fmt.Println(fn)
+	fmt.Println("errAppCore")
 
+	// channeling after core open goldcard finish
+	err = fn(c, &acc, briPl, accChan, errAppBri, errAppCore)
+
+	if err != nil {
+		return err
+	}
 	// concurrently update application status and current_step
 	go func() {
 		acc.Application.SetStatus(models.AppStatusProcessed)
@@ -352,6 +405,26 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		accChannel, _ := reg.CheckApplication(c, pl)
 		accChan <- accChannel
 	}()
-
+	return nil
+}
+func (reg *registrationsUseCase) FinalRegistrationPdsApi(c echo.Context, pl models.PayloadAppNumber) error {
+	err := reg.FinalRegistration(c, pl, reg.concurrentlyAfterOpenGoldcard)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (reg *registrationsUseCase) FinalRegistrationScheduler(c echo.Context, pl models.PayloadAppNumber) error {
+	err := reg.FinalRegistration(c, pl, reg.afterOpenGoldcard)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (reg *registrationsUseCase) concurrentlyAfterOpenGoldcard(c echo.Context, acc *models.Account,
+	briPl models.PayloadBriRegister, accChan chan models.Account, errAppBri, errAppCore chan error) error {
+	go func() {
+		_ = reg.afterOpenGoldcard(c, acc, briPl, accChan, errAppBri, errAppCore)
+	}()
 	return nil
 }
