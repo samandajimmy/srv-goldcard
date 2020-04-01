@@ -27,7 +27,7 @@ type Repository interface {
 	UpsertAppDocument(c echo.Context, app models.Document) error
 	PostOccupation(echo.Context, models.Account) error
 	GetCoreServiceStatus(c echo.Context) error
-	UpdateAppError(c echo.Context, appNumber, processID string, errStatus bool) error
+	UpdateCoreOpen(c echo.Context, acc *models.Account) error
 }
 
 // RestRepository represent the rest registrations repository contract

@@ -6,7 +6,6 @@ import (
 	"gade/srv-goldcard/process_handler"
 	"gade/srv-goldcard/registrations"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -23,80 +22,20 @@ func ProcessHandUseCase(phRepo process_handler.Repository, regRepo registrations
 	}
 }
 
-func (ph *processHandUseCase) ProcHandFinalApp(c echo.Context, applicationNumber, processID, processType, status string, errStatus bool) {
-	if processID == "" {
-		uuid, _ := uuid.NewRandom()
-		processID = uuid.String()
-	}
-
-	err := ph.regRepo.UpdateAppError(c, applicationNumber, processID, errStatus)
+// PostProcessHandler represent Usecase push process handler
+func (ph *processHandUseCase) PostProcessHandler(c echo.Context, ps models.ProcessStatus) error {
+	n, err := ph.checkProcessStatuses(c, ps)
 
 	if err != nil {
-		logger.Make(c, nil).Debug(err)
+		return err
 	}
 
-	go func() {
-		err = ph.PostProcessHandler(c, processID, processType, status)
-
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-		}
-	}()
-}
-
-func (ph *processHandUseCase) StatProcessCheck(c echo.Context, processID, status string) (bool, error) {
-	ps := models.ProcessStatus{}
-
-	ps, err := ph.phRepo.GetProcessHandler(processID)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return false, err
-	}
-
-	res := models.Contains(ps.Status, status)
-
-	return res, nil
-}
-
-func (ph *processHandUseCase) PostProcessHandler(c echo.Context, processID, processType, status string) error {
-	ps := models.ProcessStatus{}
-	ps, err := ph.phRepo.GetProcessHandler(processID)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-	}
-
-	if ps.ProcessID == "" {
-		// Map insert process status
-		err := ps.MapInsertProcessStatus(processID, processType, status)
-
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			return err
-		}
-
-		// Insert Process Handler
-		err = ph.phRepo.PostProcessHandler(ps)
-
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			return err
-		}
-
+	if !n {
 		return nil
 	}
 
-	// Map update process status
-	err = ps.MapUpdateProcessStatus(status)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return nil
-	}
-
-	// Update Process
-	err = ph.phRepo.PutProcessHandler(ps)
+	// Insert Process Handler
+	err = ph.phRepo.PostProcessHandler(ps)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
@@ -104,4 +43,15 @@ func (ph *processHandUseCase) PostProcessHandler(c echo.Context, processID, proc
 	}
 
 	return nil
+}
+
+func (ph *processHandUseCase) checkProcessStatuses(c echo.Context, ps models.ProcessStatus) (bool, error) {
+	insert, err := ph.phRepo.GetProcessHandler(ps)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return insert, err
+	}
+
+	return insert, nil
 }

@@ -1,46 +1,37 @@
 package models
 
 import (
+	"fmt"
 	"time"
 )
 
 var (
-	// Final application process var
-	AppProcType = "Application"
-	// Core Open
-	FinalRegCoreOpenErr = "CoreOpenGC-Error"
-	FinalRegCoreOpenSuc = "CoreOpenGC-Success"
-	// BRI Registration
-	FinalRegBRIRegisErr = "BRIRegGC-Error"
-	FinalRegBRIRegisSuc = "BRIRegGC-Success"
-	// BRI UploadDocument
-	FinalRegBRIUploadDocErr = "BRIUploadDoc-Error"
-	FinalRegBRIUploadDocSuc = "BRIUploadDoc-Success"
+	// Application process var
+	FinalAppProcessType = "Final Application"
+
+	// Table Names
+	ApplicationTableName = "applications"
 )
 
 type ProcessStatus struct {
 	ID          int64     `json:"id"`
-	ProcessID   string    `json:"processId"`
+	ProcessID   int64     `json:"processId"`
 	ProcessType string    `json:"processType"`
-	Status      []string  `json:"status"`
+	TblName     string    `json:"tblName"`
+	Reason      string    `json:"reason"`
+	ErrorCount  int64     `json:"errorCount"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
 
-func (ps *ProcessStatus) MapInsertProcessStatus(process_id, process_type string, status string) error {
-	ps.ProcessID = process_id
-	ps.ProcessType = process_type
-	ps.Status = append(ps.Status, status)
+func (ps *ProcessStatus) MapInsertProcessStatus(processType, tableName string, processID int64, reason interface{}) error {
+	rString := fmt.Sprintf("%v", reason)
+
+	ps.Reason = rString
+	ps.ProcessID = processID
+	ps.ProcessType = processType
+	ps.TblName = tableName
 	ps.CreatedAt = time.Now()
-
-	return nil
-}
-
-func (ps *ProcessStatus) MapUpdateProcessStatus(status string) error {
-	if !Contains(ps.Status, status) {
-		ps.Status = append(ps.Status, status)
-	}
-	ps.UpdatedAt = time.Now()
 
 	return nil
 }

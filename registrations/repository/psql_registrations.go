@@ -469,14 +469,12 @@ func (regis *psqlRegistrationsRepository) GetCoreServiceStatus(c echo.Context) e
 	return nil
 }
 
-func (regis *psqlRegistrationsRepository) UpdateAppError(c echo.Context, appNumber, processID string, errStatus bool) error {
+func (regis *psqlRegistrationsRepository) UpdateCoreOpen(c echo.Context, acc *models.Account) error {
 	app := models.Applications{
-		ApplicationNumber: appNumber,
-		ProcessID:         processID,
-		Error:             errStatus,
-		UpdatedAt:         time.Now(),
+		CoreOpen:  true,
+		UpdatedAt: time.Now(),
 	}
-	_, err := regis.DBpg.Model(&app).Column("process_id", "error", "updated_at").Where("application_number = ?", app.ApplicationNumber).Update()
+	_, err := regis.DBpg.Model(&app).Column("core_open", "updated_at").Where("application_number = ?", acc.Application.ApplicationNumber).Update()
 
 	if err != nil {
 		return err

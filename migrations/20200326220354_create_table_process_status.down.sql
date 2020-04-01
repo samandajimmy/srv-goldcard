@@ -1,7 +1,4 @@
 DROP TABLE IF EXISTS process_statuses;
 
 ALTER TABLE applications
-DROP COLUMN process_id;
-
-ALTER TABLE applications
-DROP COLUMN error;
+DROP COLUMN core_open;

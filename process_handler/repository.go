@@ -5,6 +5,5 @@ import "gade/srv-goldcard/models"
 // Repository represent the process handler repository contract
 type Repository interface {
 	PostProcessHandler(ps models.ProcessStatus) error
-	PutProcessHandler(ps models.ProcessStatus) error
-	GetProcessHandler(processID string) (models.ProcessStatus, error)
+	GetProcessHandler(ps models.ProcessStatus) (bool, error)
 }
