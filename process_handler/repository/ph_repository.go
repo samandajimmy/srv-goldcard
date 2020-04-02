@@ -49,6 +49,7 @@ func (psqlPH *psqlProcHandler) PostProcessHandler(ps models.ProcessStatus) error
 	return nil
 }
 
+// Update Process Handler
 func (psqlPH *psqlProcHandler) UpdateProcessHandler(ps models.ProcessStatus, col []string) error {
 	ps.UpdatedAt = time.Now()
 
