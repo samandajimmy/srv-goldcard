@@ -1,0 +1,2 @@
+ALTER TABLE process_statuses
+ADD COLUMN error BOOLEAN DEFAULT FALSE;

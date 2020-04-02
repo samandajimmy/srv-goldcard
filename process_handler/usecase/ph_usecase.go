@@ -24,13 +24,19 @@ func ProcessHandUseCase(phRepo process_handler.Repository, regRepo registrations
 
 // PostProcessHandler represent Usecase push process handler
 func (ph *processHandUseCase) PostProcessHandler(c echo.Context, ps models.ProcessStatus) error {
-	n, err := ph.checkProcessStatuses(c, ps)
+	res, err := ph.phRepo.GetProcessHandler(ps)
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
 		return err
 	}
 
-	if !n {
+	if res.ID != 0 {
+		// Update Process Handler reason
+		res.Reason = res.Reason + "||" + ps.Reason
+		res.Error = ps.Error
+		_ = ph.updateReasonProcStatus(c, res)
+
 		return nil
 	}
 
@@ -45,13 +51,64 @@ func (ph *processHandUseCase) PostProcessHandler(c echo.Context, ps models.Proce
 	return nil
 }
 
-func (ph *processHandUseCase) checkProcessStatuses(c echo.Context, ps models.ProcessStatus) (bool, error) {
-	insert, err := ph.phRepo.GetProcessHandler(ps)
+func (ph *processHandUseCase) UpdateCounterError(c echo.Context, acc models.Account) {
+	var ps models.ProcessStatus
+	err := ps.MapUpdateProcessStatus(models.ApplicationTableName, acc.Application.ID)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
-		return insert, err
+		return
 	}
 
-	return insert, nil
+	psOld, err := ph.phRepo.GetProcessHandler(ps)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return
+	}
+
+	col := []string{"updated_at", "error_count"}
+
+	ps.ErrorCount = psOld.ErrorCount + 1
+	err = ph.phRepo.UpdateProcessHandler(ps, col)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return
+	}
+}
+
+func (ph *processHandUseCase) UpdateErrorStatus(c echo.Context, acc models.Account) error {
+	var ps models.ProcessStatus
+	err := ps.MapUpdateProcessStatus(models.ApplicationTableName, acc.Application.ID)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return err
+	}
+
+	col := []string{"updated_at", "error"}
+
+	ps.Error = false
+	err = ph.phRepo.UpdateProcessHandler(ps, col)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return err
+	}
+
+	return nil
+}
+
+func (ph *processHandUseCase) updateReasonProcStatus(c echo.Context, ps models.ProcessStatus) error {
+	col := []string{"reason", "updated_at", "error"}
+
+	err := ph.phRepo.UpdateProcessHandler(ps, col)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return err
+	}
+
+	return nil
 }

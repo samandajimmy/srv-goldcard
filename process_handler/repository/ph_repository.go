@@ -2,6 +2,7 @@ package repository
 
 import (
 	"database/sql"
+	"time"
 
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/process_handler"
@@ -19,26 +20,41 @@ func NewPsqlProcHandlerRepository(Conn *sql.DB, dbpg *pg.DB) process_handler.Rep
 }
 
 // Get all process handler for validation insert. if return true = insert
-func (psqlPH *psqlProcHandler) GetProcessHandler(ps models.ProcessStatus) (bool, error) {
-
-	err := psqlPH.DBpg.Model(&ps).
+func (psqlPH *psqlProcHandler) GetProcessHandler(ps models.ProcessStatus) (models.ProcessStatus, error) {
+	newPs := models.ProcessStatus{}
+	err := psqlPH.DBpg.Model(&newPs).
 		Where("process_id = ?", ps.ProcessID).
 		Where("tbl_name = ?", ps.TblName).Select()
 
 	if err != nil && err != pg.ErrNoRows {
-		return false, err
+		return newPs, err
 	}
 
 	if err == pg.ErrNoRows {
-		return true, nil
+		return newPs, nil
 	}
 
-	return false, nil
+	return newPs, nil
 }
 
 // Insert Process handler
 func (psqlPH *psqlProcHandler) PostProcessHandler(ps models.ProcessStatus) error {
+	ps.CreatedAt = time.Now()
 	err := psqlPH.DBpg.Insert(&ps)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (psqlPH *psqlProcHandler) UpdateProcessHandler(ps models.ProcessStatus, col []string) error {
+	ps.UpdatedAt = time.Now()
+
+	_, err := psqlPH.DBpg.Model(&ps).Column(col...).
+		Where("process_id = ?", ps.ProcessID).
+		Where("tbl_name = ?", ps.TblName).Update()
 
 	if err != nil {
 		return err

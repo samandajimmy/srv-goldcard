@@ -109,41 +109,13 @@ func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.A
 		errAppBri <- nil
 	}
 
-	// function to update status core open if success
-	coreOpenStatus := func() {
-		err := reg.regRepo.UpdateCoreOpen(c, acc)
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			return
-		}
-	}
-
-	// function insert to process status if error
-	insertProcessHandler := func(errCore error) {
-		var ps models.ProcessStatus
-		err := ps.MapInsertProcessStatus(models.FinalAppProcessType, models.ApplicationTableName, acc.Application.ID, errCore)
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			return
-		}
-		err = reg.phUC.PostProcessHandler(c, ps)
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			return
-		}
-	}
-
 	for {
 		select {
 		case err := <-errAppCore:
 			if err == nil {
-				// Core open Status
-				go coreOpenStatus()
 				go applyBri()
 			}
 			if err != nil {
-				// insert to process handler
-				go insertProcessHandler(err)
 				// send notif app failed
 				notif.GcApplication(accChannel, "failed")
 				_ = reg.rrr.SendNotification(c, notif, "")

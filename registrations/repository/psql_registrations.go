@@ -469,6 +469,7 @@ func (regis *psqlRegistrationsRepository) GetCoreServiceStatus(c echo.Context) e
 	return nil
 }
 
+// UpdateCoreOpen for update field core open on application table
 func (regis *psqlRegistrationsRepository) UpdateCoreOpen(c echo.Context, acc *models.Account) error {
 	app := models.Applications{
 		CoreOpen:  true,

@@ -320,11 +320,17 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		}
 
 		err = reg.rrr.OpenGoldcard(c, acc, false)
+
 		if err != nil {
+			// insert error to process handler
+			// change error status become true on table proess_statuses
+			go reg.upsertProcessHandler(c, &acc, err)
 			logger.Make(c, nil).Debug(err)
 			errAppCore <- err
 			return
 		}
+		// update Core open Status
+		reg.coreOpenStatus(c, acc)
 		errAppCore <- nil
 	}()
 
@@ -364,7 +370,22 @@ func (reg *registrationsUseCase) FinalRegistrationPdsApi(c echo.Context, pl mode
 }
 
 func (reg *registrationsUseCase) FinalRegistrationScheduler(c echo.Context, pl models.PayloadAppNumber) error {
-	err := reg.FinalRegistration(c, pl, reg.afterOpenGoldcard)
+	acc, err := reg.CheckApplication(c, pl)
+
+	if err != nil {
+		return err
+	}
+
+	err = reg.FinalRegistration(c, pl, reg.afterOpenGoldcard)
+
+	if err != nil {
+		// counter error on table process_statuses
+		go reg.phUC.UpdateCounterError(c, acc)
+		return err
+	}
+
+	// update error status to false on table process_statuses.
+	err = reg.phUC.UpdateErrorStatus(c, acc)
 
 	if err != nil {
 		return err
@@ -380,4 +401,31 @@ func (reg *registrationsUseCase) concurrentlyAfterOpenGoldcard(c echo.Context, a
 	}()
 
 	return nil
+}
+
+func (reg *registrationsUseCase) upsertProcessHandler(c echo.Context, acc *models.Account, errCore error) {
+	var ps models.ProcessStatus
+	err := ps.MapInsertProcessStatus(models.FinalAppProcessType, models.ApplicationTableName, acc.Application.ID, errCore)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return
+	}
+
+	err = reg.phUC.PostProcessHandler(c, ps)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return
+	}
+}
+
+// function to update status core open if success
+func (reg *registrationsUseCase) coreOpenStatus(c echo.Context, acc models.Account) {
+	err := reg.regRepo.UpdateCoreOpen(c, &acc)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return
+	}
 }

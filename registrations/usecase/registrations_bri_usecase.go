@@ -12,6 +12,9 @@ func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, p
 	err := reg.briRegister(c, acc, pl)
 
 	if err != nil {
+		// insert error to process handler
+		// ubah status error jadi true di table process_statuses
+		go reg.upsertProcessHandler(c, acc, err)
 		logger.Make(c, nil).Debug(err)
 		return err
 	}
@@ -21,6 +24,9 @@ func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, p
 		err := reg.uploadAppDocs(c, acc)
 
 		if len(err) > 0 {
+			// insert error to process handler
+			// ubah status error jadi true di table proess_statuses
+			go reg.upsertProcessHandler(c, acc, err[0])
 			logger.Make(c, nil).Debug(err[0])
 		}
 	}()
