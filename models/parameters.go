@@ -194,13 +194,4 @@ func StringNameFormatter(name string, length int) string {
 	return result
 }
 
-func Contains(arr []string, x string) bool {
-	for _, n := range arr {
-		if x == n {
-			return true
-		}
-	}
-	return false
-}
-
 type FuncAfterGC func(c echo.Context, acc *Account, briPl PayloadBriRegister, accChan chan Account, errAppBri, errAppCore chan error) error
