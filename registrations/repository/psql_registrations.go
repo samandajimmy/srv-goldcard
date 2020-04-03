@@ -322,18 +322,18 @@ func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, acc
 func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account) error {
 	var nilFilters []string
 	upsertQuery := `INSERT INTO cards (card_limit, created_at, gold_limit, stl_limit, balance,
-		gold_balance, stl_balance, reserved_gold_limit) VALUES ($1, $2, $3, $4, $1, $3, $4, $5) RETURNING id;`
+		gold_balance, stl_balance) VALUES ($1, $2, $3, $4, $1, $3, $4) RETURNING id;`
 	upsertFilters := []string{"cardID"}
 
 	if acc.CardID != 0 {
 		upsertQuery = `UPDATE cards set card_limit = $1, updated_at = $2, gold_limit = $3,
-			stl_limit = $4, balance = $1, gold_balance = $3, stl_balance = $4, reserved_gold_limit = $5 WHERE id = ` +
+			stl_limit = $4, balance = $1, gold_balance = $3, stl_balance = $4 WHERE id = ` +
 			strconv.Itoa(int(acc.CardID)) + ` RETURNING id;`
 	}
 
 	stmts := []*gcdb.PipelineStmt{
 		gcdb.NewPipelineStmt(upsertQuery, upsertFilters, acc.Card.CardLimit, time.Now(),
-			acc.Card.GoldLimit, acc.Card.StlLimit, acc.Card.ReservedGoldLimit),
+			acc.Card.GoldLimit, acc.Card.StlLimit),
 		gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1
 			WHERE id = $2`, nilFilters, time.Now(), acc.ID),
 	}

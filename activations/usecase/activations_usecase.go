@@ -86,7 +86,7 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	}
 
 	appliedGoldLimit := acc.Card.GoldLimit
-	currGoldLimit := acc.Card.SetSubmissionGoldLimit(acc.Card.CardLimit, currStl)
+	currGoldLimit := acc.Card.SetGoldLimit(acc.Card.CardLimit, currStl)
 	// because we need user to have at least 0.1 effective gold balance
 	deficitGoldLimit := models.CustomRound("round", currGoldLimit-appliedGoldLimit, 10000) + models.MinEffBalance
 

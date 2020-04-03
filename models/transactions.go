@@ -64,7 +64,7 @@ type BRICardBalance struct {
 func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPendingTransactions, trans Transaction, refTrxPg string, stl int64) error {
 	goldNominal := trx.Account.Card.ConvertMoneyToGold(pl.Amount, stl)
 	balance := trx.Account.Card.Balance - pl.Amount
-	goldBalance := trx.Account.Card.SetTransactionGoldLimit(balance, stl)
+	goldBalance := trx.Account.Card.ConvertMoneyToGold(balance, stl)
 
 	trx.AccountId = trans.Account.ID
 	trx.RefTrxPgdn = refTrxPg
@@ -86,7 +86,7 @@ func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPending
 func (trx *Transaction) MappingPaymentTransaction(c echo.Context, pl PayloadPaymentTransactions, trans Transaction, refTrxPg string, stl int64) error {
 	goldNominal := trx.Account.Card.ConvertMoneyToGold(pl.PaymentAmount, stl)
 	balance := trx.Account.Card.Balance + pl.PaymentAmount
-	goldBalance := trx.Account.Card.SetTransactionGoldLimit(balance, stl)
+	goldBalance := trx.Account.Card.ConvertMoneyToGold(balance, stl)
 
 	trx.AccountId = trans.Account.ID
 	trx.RefTrxPgdn = refTrxPg

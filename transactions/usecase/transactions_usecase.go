@@ -278,7 +278,7 @@ func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc mo
 	}
 
 	// get gold balance
-	goldBalance := acc.Card.SetTransactionGoldLimit(cardBal.AvailableCredit, stl)
+	goldBalance := acc.Card.ConvertMoneyToGold(cardBal.AvailableCredit, stl)
 
 	// define new card balances
 	acc.Card.Balance = cardBal.AvailableCredit

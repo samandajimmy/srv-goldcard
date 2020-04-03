@@ -19,22 +19,21 @@ const (
 
 // Card is a struct to store card data
 type Card struct {
-	ID                int64     `json:"id"`
-	CardName          string    `json:"cardName"`
-	CardNumber        string    `json:"cardNumber"`
-	CardLimit         int64     `json:"cardLimit"`
-	GoldLimit         float64   `json:"goldLimit"`
-	ReservedGoldLimit float64   `json:"reservedGoldLimit"`
-	StlLimit          int64     `json:"stlLimit"`
-	ValidUntil        string    `json:"validUntil"`
-	PinNumber         string    `json:"pinNumber"`
-	Description       string    `json:"description"`
-	Balance           int64     `json:"balance"`
-	GoldBalance       float64   `json:"goldBalance"`
-	StlBalance        int64     `json:"stlBalance"`
-	Status            string    `json:"status"`
-	UpdatedAt         time.Time `json:"updatedAt"`
-	CreatedAt         time.Time `json:"createdAt"`
+	ID          int64     `json:"id"`
+	CardName    string    `json:"cardName"`
+	CardNumber  string    `json:"cardNumber"`
+	CardLimit   int64     `json:"cardLimit"`
+	GoldLimit   float64   `json:"goldLimit"`
+	StlLimit    int64     `json:"stlLimit"`
+	ValidUntil  string    `json:"validUntil"`
+	PinNumber   string    `json:"pinNumber"`
+	Description string    `json:"description"`
+	Balance     int64     `json:"balance"`
+	GoldBalance float64   `json:"goldBalance"`
+	StlBalance  int64     `json:"stlBalance"`
+	Status      string    `json:"status"`
+	UpdatedAt   time.Time `json:"updatedAt"`
+	CreatedAt   time.Time `json:"createdAt"`
 }
 
 // ConvertMoneyToGold to convert rupiah into gram
@@ -47,14 +46,8 @@ func (c *Card) ConvertMoneyToGold(money int64, stl int64) float64 {
 
 }
 
-// SetSubmissionGoldLimit a function to set gold limit in gram
+// SetGoldLimit a function to set gold limit in gram
 // when updating gold limit, gold limit is added with ReservedLockLimitBalance
-func (c *Card) SetSubmissionGoldLimit(money int64, stl int64) float64 {
+func (c *Card) SetGoldLimit(money int64, stl int64) float64 {
 	return c.ConvertMoneyToGold(money, stl) + ReservedLockLimitBalance
-}
-
-// SetTransactionGoldLimit a function to set gold limit in gram
-// when updating gold limit, gold limit is added with reserved gold limit value in cards table
-func (c *Card) SetTransactionGoldLimit(money int64, stl int64) float64 {
-	return c.ConvertMoneyToGold(money, stl) + c.ReservedGoldLimit
 }
