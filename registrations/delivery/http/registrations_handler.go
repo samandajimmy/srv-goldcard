@@ -31,6 +31,8 @@ func NewRegistrationsHandler(
 	echoGroup.API.POST("/registrations/final", handler.final)
 	echoGroup.API.POST("/registrations/application-status", handler.applicationStatus)
 	echoGroup.API.POST("/registrations/occupation", handler.PostOccupation)
+	echoGroup.API.POST("/registrations/scheduler/final", handler.schedulerFinal)
+
 }
 
 // Registrations a handler to handle goldcard registrations
@@ -195,6 +197,38 @@ func (reg *RegistrationsHandler) cardLimit(c echo.Context) error {
 	return reg.response.Body(c, err)
 }
 
+func (reg *RegistrationsHandler) schedulerFinal(c echo.Context) error {
+	var pl models.PayloadAppNumber
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.FinalRegistrationScheduler(c, pl)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
+
+	return reg.response.Body(c, err)
+}
+
 func (reg *RegistrationsHandler) final(c echo.Context) error {
 	var pl models.PayloadAppNumber
 	reg.response, reg.respErrors = models.NewResponse()
@@ -213,7 +247,7 @@ func (reg *RegistrationsHandler) final(c echo.Context) error {
 		return reg.response.Body(c, err)
 	}
 
-	err := reg.registrationsUseCase.FinalRegistration(c, pl)
+	err := reg.registrationsUseCase.FinalRegistrationPdsApi(c, pl)
 
 	if err != nil {
 		reg.respErrors.SetTitle(err.Error())

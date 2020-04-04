@@ -469,6 +469,21 @@ func (regis *psqlRegistrationsRepository) GetCoreServiceStatus(c echo.Context) e
 	return nil
 }
 
+// UpdateCoreOpen for update field core open on application table
+func (regis *psqlRegistrationsRepository) UpdateCoreOpen(c echo.Context, acc *models.Account) error {
+	app := models.Applications{
+		CoreOpen:  true,
+		UpdatedAt: time.Now(),
+	}
+	_, err := regis.DBpg.Model(&app).Column("core_open", "updated_at").Where("application_number = ?", acc.Application.ApplicationNumber).Update()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (regis *psqlRegistrationsRepository) insertAppDocument(c echo.Context, doc models.Document) error {
 	doc.CreatedAt = time.Now()
 	err := regis.DBpg.Insert(&doc)

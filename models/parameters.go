@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/jung-kurt/gofpdf"
+	"github.com/labstack/echo"
 )
 
 var (
@@ -192,3 +193,5 @@ func StringNameFormatter(name string, length int) string {
 
 	return result
 }
+
+type FuncAfterGC func(c echo.Context, acc *Account, briPl PayloadBriRegister, accChan chan Account, errAppBri, errAppCore chan error) error

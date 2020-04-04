@@ -18,6 +18,8 @@ import (
 	_billingsHttpDelivery "gade/srv-goldcard/billings/delivery/http"
 	_billingsRepository "gade/srv-goldcard/billings/repository"
 	_billingsUseCase "gade/srv-goldcard/billings/usecase"
+	_processHandlerRepository "gade/srv-goldcard/process_handler/repository"
+	_processHandlerUseCase "gade/srv-goldcard/process_handler/usecase"
 	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
 	_productreqsUseCase "gade/srv-goldcard/productreqs/usecase"
 	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
@@ -86,11 +88,13 @@ func main() {
 	transactionsRepository := _transactionsRepository.NewPsqlTransactionsRepository(dbConn, dbpg)
 	billingsRepository := _billingsRepository.NewPsqlBillingsRepository(dbConn, dbpg)
 	restTransactionsRepo := _transactionsRepository.NewRestTransactions()
+	processHandlerRepo := _processHandlerRepository.NewPsqlProcHandlerRepository(dbConn, dbpg)
 
 	// USECASES
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
+	processHandlerUseCase := _processHandlerUseCase.ProcessHandUseCase(processHandlerRepo, registrationsRepository)
 	tokenUseCase := _tokenUseCase.NewTokenUseCase(tokenRepository, timeoutContext)
-	registrationsUseCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository, restRegistrationsRepo)
+	registrationsUseCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository, restRegistrationsRepo, processHandlerUseCase)
 	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo, registrationsUseCase)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
 	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, billingsRepository, restTransactionsRepo, restRegistrationsRepo)

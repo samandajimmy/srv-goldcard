@@ -116,6 +116,7 @@ type Applications struct {
 	CardSentDate             time.Time  `json:"cardSentDate,omitempty"`
 	FailedDate               time.Time  `json:"failedDate,omitempty"`
 	Documents                []Document `json:"documents" pg:"-"`
+	CoreOpen                 bool       `json:"coreOpen"`
 	CreatedAt                time.Time  `json:"createdAt"`
 	UpdatedAt                time.Time  `json:"updatedAt"`
 }

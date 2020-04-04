@@ -4,6 +4,7 @@ import (
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
+	"gade/srv-goldcard/process_handler"
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/retry"
 
@@ -14,11 +15,12 @@ import (
 type registrationsUseCase struct {
 	regRepo registrations.Repository
 	rrr     registrations.RestRepository
+	phUC    process_handler.UseCase
 }
 
 // RegistrationsUseCase represent Registrations Use Case
-func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.RestRepository) registrations.UseCase {
-	return &registrationsUseCase{regRepo, rrr}
+func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.RestRepository, phUC process_handler.UseCase) registrations.UseCase {
+	return &registrationsUseCase{regRepo, rrr, phUC}
 }
 
 func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAddress) error {
@@ -291,46 +293,46 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 	return nil
 }
 
-func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber) error {
+func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber, fn models.FuncAfterGC) error {
 	acc, err := reg.CheckApplication(c, pl)
-
 	if err != nil {
 		return err
 	}
-
 	// get account by appNumber
 	briPl, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
-
 	if err != nil {
 		return models.ErrAppData
 	}
-
 	// validasi bri register payload
 	if err := c.Validate(briPl); err != nil {
 		logger.Make(c, nil).Debug(err)
-
 		return err
 	}
-
 	// open and lock gold limit to core
 	errAppBri := make(chan error)
 	errAppCore := make(chan error)
 	accChan := make(chan models.Account)
-
 	go func() {
-		err := reg.rrr.OpenGoldcard(c, acc, false)
+		// this validation for check is core already open before
+		if acc.Application.CoreOpen {
+			errAppCore <- nil
+			return
+		}
+
+		err = reg.rrr.OpenGoldcard(c, acc, false)
 
 		if err != nil {
+			// insert error to process handler
+			// change error status become true on table proess_statuses
+			go reg.upsertProcessHandler(c, &acc, err)
 			logger.Make(c, nil).Debug(err)
 			errAppCore <- err
 			return
 		}
-
+		// update Core open Status
+		reg.coreOpenStatus(c, acc)
 		errAppCore <- nil
 	}()
-
-	// channeling after core open goldcard finish
-	go reg.afterOpenGoldcard(c, &acc, briPl, accChan, errAppBri, errAppCore)
 
 	// concurrently update application status and current_step
 	go func() {
@@ -338,9 +340,92 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		acc.Application.CurrentStep = models.AppStepCompleted
 		_ = reg.regRepo.UpdateAppStatus(c, acc.Application)
 		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"status", "current_step"})
-		accChannel, _ := reg.CheckApplication(c, pl)
+		accChannel, err := reg.CheckApplication(c, pl)
+
+		if err != nil {
+			accChan <- models.Account{}
+		}
+
 		accChan <- accChannel
 	}()
 
+	// channeling after core open goldcard finish
+	err = fn(c, &acc, briPl, accChan, errAppBri, errAppCore)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
+}
+
+func (reg *registrationsUseCase) FinalRegistrationPdsApi(c echo.Context, pl models.PayloadAppNumber) error {
+	err := reg.FinalRegistration(c, pl, reg.concurrentlyAfterOpenGoldcard)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (reg *registrationsUseCase) FinalRegistrationScheduler(c echo.Context, pl models.PayloadAppNumber) error {
+	acc, err := reg.CheckApplication(c, pl)
+
+	if err != nil {
+		return err
+	}
+
+	err = reg.FinalRegistration(c, pl, reg.afterOpenGoldcard)
+
+	if err != nil {
+		// counter error on table process_statuses
+		go reg.phUC.UpdateCounterError(c, acc)
+		return err
+	}
+
+	// update error status to false on table process_statuses.
+	err = reg.phUC.UpdateErrorStatus(c, acc)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (reg *registrationsUseCase) concurrentlyAfterOpenGoldcard(c echo.Context, acc *models.Account,
+	briPl models.PayloadBriRegister, accChan chan models.Account, errAppBri, errAppCore chan error) error {
+	go func() {
+		_ = reg.afterOpenGoldcard(c, acc, briPl, accChan, errAppBri, errAppCore)
+	}()
+
+	return nil
+}
+
+func (reg *registrationsUseCase) upsertProcessHandler(c echo.Context, acc *models.Account, errCore error) {
+	var ps models.ProcessStatus
+	err := ps.MapInsertProcessStatus(models.FinalAppProcessType, models.ApplicationTableName, acc.Application.ID, errCore)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return
+	}
+
+	err = reg.phUC.PostProcessHandler(c, ps)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return
+	}
+}
+
+// function to update status core open if success
+func (reg *registrationsUseCase) coreOpenStatus(c echo.Context, acc models.Account) {
+	err := reg.regRepo.UpdateCoreOpen(c, &acc)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return
+	}
 }
