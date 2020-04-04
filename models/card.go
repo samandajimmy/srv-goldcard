@@ -9,6 +9,8 @@ const (
 	DecreasedLimit float64 = 0.0115
 	// MinEffBalance to store a value of minimum effective balance
 	MinEffBalance float64 = 0.1000
+	// ReservedLockBalance to store a value of additional lock gold balance when updating gold limit
+	ReservedLockLimitBalance float64 = 0.5000
 
 	defMoneyTaken float64 = 0.94
 
@@ -42,4 +44,10 @@ func (c *Card) ConvertMoneyToGold(money int64, stl int64) float64 {
 
 	return CustomRound("round", gold, 10000)
 
+}
+
+// SetGoldLimit a function to set gold limit in gram
+// when updating gold limit, gold limit is added with ReservedLockLimitBalance
+func (c *Card) SetGoldLimit(money int64, stl int64) float64 {
+	return c.ConvertMoneyToGold(money, stl) + ReservedLockLimitBalance
 }
