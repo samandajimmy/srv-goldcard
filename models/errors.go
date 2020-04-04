@@ -159,6 +159,9 @@ var (
 	// ErrGetHistoryTransactions to store message failed when get data history account in table transactions
 	ErrGetHistoryTransactions = errors.New("Gagal saat mencari data history transaksi")
 
+	// ErrGetPaymentTransaction to store message failed when get data payment transaction
+	ErrGetPaymentTransaction = errors.New("Gagal mendapatkan transaksi pembayaran")
+
 	// ErrCoreEODStatus to store down time core servive
 	ErrCoreEODStatus = errors.New("Mohon maaf, Layanan sedang tidak tersedia")
 

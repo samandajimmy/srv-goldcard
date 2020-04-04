@@ -9,7 +9,6 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -38,10 +37,8 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 
 	// init account trx
 	trx := models.Transaction{AccountId: acc.ID, Account: acc}
-	// Generate ref transactions pegadaian
-	refTrxPgdn, _ := uuid.NewRandom()
 	// Get curr STL
-	currStl, err := trxUS.rrRepo.GetCurrentGoldSTL(c)
+	trx.CurrStl, err = trxUS.rrRepo.GetCurrentGoldSTL(c)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetCurrSTL.Error())
@@ -49,7 +46,7 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 	}
 
 	// mapping all trx data needed
-	err = trx.MappingTransactions(c, pl, trx, refTrxPgdn.String(), currStl)
+	err = trx.MappingTrx(pl, models.TypeTrxCredit, true)
 
 	if err != nil {
 		errors.SetTitle(models.ErrMappingData.Error())
@@ -95,47 +92,16 @@ func (trxUS *transactionsUseCase) PostPaymentTransaction(c echo.Context, pl mode
 		return errors
 	}
 
-	// init account trx
-	trx := models.Transaction{AccountId: acc.ID, Account: acc}
-	// Generate ref transactions pegadaian
-	refTrxPgdn, _ := uuid.NewRandom()
-	// Get curr STL
-	currStl, err := trxUS.rrRepo.GetCurrentGoldSTL(c)
+	// prepare account trx and account billing
+	trx, bill, errors := trxUS.prepareTrxAndBill(c, acc, pl)
 
-	if err != nil {
-		errors.SetTitle(models.ErrGetCurrSTL.Error())
-		return errors
-	}
-
-	// populate payment transaction for insert
-	err = trx.MappingPaymentTransaction(c, pl, trx, refTrxPgdn.String(), currStl)
-
-	if err != nil {
-		errors.SetTitle(models.ErrMappingData.Error())
-		return errors
-	}
-
-	// init current billing
-	bill := models.Billing{
-		Account: acc,
-	}
-
-	// get last published billing to map payment transaction into billings
-	err = trxUS.billRepo.GetBillingInquiry(c, &bill)
-
-	if err != nil {
+	if errors.Code != "00" {
 		errors.SetTitle(err.Error())
 		return errors
 	}
 
 	// prepare billing debt
-	// get debt amount
-	bill.DebtAmount = bill.DebtAmount - trx.Nominal
-	// get debt gold amount
-	bill.DebtGold = bill.Account.Card.ConvertMoneyToGold(bill.DebtAmount, currStl)
-	// set debt stl
-	bill.DebtSTL = currStl
-
+	_ = trxUS.payTheBill(c, &bill, trx)
 	// insert payment transaction
 	err = trxUS.trxRepo.PostPayment(c, trx, bill)
 
@@ -152,6 +118,56 @@ func (trxUS *transactionsUseCase) PostPaymentTransaction(c echo.Context, pl mode
 			logger.Make(c, nil).Debug(err)
 		}
 	}()
+
+	return errors
+}
+
+func (trxUS *transactionsUseCase) PostPaymentTrxCore(c echo.Context, pl models.PlPaymentTrxCore) models.ResponseErrors {
+	var errors models.ResponseErrors
+	acc, err := trxUS.CheckAccountByAccountNumber(c, pl)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
+		return errors
+	}
+
+	// get payment trx data with ref_trx
+	payment, err := trxUS.trxRepo.GetPayInquiryByRefTrx(c, acc, pl.RefTrx)
+
+	if err != nil {
+		errors.SetTitle(err.Error())
+		return errors
+	}
+
+	// init payment amount and source
+	pl.PaymentAmount = payment.Nominal
+	pl.Source = models.SourceCore
+	// prepare account trx and account billing
+	trx, bill, errors := trxUS.prepareTrxAndBill(c, acc, pl)
+
+	if errors.Title != "" {
+		errors.SetTitle(err.Error())
+		return errors
+	}
+
+	bill = payment.Billing
+	// prepare billing debt
+	_ = trxUS.payTheBill(c, &bill, trx)
+	// insert payment transaction
+	err = trxUS.trxRepo.PostPayment(c, trx, bill)
+
+	if err != nil {
+		errors.SetTitle(models.ErrInsertPaymentTransactions.Error())
+		return errors
+	}
+
+	// update payment inquiry status to paid
+	err = trxUS.trxRepo.UpdatePayInquiryStatusPaid(c, payment)
+
+	if err != nil {
+		errors.SetTitle(err.Error())
+		return errors
+	}
 
 	return errors
 }
@@ -295,36 +311,106 @@ func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc mo
 	return acc.Card, nil
 }
 
-func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, ppi models.PayloadPaymentInquiry) models.ResponseErrors {
+func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPaymentInquiry) models.ResponseErrors {
 	var errors models.ResponseErrors
-
 	// Get Account by Account Number
-	acc, err := trxUS.CheckAccountByAccountNumber(c, ppi)
+	acc, err := trxUS.CheckAccountByAccountNumber(c, pl)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
 		return errors
 	}
 
-	// get billings by account
+	// init current billing
 	bill := models.Billing{Account: acc}
+	// get last published billing to map payment transaction into billings
 	err = trxUS.billRepo.GetBillingInquiry(c, &bill)
+
 	if err != nil {
 		errors.SetTitleCode("11", models.ErrNoBilling.Error(), "")
 		return errors
 	}
 
 	// check over payment
-	if bill.DebtAmount < ppi.PaymentAmount {
+	if bill.DebtAmount < pl.PaymentAmount {
 		errors.SetTitleCode("22", models.ErrOverPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
 		return errors
 	}
 
-	// check payment less than 10% remaining payment
-	if bill.DebtAmount == bill.Amount && ppi.PaymentAmount < bill.DebtAmount/10 {
+	// check payment less than 10% remaining payment but only at the first payment
+	if bill.DebtAmount == bill.Amount && pl.PaymentAmount <= int64(bill.MinimumPayment) {
 		errors.SetTitleCode("22", models.ErrMinimumPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
 		return errors
 	}
 
+	// prepare the payment inquiry data
+	paymentInq := models.PaymentInquiry{
+		AccountId: acc.ID,
+		BillingId: bill.ID,
+		RefTrx:    pl.RefTrx,
+		Nominal:   pl.PaymentAmount,
+	}
+
+	// insert payment inquiry
+	err = trxUS.trxRepo.PostPaymentInquiry(c, paymentInq)
+
+	if err != nil {
+		errors.SetTitle(models.ErrInsertPaymentTransactions.Error())
+		return errors
+	}
+
 	return errors
+}
+
+func (trxUS *transactionsUseCase) prepareTrxAndBill(c echo.Context, acc models.Account, pl interface{}) (models.Transaction,
+	models.Billing, models.ResponseErrors) {
+	var errors models.ResponseErrors
+	var err error
+	// init account trx
+	trx := models.Transaction{AccountId: acc.ID, Account: acc}
+	// init current billing
+	bill := models.Billing{Account: acc}
+	// Get curr STL
+	trx.CurrStl, err = trxUS.rrRepo.GetCurrentGoldSTL(c)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetCurrSTL.Error())
+		return models.Transaction{}, models.Billing{}, errors
+	}
+
+	// populate payment transaction for insert
+	err = trx.MappingTrx(pl, models.TypeTrxDebit, false)
+
+	if err != nil {
+		errors.SetTitle(models.ErrMappingData.Error())
+		return models.Transaction{}, models.Billing{}, errors
+	}
+
+	// get last published billing to map payment transaction into billings
+	err = trxUS.billRepo.GetBillingInquiry(c, &bill)
+
+	if err != nil {
+		errors.SetTitleCode("11", models.ErrNoBilling.Error(), "")
+		return models.Transaction{}, models.Billing{}, errors
+	}
+
+	return trx, bill, errors
+}
+
+func (trxUS *transactionsUseCase) payTheBill(c echo.Context, bill *models.Billing, trx models.Transaction) error {
+	// prepare billing debt
+	// get debt amount
+	bill.DebtAmount = bill.DebtAmount - trx.Nominal
+
+	// change bill status to paid
+	if bill.DebtAmount <= 0 && bill.Status != models.BillTrxPaid {
+		bill.Status = models.BillTrxPaid
+	}
+
+	// get debt gold amount
+	bill.DebtGold = bill.Account.Card.ConvertMoneyToGold(bill.DebtAmount, trx.CurrStl)
+	// set debt stl
+	bill.DebtSTL = trx.CurrStl
+
+	return nil
 }

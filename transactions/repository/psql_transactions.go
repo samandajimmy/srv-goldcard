@@ -42,7 +42,7 @@ func (PSQLTrx *psqlTransactionsRepository) GetAccountByBrixKey(c echo.Context, b
 }
 
 func (PSQLTrx *psqlTransactionsRepository) PostTransactions(c echo.Context, trx models.Transaction) error {
-	trx.CreatedAt = time.Now()
+	trx.CreatedAt = models.NowDbpg()
 	err := PSQLTrx.DBpg.Insert(&trx)
 
 	if err != nil {
@@ -120,7 +120,7 @@ func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Cont
 }
 
 func (PSQLTrx *psqlTransactionsRepository) UpdateCardBalance(c echo.Context, card models.Card) error {
-	card.UpdatedAt = time.Now()
+	card.UpdatedAt = models.NowDbpg()
 	col := []string{"balance", "gold_balance", "stl_balance", "updated_at"}
 	_, err := PSQLTrx.DBpg.Model(&card).Column(col...).WherePK().Update()
 
@@ -133,8 +133,58 @@ func (PSQLTrx *psqlTransactionsRepository) UpdateCardBalance(c echo.Context, car
 	return nil
 }
 
+func (PSQLTrx *psqlTransactionsRepository) UpdatePayInquiryStatusPaid(c echo.Context, pay models.PaymentInquiry) error {
+	pay.UpdatedAt = models.NowDbpg()
+	pay.Status = models.BillTrxPaid
+	col := []string{"status", "updated_at"}
+	_, err := PSQLTrx.DBpg.Model(&pay).Column(col...).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (PSQLTrx *psqlTransactionsRepository) GetPayInquiryByRefTrx(c echo.Context, acc models.Account, refTrx string) (models.PaymentInquiry, error) {
+	payment := models.PaymentInquiry{}
+	err := PSQLTrx.DBpg.Model(&payment).Relation("Billing").
+		Where("payment_inquiry.account_id = ? AND ref_trx = ?", acc.ID, refTrx).
+		Where("payment_inquiry.status = ?", models.BillTrxUnpaid).
+		Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return payment, err
+	}
+
+	if err == pg.ErrNoRows {
+		return payment, models.ErrGetPaymentTransaction
+	}
+
+	return payment, nil
+}
+
+func (PSQLTrx *psqlTransactionsRepository) PostPaymentInquiry(c echo.Context, paymentInq models.PaymentInquiry) error {
+	paymentInq.InquiryDate = models.NowDbpg()
+	paymentInq.CreatedAt = models.NowDbpg()
+	err := PSQLTrx.DBpg.Insert(&paymentInq)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
 func (PSQLTrx *psqlTransactionsRepository) PostPayment(c echo.Context, trx models.Transaction, bill models.Billing) error {
 	var nilFilters []string
+	billPayment := trx.BillingPayments[0]
 
 	stmts := []*gcdb.PipelineStmt{
 		// insert payment trx
@@ -148,10 +198,10 @@ func (PSQLTrx *psqlTransactionsRepository) PostPayment(c echo.Context, trx model
 		// insert billing payment
 		gcdb.NewPipelineStmt(`INSERT INTO billing_payments (trx_id, bill_id, source, created_at)
 			VALUES ({trxID}, $1, $2, $3) RETURNING id;`,
-			nilFilters, bill.ID, trx.Source, time.Now()),
+			nilFilters, bill.ID, billPayment.Source, time.Now()),
 		// update billings record
-		gcdb.NewPipelineStmt(`UPDATE billings set debt_amount = $1, debt_gold = $2, debt_stl = $3,
-			updated_at = $4 WHERE id = $5;`,
+		gcdb.NewPipelineStmt(`UPDATE billings set debt_amount = $1,
+			debt_gold = $2, debt_stl = $3, updated_at = $4 WHERE id = $5;`,
 			nilFilters, bill.DebtAmount, bill.DebtGold, bill.DebtSTL, time.Now(), bill.ID),
 	}
 

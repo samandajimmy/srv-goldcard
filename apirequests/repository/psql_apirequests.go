@@ -5,7 +5,6 @@ import (
 	"gade/srv-goldcard/apirequests"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
-	"time"
 
 	"github.com/go-pg/pg/v9"
 	"github.com/labstack/echo"
@@ -22,7 +21,7 @@ func NewPsqlAPIRequestsRepository(Conn *sql.DB, dbpg *pg.DB) apirequests.Reposit
 }
 
 func (par *psqlAPIRequests) InserAPIRequest(c echo.Context, ar models.APIRequest) error {
-	ar.CreatedAt = time.Now()
+	ar.CreatedAt = models.NowDbpg()
 	err := par.DBpg.Insert(&ar)
 
 	if err != nil {

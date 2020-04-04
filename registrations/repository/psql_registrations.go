@@ -352,7 +352,7 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 }
 
 func (regis *psqlRegistrationsRepository) UpdateBrixkeyID(c echo.Context, acc models.Account) error {
-	acc.UpdatedAt = time.Now()
+	acc.UpdatedAt = models.NowDbpg()
 	_, err := regis.DBpg.Model(&acc).
 		Set(`brixkey = ?brixkey, status = ?status, updated_at = ?updated_at`).WherePK().Update()
 
@@ -383,7 +383,7 @@ func (regis *psqlRegistrationsRepository) GetAppStatus(c echo.Context, app model
 }
 
 func (regis *psqlRegistrationsRepository) UpdateAppStatus(c echo.Context, app models.Applications) error {
-	app.UpdatedAt = time.Now()
+	app.UpdatedAt = models.NowDbpg()
 	key := app.GetStatusDateKey()
 
 	_, err := regis.DBpg.Model(&app).
@@ -400,7 +400,7 @@ func (regis *psqlRegistrationsRepository) UpdateAppStatus(c echo.Context, app mo
 }
 
 func (regis *psqlRegistrationsRepository) UpdateAppDocID(c echo.Context, app models.Applications) error {
-	app.UpdatedAt = time.Now()
+	app.UpdatedAt = models.NowDbpg()
 	_, err := regis.DBpg.Model(&app).
 		Set(`ktp_doc_id = ?ktp_doc_id, npwp_doc_id = ?npwp_doc_id, selfie_doc_id = ?selfie_doc_id,
 			updated_at = ?updated_at`).WherePK().Update()
@@ -415,7 +415,7 @@ func (regis *psqlRegistrationsRepository) UpdateAppDocID(c echo.Context, app mod
 }
 
 func (regis *psqlRegistrationsRepository) UpdateApplication(c echo.Context, app models.Applications, col []string) error {
-	app.UpdatedAt = time.Now()
+	app.UpdatedAt = models.NowDbpg()
 	col = append(col, "updated_at")
 	_, err := regis.DBpg.Model(&app).Column(col...).WherePK().Update()
 
@@ -434,7 +434,7 @@ func (regis *psqlRegistrationsRepository) UpsertAppDocument(c echo.Context, doc 
 	if doc.ID == 0 {
 		err = regis.insertAppDocument(c, doc)
 	} else {
-		doc.UpdatedAt = time.Now()
+		doc.UpdatedAt = models.NowDbpg()
 		err = regis.DBpg.Update(&doc)
 	}
 
@@ -485,7 +485,7 @@ func (regis *psqlRegistrationsRepository) UpdateCoreOpen(c echo.Context, acc *mo
 }
 
 func (regis *psqlRegistrationsRepository) insertAppDocument(c echo.Context, doc models.Document) error {
-	doc.CreatedAt = time.Now()
+	doc.CreatedAt = models.NowDbpg()
 	err := regis.DBpg.Insert(&doc)
 
 	if err != nil {

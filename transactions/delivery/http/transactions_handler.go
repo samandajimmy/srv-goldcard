@@ -30,8 +30,8 @@ func NewTransactionsHandler(
 	// Endpoint For PDS
 	echoGroup.API.GET("/transactions/history", handler.HistoryTransactions)
 	echoGroup.API.GET("/transactions/balance", handler.GetCardBalance)
-
 	echoGroup.API.POST("/transactions/payment/inquiry", handler.PaymentInquiry)
+	echoGroup.API.POST("/transactions/payment/core", handler.paymentTransactionCore)
 }
 
 // Registrations a handler to handle goldcard registrations
@@ -160,8 +160,38 @@ func (th *TransactionsHandler) paymentTransaction(c echo.Context) error {
 	return th.response.Body(c, nil)
 }
 
+func (th *TransactionsHandler) paymentTransactionCore(c echo.Context) error {
+	var pl models.PlPaymentTrxCore
+	th.response, th.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		th.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		th.response.SetResponse("", &th.respErrors)
+
+		return th.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		th.respErrors.SetTitle(err.Error())
+		th.response.SetResponse("", &th.respErrors)
+
+		return th.response.Body(c, err)
+	}
+
+	err := th.transactionsUseCase.PostPaymentTrxCore(c, pl)
+
+	if err.Title != "" {
+		th.response.SetResponse("", &err)
+
+		return th.response.Body(c, nil)
+	}
+
+	th.response.SetResponse("", &err)
+	return th.response.Body(c, nil)
+}
+
 func (th *TransactionsHandler) PaymentInquiry(c echo.Context) error {
-	var ppi models.PayloadPaymentInquiry
+	var ppi models.PlPaymentInquiry
 	th.response, th.respErrors = models.NewResponse()
 
 	if err := c.Bind(&ppi); err != nil {

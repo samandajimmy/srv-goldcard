@@ -96,7 +96,7 @@ func MakeStructToJSON(strct interface{}) {
 		return
 	}
 
-	fmt.Println()
+	fmt.Println("DEBUGGING ONLY")
 	MakeWithoutReportCaller(nil, nil).Debug(string(b))
-	fmt.Println()
+	fmt.Println("DEBUGGING ONLY")
 }

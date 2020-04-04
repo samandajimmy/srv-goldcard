@@ -126,7 +126,7 @@ func (app *Applications) SetStatus(msg string) {
 	stat := app.getStatus(msg)
 	app.Status = stat
 	r := reflect.ValueOf(app)
-	rNow := reflect.ValueOf(time.Now())
+	rNow := reflect.ValueOf(NowDbpg())
 	fStatDt := r.Elem().FieldByName(mapStatusDate[stat])
 	fStatDt.Set(rNow)
 }
