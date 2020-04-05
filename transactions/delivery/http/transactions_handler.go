@@ -208,7 +208,7 @@ func (th *TransactionsHandler) PaymentInquiry(c echo.Context) error {
 		return th.response.Body(c, err)
 	}
 
-	err := th.transactionsUseCase.PaymentInquiry(c, ppi)
+	refTrx, err := th.transactionsUseCase.PaymentInquiry(c, ppi)
 
 	if err.Title != "" {
 		th.response.SetResponse("", &err)
@@ -216,6 +216,7 @@ func (th *TransactionsHandler) PaymentInquiry(c echo.Context) error {
 		return th.response.Body(c, nil)
 	}
 
-	th.response.SetResponse("", &err)
+	response := map[string]string{"refTrx": refTrx}
+	th.response.SetResponse(response, &err)
 	return th.response.Body(c, nil)
 }

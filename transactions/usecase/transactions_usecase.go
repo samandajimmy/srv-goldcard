@@ -311,14 +311,14 @@ func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc mo
 	return acc.Card, nil
 }
 
-func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPaymentInquiry) models.ResponseErrors {
+func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPaymentInquiry) (string, models.ResponseErrors) {
 	var errors models.ResponseErrors
 	// Get Account by Account Number
 	acc, err := trxUS.CheckAccountByAccountNumber(c, pl)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
-		return errors
+		return "", errors
 	}
 
 	// init current billing
@@ -328,26 +328,34 @@ func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPay
 
 	if err != nil {
 		errors.SetTitleCode("11", models.ErrNoBilling.Error(), "")
-		return errors
+		return "", errors
+	}
+
+	// payment inquiry to core
+	refTrx, err := trxUS.trxrRepo.CorePaymentInquiry(c, pl)
+
+	if err != nil {
+		errors.SetTitleCode("11", models.ErrNoBilling.Error(), "")
+		return "", errors
 	}
 
 	// check over payment
 	if bill.DebtAmount < pl.PaymentAmount {
 		errors.SetTitleCode("22", models.ErrOverPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
-		return errors
+		return "", errors
 	}
 
 	// check payment less than 10% remaining payment but only at the first payment
 	if bill.DebtAmount == bill.Amount && pl.PaymentAmount <= int64(bill.MinimumPayment) {
 		errors.SetTitleCode("22", models.ErrMinimumPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
-		return errors
+		return "", errors
 	}
 
 	// prepare the payment inquiry data
 	paymentInq := models.PaymentInquiry{
 		AccountId: acc.ID,
 		BillingId: bill.ID,
-		RefTrx:    pl.RefTrx,
+		RefTrx:    refTrx,
 		Nominal:   pl.PaymentAmount,
 	}
 
@@ -356,10 +364,10 @@ func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPay
 
 	if err != nil {
 		errors.SetTitle(models.ErrInsertPaymentTransactions.Error())
-		return errors
+		return "", errors
 	}
 
-	return errors
+	return paymentInq.RefTrx, errors
 }
 
 func (trxUS *transactionsUseCase) prepareTrxAndBill(c echo.Context, acc models.Account, pl interface{}) (models.Transaction,

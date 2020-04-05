@@ -214,7 +214,7 @@ type PayloadBRIPendingTransactions struct {
 type PlPaymentInquiry struct {
 	AccountNumber string `json:"accountNumber" validate:"required"`
 	PaymentAmount int64  `json:"paymentAmount" validate:"required"`
-	RefTrx        string `json:"refTrx" validate:"required"`
+	RefTrx        string `json:"refTrx"`
 }
 
 // PlPaymentTrxCore a struct to store all payload for payment transactions for core
