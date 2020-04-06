@@ -1,12 +1,19 @@
 package middleware
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
-	"gopkg.in/go-playground/validator.v9"
+	"net/url"
 	"os"
 	"reflect"
+	"strings"
+
+	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
+	"github.com/sirupsen/logrus"
+	"gopkg.in/go-playground/validator.v9"
 )
 
 type customValidator struct {
@@ -27,24 +34,63 @@ var echGroup models.EchoGroup
 func InitMiddleware(ech *echo.Echo, echoGroup models.EchoGroup) {
 	cm := &customMiddleware{ech}
 	echGroup = echoGroup
+
 	ech.Use(middleware.RequestIDWithConfig(middleware.DefaultRequestIDConfig))
-
-	ech.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: "requestID=${id}, method=${method}, status=${status}, path=${path}, latency=${latency_human} " +
-			"host=${host}, remote_ip=${remote_ip}, user_agent=${user_agent}, error=${error} \n",
-	}))
-
+	cm.customLogging()
+	cm.customBodyDump()
 	ech.Use(middleware.Recover())
 	cm.cors()
 	cm.basicAuth()
-	// cm.jwtAuth() // klo gk di tutup gk bisa request.
+	cm.jwtAuth()
 	cm.customValidation()
+}
+
+func (cm *customMiddleware) customBodyDump() {
+	cm.e.Use(middleware.BodyDumpWithConfig(middleware.BodyDumpConfig{
+		Handler: func(c echo.Context, req, resp []byte) {
+			bodyParser(c, &req)
+			bodyParser(c, &resp)
+			reqBody := c.Request()
+			reqStr := string(req)
+			respStr := string(resp)
+
+			logger.MakeWithoutReportCaller(c, reqStr).Info("Request payload for endpoint " + reqBody.Method + " " + reqBody.URL.Path)
+			logger.MakeWithoutReportCaller(c, respStr).Info("Response payload for endpoint " + reqBody.Method + " " + reqBody.URL.Path)
+		},
+	}))
+}
+
+func (cm *customMiddleware) customLogging() {
+	cm.e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			logrus.SetReportCaller(false)
+			req := c.Request()
+			res := c.Response()
+			reqID := req.Header.Get(echo.HeaderXRequestID)
+
+			if reqID == "" {
+				reqID = res.Header().Get(echo.HeaderXRequestID)
+			}
+
+			logrus.WithFields(logrus.Fields{
+				"requestID":  reqID,
+				"method":     req.Method,
+				"status":     res.Status,
+				"host":       req.Host,
+				"user_agent": req.UserAgent(),
+				"uri":        req.URL.String(),
+				"ip":         c.RealIP(),
+			}).Info("Incoming request")
+			return next(c)
+		}
+	})
 }
 
 func (cm *customMiddleware) customValidation() {
 	validator := validator.New()
 	customValidator := customValidator{}
-	validator.RegisterValidation("isRequiredWith", customValidator.isRequiredWith)
+	_ = validator.RegisterValidation("isRequiredWith", customValidator.isRequiredWith)
+	_ = validator.RegisterValidation("base64", customValidator.base64)
 	customValidator.validator = validator
 	cm.e.Validator = &customValidator
 }
@@ -76,12 +122,12 @@ func (cm customMiddleware) jwtAuth() {
 		SigningMethod: "HS512",
 		SigningKey:    []byte(os.Getenv(`JWT_SECRET`)),
 	}))
-
 }
 
+// begin custom validator
 func (cv *customValidator) isRequiredWith(fl validator.FieldLevel) bool {
 	field := fl.Field()
-	otherField, _, _ := fl.GetStructFieldOK()
+	otherField, _, _, _ := fl.GetStructFieldOK2()
 
 	if otherField.IsValid() && otherField.Interface() != reflect.Zero(otherField.Type()).Interface() {
 		if field.IsValid() && field.Interface() == reflect.Zero(field.Type()).Interface() {
@@ -90,4 +136,70 @@ func (cv *customValidator) isRequiredWith(fl validator.FieldLevel) bool {
 	}
 
 	return true
+}
+
+func (cv *customValidator) base64(fl validator.FieldLevel) bool {
+	field := fl.Field()
+
+	// if field is nil
+	if field.Interface() == reflect.Zero(field.Type()).Interface() {
+		return true
+	}
+
+	// check field base64 or not, if error then false
+	_, err := base64.StdEncoding.DecodeString(field.Interface().(string))
+
+	return err == nil
+}
+
+func bodyParser(c echo.Context, pl *[]byte) {
+	if string(*pl) == "" {
+		rawQuery := c.Request().URL.RawQuery
+		m, err := url.ParseQuery(rawQuery)
+
+		if err != nil {
+			logger.Make(nil, nil).Fatal(err)
+		}
+
+		*pl, err = json.Marshal(m)
+
+		if err != nil {
+			logger.Make(nil, nil).Fatal(err)
+		}
+	}
+
+	payloadExcluder(pl)
+}
+
+func payloadExcluder(pl *[]byte) {
+	plMap := map[string]interface{}{}
+	strExclude := []string{"password", "base64", "npwp", "handPhone", "nik"}
+	err := json.Unmarshal(*pl, &plMap)
+
+	if err != nil {
+		logger.Make(nil, nil).Fatal(err)
+	}
+
+	for k, v := range plMap {
+		if contains(strExclude, k) {
+			v = models.StarString
+		}
+		plMap[k] = v
+	}
+
+	*pl, err = json.Marshal(plMap)
+
+	if err != nil {
+		logger.Make(nil, nil).Fatal(err)
+	}
+}
+
+func contains(strIncluder []string, str string) bool {
+	for _, include := range strIncluder {
+		if strings.Contains(str, include) {
+			return true
+		}
+	}
+
+	return false
 }

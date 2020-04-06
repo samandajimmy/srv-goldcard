@@ -6,7 +6,16 @@ import (
 	"github.com/labstack/echo"
 )
 
-// UseCase represent the rewards usecases
+// UseCase represent the registrations usecases
 type UseCase interface {
-	Registrations(echo.Context, *models.Registrations) error
+	PostAddress(echo.Context, models.PayloadAddress) error
+	PostSavingAccount(echo.Context, models.PayloadSavingAccount) error
+	PostPersonalInfo(echo.Context, models.PayloadPersonalInformation) error
+	PostRegistration(echo.Context, models.PayloadRegistration) (models.RespRegistration, error)
+	PostCardLimit(c echo.Context, pl models.PayloadCardLimit) error
+	FinalRegistrationScheduler(c echo.Context, pl models.PayloadAppNumber) error
+	FinalRegistrationPdsApi(c echo.Context, pl models.PayloadAppNumber) error
+	GetAppStatus(c echo.Context, pl models.PayloadAppNumber) (models.AppStatus, error)
+	PostOccupation(echo.Context, models.PayloadOccupation) error
+	CheckApplication(c echo.Context, pl interface{}) (models.Account, error)
 }

@@ -1,0 +1,2 @@
+ALTER TABLE transactions
+ADD CONSTRAINT transactions_account_id_key UNIQUE(account_id)
