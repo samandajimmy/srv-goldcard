@@ -46,6 +46,7 @@ type BillingPayment struct {
 	ID        int64     `json:"id"`
 	TrxId     int64     `json:"trxId"`
 	BillId    int64     `json:"billId"`
+	Source    string    `json:"source"`
 	UpdatedAt time.Time `json:"updatedAt"`
 	CreatedAt time.Time `json:"createdAt"`
 }
@@ -84,7 +85,7 @@ func (pgdBil *PegadaianBilling) MappingPegadaianBilling(c echo.Context, pl Paylo
 	pgdBil.FileName = pl.FileName
 	pgdBil.FileBase64 = pl.FileBase64
 	pgdBil.FileExtension = pl.FileExtension
-	pgdBil.CreatedAt = time.Now()
+	pgdBil.CreatedAt = NowDbpg()
 
 	return nil
 }

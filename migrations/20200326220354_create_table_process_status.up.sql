@@ -1,4 +1,3 @@
--- create table pegadaian_billings
 CREATE TABLE IF NOT EXISTS process_statuses (
     id SERIAL PRIMARY KEY NOT NULL,
     process_id INT,

@@ -1,14 +1,23 @@
 package models
 
 import (
+	"reflect"
 	"time"
 
-	"github.com/labstack/echo"
+	"github.com/google/uuid"
 )
 
 const (
-	typeTrxCredit    string = "credit"
-	typeTrxDebit     string = "debit"
+	// TypeTrxCredit trx type credit
+	TypeTrxCredit string = "credit"
+	// TypeTrxDebit trx type debit
+	TypeTrxDebit string = "debit"
+	// BillTrxUnpaid billing status unpaid
+	BillTrxUnpaid string = "unpaid"
+	// BillTrxPaid billing status paid
+	BillTrxPaid string = "paid"
+	// SourceCore source for core
+	SourceCore       string = "core"
 	statusTrxPending string = "pending"
 	statusTrxPosted  string = "posted"
 	methodTrxPayment string = "payment"
@@ -16,25 +25,26 @@ const (
 
 // Transaction is a struct to store transaction data
 type Transaction struct {
-	ID            int64     `json:"id"`
-	AccountId     int64     `json:"accountId"`
-	RefTrxPgdn    string    `json:"refTrxPgdn"`
-	RefTrx        string    `json:"refTrx"`
-	Nominal       int64     `json:"nominal"`
-	GoldNominal   float64   `json:"goldNominal"`
-	Type          string    `json:"type"`
-	Status        string    `json:"status"`
-	Balance       int64     `json:"balance"`
-	GoldBalance   float64   `json:"goldBalance"`
-	Methods       string    `json:"methods"`
-	TrxDate       string    `json:"trxDate"`
-	Description   string    `json:"description"`
-	CompareID     string    `json:"compareId"`
-	TransactionID string    `json:"transactionId"`
-	UpdatedAt     time.Time `json:"updatedAt"`
-	CreatedAt     time.Time `json:"createdAt"`
-	Account       Account   `json:"account"`
-	Source        string    `json:"source" pg:"-"`
+	ID              int64            `json:"id"`
+	AccountId       int64            `json:"accountId"`
+	RefTrxPgdn      string           `json:"refTrxPgdn"`
+	RefTrx          string           `json:"refTrx"`
+	Nominal         int64            `json:"nominal"`
+	GoldNominal     float64          `json:"goldNominal"`
+	Type            string           `json:"type"`
+	Status          string           `json:"status"`
+	Balance         int64            `json:"balance"`
+	GoldBalance     float64          `json:"goldBalance"`
+	Methods         string           `json:"methods"`
+	TrxDate         string           `json:"trxDate"`
+	Description     string           `json:"description"`
+	CompareID       string           `json:"compareId"`
+	TransactionID   string           `json:"transactionId"`
+	UpdatedAt       time.Time        `json:"updatedAt"`
+	CreatedAt       time.Time        `json:"createdAt"`
+	Account         Account          `json:"account"`
+	BillingPayments []BillingPayment `json:"billingPayments" pg:"-"`
+	CurrStl         int64            `json:"currStl" pg:"-"`
 }
 
 // ListTrx struct to store list history transactions
@@ -60,47 +70,66 @@ type BRICardBalance struct {
 	AvailableCredit int64   `json:"availableCredit"`
 }
 
-// MappingTransactions is a struct to mapping transactions data
-func (trx *Transaction) MappingTransactions(c echo.Context, pl PayloadBRIPendingTransactions, trans Transaction, refTrxPg string, stl int64) error {
-	goldNominal := trx.Account.Card.ConvertMoneyToGold(pl.Amount, stl)
-	balance := trx.Account.Card.Balance - pl.Amount
-	goldBalance := trx.Account.Card.ConvertMoneyToGold(balance, stl)
+// MappingTrx is a struct to mapping trx data
+func (trx *Transaction) MappingTrx(pl interface{}, trxType string, isTrx bool) error {
+	// Generate ref transactions pegadaian
+	refTrxPgdn, _ := uuid.NewRandom()
+	// reflect payload interface
+	r := reflect.ValueOf(pl)
+	// init variables inside trx struct
+	trx.Nominal = GetInterfaceValue(r, "PaymentAmount").(int64)
+	trx.TransactionID = GetInterfaceValue(r, "TransactionId").(string)
+	trx.RefTrx = GetInterfaceValue(r, "RefTrx").(string)
+	trx.TrxDate = GetInterfaceValue(r, "PaymentDate").(string)
+	trx.CompareID = GetInterfaceValue(r, "AuthCode").(string)
+	trx.Description = GetInterfaceValue(r, "PaymentDesc").(string)
 
-	trx.AccountId = trans.Account.ID
-	trx.RefTrxPgdn = refTrxPg
-	trx.TransactionID = pl.TransactionId
-	trx.Nominal = pl.Amount
-	trx.GoldNominal = goldNominal
-	trx.Type = typeTrxCredit
-	trx.Status = statusTrxPending
-	trx.Balance = int64(balance)
-	trx.GoldBalance = float64(goldBalance)
-	trx.TrxDate = pl.TrxDateTime
-	trx.Description = pl.TrxDesc
-	trx.CompareID = pl.AuthCode
+	// if no value on pl->RefTrx
+	if trx.RefTrx == "" {
+		trx.RefTrx = GetInterfaceValue(r, "RefID").(string)
+	}
 
-	return nil
-}
+	// if no value on pl->PaymentDate
+	if trx.TrxDate == "" {
+		trx.TrxDate = GetInterfaceValue(r, "TrxDateTime").(string)
+	}
 
-// MappingTransactions is a struct to mapping payment transactions data
-func (trx *Transaction) MappingPaymentTransaction(c echo.Context, pl PayloadPaymentTransactions, trans Transaction, refTrxPg string, stl int64) error {
-	goldNominal := trx.Account.Card.ConvertMoneyToGold(pl.PaymentAmount, stl)
-	balance := trx.Account.Card.Balance + pl.PaymentAmount
-	goldBalance := trx.Account.Card.ConvertMoneyToGold(balance, stl)
+	// if no value on pl->TrxDateTime
+	if trx.TrxDate == "" {
+		trx.TrxDate = time.Now().Format(time.RFC3339)
+	}
 
-	trx.AccountId = trans.Account.ID
-	trx.RefTrxPgdn = refTrxPg
-	trx.RefTrx = pl.RefID
-	trx.Nominal = pl.PaymentAmount
-	trx.GoldNominal = goldNominal
-	trx.Type = typeTrxDebit
-	trx.Status = statusTrxPosted
-	trx.Methods = methodTrxPayment
-	trx.Balance = int64(balance)
-	trx.GoldBalance = float64(goldBalance)
-	trx.TrxDate = pl.PaymentDate
-	trx.Description = pl.PaymentDesc
-	trx.Source = pl.Source
+	// if no value on pl->PaymentDesc
+	if trx.Description == "" {
+		// TODO: we should have default payment description
+		trx.Description = ""
+	}
+
+	// if no value on pl->PaymentAmount
+	if trx.Nominal == 0 {
+		trx.Nominal = GetInterfaceValue(r, "Amount").(int64)
+	}
+
+	// if its transaction data
+	if isTrx {
+		trx.Balance = trx.Account.Card.Balance - trx.Nominal
+		trx.Status = statusTrxPending
+	}
+
+	// if its payment transaction data
+	if !isTrx {
+		trx.Balance = trx.Account.Card.Balance + trx.Nominal
+		trx.Status = statusTrxPosted
+		trx.Methods = methodTrxPayment
+		trx.BillingPayments = []BillingPayment{
+			BillingPayment{Source: GetInterfaceValue(r, "Source").(string)},
+		}
+	}
+
+	trx.GoldNominal = trx.Account.Card.ConvertMoneyToGold(trx.Nominal, trx.CurrStl)
+	trx.GoldBalance = trx.Account.Card.ConvertMoneyToGold(trx.Balance, trx.CurrStl)
+	trx.RefTrxPgdn = refTrxPgdn.String()
+	trx.Type = trxType
 
 	return nil
 }

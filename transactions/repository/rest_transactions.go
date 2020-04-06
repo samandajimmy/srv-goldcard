@@ -51,3 +51,32 @@ func (ra *restTransactions) GetBRICardInformation(c echo.Context, acc models.Acc
 
 	return briCardBal, nil
 }
+
+func (rt *restTransactions) CorePaymentInquiry(c echo.Context, pl models.PlPaymentInquiry) (string, error) {
+	respSwitching := api.SwitchingResponse{}
+	requestDataSwitching := map[string]interface{}{
+		"amount":         pl.PaymentAmount,
+		"jenisTransaksi": "CC",
+		"norek":          pl.AccountNumber,
+	}
+
+	req := api.MappingRequestSwitching(requestDataSwitching)
+	errSwitching := api.RetryableSwitchingPost(c, req, "/gadai/inquiry", &respSwitching)
+
+	if errSwitching != nil {
+		return "", errSwitching
+	}
+
+	if respSwitching.ResponseCode != api.APIRCSuccess {
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc}))
+		return "", models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc})
+	}
+
+	if _, ok := respSwitching.ResponseData["reffSwitching"].(string); !ok {
+		logger.Make(c, nil).Debug(models.ErrSetVar)
+
+		return "", models.ErrSetVar
+	}
+
+	return respSwitching.ResponseData["reffSwitching"].(string), nil
+}
