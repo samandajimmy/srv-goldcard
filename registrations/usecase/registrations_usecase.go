@@ -7,20 +7,24 @@ import (
 	"gade/srv-goldcard/process_handler"
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/retry"
+	"gade/srv-goldcard/transactions"
+
+	u "github.com/Mindinventory/Golang-HTML-TO-PDF-Converter/pdfGenerator"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
 type registrationsUseCase struct {
-	regRepo registrations.Repository
-	rrr     registrations.RestRepository
-	phUC    process_handler.UseCase
+	regRepo  registrations.Repository
+	rrr      registrations.RestRepository
+	phUC     process_handler.UseCase
+	tUseCase transactions.UseCase
 }
 
 // RegistrationsUseCase represent Registrations Use Case
-func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.RestRepository, phUC process_handler.UseCase) registrations.UseCase {
-	return &registrationsUseCase{regRepo, rrr, phUC}
+func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.RestRepository, phUC process_handler.UseCase, tUseCase transactions.UseCase) registrations.UseCase {
+	return &registrationsUseCase{regRepo, rrr, phUC, tUseCase}
 }
 
 func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAddress) error {
@@ -289,6 +293,52 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 	go func() {
 		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 	}()
+
+	return nil
+}
+
+func (reg *registrationsUseCase) GenerateApplicationForm(c echo.Context, pan models.PayloadAccNumber) error {
+	acc, err := reg.tUseCase.CheckAccountByAccountNumber(c, pan)
+
+	if err != nil {
+		return err
+	}
+
+	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
+	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID)
+
+	if err != nil {
+		return models.ErrGetDocument
+	}
+
+	r := u.NewRequestPdf("")
+
+	// Html template path
+	templatePath := "template/template_application_form.html"
+
+	// Path for download pdf
+	outputPath := "application_form/application_form.pdf"
+
+	appFormData := models.PayloadApplicationForm{}
+
+	// Mapping Application Form Data
+	err = appFormData.MappingApplicationForm(acc, docs)
+
+	if err != nil {
+		return models.ErrMappingData
+	}
+
+	// Mapping Application Form Data to Html
+	err = r.ParseTemplate(templatePath, appFormData)
+	if err != nil {
+		return err
+	}
+
+	// Generate Pdf File
+	_, err = r.GeneratePDF(outputPath)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

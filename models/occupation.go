@@ -18,9 +18,9 @@ type Occupation struct {
 	Company           string    `json:"company"`
 	JobTitle          string    `json:"jobTitle"`
 	WorkSince         string    `json:"workSince"`
-	OfficeAddress1    string    `json:"officeAddress1"`
-	OfficeAddress2    string    `json:"officeAddress2"`
-	OfficeAddress3    string    `json:"officeAddress3"`
+	OfficeAddress1    string    `json:"officeAddress1" pg:"office_address_1"`
+	OfficeAddress2    string    `json:"officeAddress2" pg:"office_address_2"`
+	OfficeAddress3    string    `json:"officeAddress3" pg:"office_address_3"`
 	OfficeZipcode     string    `json:"officeZipcode"`
 	OfficeCity        string    `json:"officeCity"`
 	OfficePhone       string    `json:"officePhone"`

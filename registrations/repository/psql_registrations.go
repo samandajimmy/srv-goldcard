@@ -494,3 +494,17 @@ func (regis *psqlRegistrationsRepository) insertAppDocument(c echo.Context, doc 
 
 	return nil
 }
+
+func (regis *psqlRegistrationsRepository) GetDocumentByApplicationId(appId int64) ([]models.Document, error) {
+	var listDocument []models.Document
+	err := regis.DBpg.Model(&listDocument).
+		Where("application_id = ?", appId).Select()
+
+	if err != nil || (listDocument == nil) {
+		logger.Make(nil, nil).Debug(err)
+
+		return listDocument, err
+	}
+
+	return listDocument, nil
+}

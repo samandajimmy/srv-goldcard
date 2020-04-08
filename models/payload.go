@@ -1,8 +1,76 @@
 package models
 
+import (
+	"time"
+)
+
 var (
 	// UseExistingAddress is var to store use existing address status
 	UseExistingAddress int64
+
+	//textFileFound is var to store if file is found in database
+	textFileFound = "Ada"
+
+	//textFileNotFound is var to store if file is not found in database
+	textFileNotFound = "Tidak ada"
+
+	homeStatusStr = map[int64]string{
+		1: "Milik Sendiri",
+		2: "Sewa / Kos",
+		3: "Milik Keluarga",
+		4: "Milik Perusahaan",
+		5: "Lain-lain",
+	}
+
+	educationStr = map[int64]string{
+		1: "SD/SMP",
+		2: "SMA",
+		3: "Diploma",
+		4: "S1",
+		5: "S2",
+		6: "S3",
+	}
+
+	maritalStatusStr = map[int64]string{
+		1: "Single",
+		2: "Menikah",
+		3: "Duda/Janda",
+	}
+
+	jobCategoryStr = map[int64]string{
+		1: "Karyawan",
+		2: "Profesional",
+		3: "Pensiunan",
+		4: "TNI/POLRI",
+		5: "Wiraswasta",
+		6: "Lain-lain",
+	}
+
+	jobBidangUsahaStr = map[int64]string{
+		10: "Agricultural & Animal Rising",
+		20: "Aneka Industry",
+		30: "Customer Product",
+		40: "Financial",
+		50: "Goverment",
+		60: "Industry and Chemical",
+		70: "Infrastructure",
+		80: "Mining",
+		90: "Trading and Service",
+		99: "Lain-lain",
+	}
+
+	relationStr = map[int64]string{
+		1:  "Suami/Istri",
+		2:  "Anak",
+		3:  "Adik",
+		4:  "Kakak Kandung",
+		5:  "Orang Tua",
+		6:  "Saudara",
+		7:  "HRD",
+		8:  "Atasan",
+		9:  "Lain-lain",
+		10: "Applicant",
+	}
 )
 
 // PayloadList a struct to store all payload for a list response
@@ -246,6 +314,23 @@ type PayloadBriGetCardInformation struct {
 	BriXkey string `json:"briXkey" validate:"required"`
 }
 
+// Payload PayloadApplicationForm a struct to store all payload for Application Form BRI
+type PayloadApplicationForm struct {
+	Account            Account `json:"account"`
+	Date               string  `json:"createdAt"`
+	TextHomeStatus     string  `json:"textHomeStatus"`
+	TextEducation      string  `json:"textEducation"`
+	TextMaritalStatus  string  `json:"textMaritalStatus"`
+	TextJobBidangUsaha string  `json:"textJobBidangUsaha"`
+	TextJobCategory    string  `json:"textJobCategory"`
+	TextRelation       string  `json:"textrelation"`
+	FileKtp            string  `json:"fileKtp"`
+	FileSelfie         string  `json:"fileSelfie"`
+	FileNpwp           string  `json:"fileNpwp"`
+	FileAppForm        string  `json:"fileAppForm"`
+	FileSlipTe         string  `json:"fileSlipTe"`
+}
+
 // PaginationPayload struct to store pagination payload
 type PaginationPayload struct {
 	Limit int64 `json:"limit"`
@@ -307,4 +392,104 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.ProductRequest = StringCutter(plBRIReg.ProductRequest, 30)
 
 	return nil
+}
+
+// MappingApplicationForm a function to mapping application form data BRI
+func (plAf *PayloadApplicationForm) MappingApplicationForm(acc Account, docs []Document) error {
+	plAf.Account = acc
+	plAf.Date = time.Now().UTC().Format(DateTimeFormat)
+	plAf.TextHomeStatus = plAf.GetHomeStatus(acc.PersonalInformation.HomeStatus)
+	plAf.TextEducation = plAf.GetEducation(acc.PersonalInformation.Education)
+	plAf.TextMaritalStatus = plAf.GetMaritalStatus(acc.PersonalInformation.MaritalStatus)
+	plAf.TextJobBidangUsaha = plAf.GetJobBidangUsaha(acc.Occupation.JobBidangUsaha)
+	plAf.TextJobCategory = plAf.GetJobCategory(acc.Occupation.JobCategory)
+	plAf.TextRelation = plAf.GetRelation(acc.EmergencyContact.Relation)
+	plAf.FileKtp = textFileNotFound
+	plAf.FileNpwp = textFileNotFound
+	plAf.FileSelfie = textFileNotFound
+	plAf.FileAppForm = textFileNotFound
+	plAf.FileSlipTe = textFileNotFound
+
+	for _, document := range docs {
+		switch document.Type {
+		case "ktp":
+			plAf.FileKtp = textFileFound
+		case "npwp":
+			plAf.FileNpwp = textFileFound
+		case "selfie":
+			plAf.FileSelfie = textFileFound
+		case "slip_te":
+			plAf.FileSlipTe = textFileFound
+		case "app_form":
+			plAf.FileAppForm = textFileFound
+		}
+	}
+
+	return nil
+}
+
+// GetHomeStatus to get home status
+func (plAf *PayloadApplicationForm) GetHomeStatus(homeStatus int64) string {
+	for k, v := range homeStatusStr {
+		if k == homeStatus {
+			return v
+		}
+	}
+
+	return ""
+}
+
+// GetEducation to get education text
+func (plAf *PayloadApplicationForm) GetEducation(education int64) string {
+	for k, v := range educationStr {
+		if k == education {
+			return v
+		}
+	}
+
+	return ""
+}
+
+// GetMaritalStatus to get marital status text
+func (plAf *PayloadApplicationForm) GetMaritalStatus(maritalStatus int64) string {
+	for k, v := range maritalStatusStr {
+		if k == maritalStatus {
+			return v
+		}
+	}
+
+	return ""
+}
+
+// GetJobCategory to get job category
+func (plAf *PayloadApplicationForm) GetJobCategory(jobCategory int64) string {
+	for k, v := range jobCategoryStr {
+		if k == jobCategory {
+			return v
+		}
+	}
+
+	return ""
+}
+
+// GetJobBidangUsaha to get job bidang usaha
+func (plAf *PayloadApplicationForm) GetJobBidangUsaha(jobBidangUsaha int64) string {
+	for k, v := range jobBidangUsahaStr {
+		if k == jobBidangUsaha {
+			return v
+		}
+	}
+
+	return ""
+}
+
+// GetRelation to get relation text
+func (plAf *PayloadApplicationForm) GetRelation(relation int64) string {
+	for k, v := range relationStr {
+		if k == relation {
+			return v
+		}
+	}
+
+	return ""
 }

@@ -28,6 +28,7 @@ type Repository interface {
 	PostOccupation(echo.Context, models.Account) error
 	GetCoreServiceStatus(c echo.Context) error
 	UpdateCoreOpen(c echo.Context, acc *models.Account) error
+	GetDocumentByApplicationId(appId int64) ([]models.Document, error)
 }
 
 // RestRepository represent the rest registrations repository contract
