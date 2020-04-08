@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"encoding/json"
 	"gade/srv-goldcard/billings"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -311,14 +312,15 @@ func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc mo
 	return acc.Card, nil
 }
 
-func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPaymentInquiry) (string, models.ResponseErrors) {
+func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPaymentInquiry) (map[string]interface{}, models.ResponseErrors) {
 	var errors models.ResponseErrors
+	response := map[string]interface{}{}
 	// Get Account by Account Number
 	acc, err := trxUS.CheckAccountByAccountNumber(c, pl)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
-		return "", errors
+		return response, errors
 	}
 
 	// init current billing
@@ -328,35 +330,54 @@ func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPay
 
 	if err != nil {
 		errors.SetTitleCode("11", models.ErrNoBilling.Error(), "")
-		return "", errors
+		return response, errors
 	}
 
 	// payment inquiry to core
-	refTrx, err := trxUS.trxrRepo.CorePaymentInquiry(c, pl)
+	respInquiry, err := trxUS.trxrRepo.CorePaymentInquiry(c, pl)
 
 	if err != nil {
 		errors.SetTitleCode("11", models.ErrNoBilling.Error(), "")
-		return "", errors
+		return response, errors
+	}
+
+	if _, ok := respInquiry["reffSwitching"].(string); !ok {
+		errors.SetTitle(models.ErrSetVar.Error())
+
+		return response, errors
+	}
+
+	// get refTrx
+	refTrx := respInquiry["reffSwitching"].(string)
+	// convert respInquiry to json
+	respJSON, err := json.Marshal(respInquiry)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		errors.SetTitle(err.Error())
+
+		return response, errors
 	}
 
 	// check over payment
 	if bill.DebtAmount < pl.PaymentAmount {
 		errors.SetTitleCode("22", models.ErrOverPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
-		return "", errors
+		return response, errors
 	}
 
 	// check payment less than 10% remaining payment but only at the first payment
 	if bill.DebtAmount == bill.Amount && pl.PaymentAmount <= int64(bill.MinimumPayment) {
 		errors.SetTitleCode("22", models.ErrMinimumPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
-		return "", errors
+		return response, errors
 	}
 
 	// prepare the payment inquiry data
 	paymentInq := models.PaymentInquiry{
-		AccountId: acc.ID,
-		BillingId: bill.ID,
-		RefTrx:    refTrx,
-		Nominal:   pl.PaymentAmount,
+		AccountId:    acc.ID,
+		BillingId:    bill.ID,
+		RefTrx:       refTrx,
+		Nominal:      pl.PaymentAmount,
+		CoreResponse: respJSON,
 	}
 
 	// insert payment inquiry
@@ -364,10 +385,10 @@ func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPay
 
 	if err != nil {
 		errors.SetTitle(models.ErrInsertPaymentTransactions.Error())
-		return "", errors
+		return response, errors
 	}
 
-	return paymentInq.RefTrx, errors
+	return respInquiry, errors
 }
 
 func (trxUS *transactionsUseCase) prepareTrxAndBill(c echo.Context, acc models.Account, pl interface{}) (models.Transaction,

@@ -285,6 +285,13 @@ type PlPaymentInquiry struct {
 	RefTrx        string `json:"refTrx"`
 }
 
+// RespPaymentInquiry a struct to store all response for payment inquiry
+type RespPaymentInquiry struct {
+	AccountNumber string `json:"accountNumber"`
+	PaymentAmount int64  `json:"paymentAmount"`
+	RefTrx        string `json:"refTrx"`
+}
+
 // PlPaymentTrxCore a struct to store all payload for payment transactions for core
 type PlPaymentTrxCore struct {
 	Source        string `json:"source"`
