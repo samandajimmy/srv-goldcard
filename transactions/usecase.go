@@ -15,7 +15,7 @@ type UseCase interface {
 	CheckAccountByBrixkey(c echo.Context, pl interface{}) (models.Account, error)
 	UpdateAndGetCardBalance(c echo.Context, acc models.Account) (models.Card, error)
 	PostPaymentTransaction(c echo.Context, pl models.PayloadPaymentTransactions) models.ResponseErrors
-	PaymentInquiry(c echo.Context, ppi models.PlPaymentInquiry) (string, models.ResponseErrors)
+	PaymentInquiry(c echo.Context, ppi models.PlPaymentInquiry) (map[string]interface{}, models.ResponseErrors)
 	PostPaymentTrxCore(c echo.Context, pl models.PlPaymentTrxCore) models.ResponseErrors
 	DecreasedSTL(c echo.Context, pl models.PayloadCoreDecreasedSTL) models.ResponseErrors
 }

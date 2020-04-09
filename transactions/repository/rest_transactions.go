@@ -52,7 +52,8 @@ func (ra *restTransactions) GetBRICardInformation(c echo.Context, acc models.Acc
 	return briCardBal, nil
 }
 
-func (rt *restTransactions) CorePaymentInquiry(c echo.Context, pl models.PlPaymentInquiry) (string, error) {
+func (rt *restTransactions) CorePaymentInquiry(c echo.Context, pl models.PlPaymentInquiry) (map[string]interface{}, error) {
+	response := map[string]interface{}{}
 	respSwitching := api.SwitchingResponse{}
 	requestDataSwitching := map[string]interface{}{
 		"amount":         pl.PaymentAmount,
@@ -64,19 +65,13 @@ func (rt *restTransactions) CorePaymentInquiry(c echo.Context, pl models.PlPayme
 	errSwitching := api.RetryableSwitchingPost(c, req, "/gadai/inquiry", &respSwitching)
 
 	if errSwitching != nil {
-		return "", errSwitching
+		return response, errSwitching
 	}
 
 	if respSwitching.ResponseCode != api.APIRCSuccess {
 		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc}))
-		return "", models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc})
+		return response, models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc})
 	}
 
-	if _, ok := respSwitching.ResponseData["reffSwitching"].(string); !ok {
-		logger.Make(c, nil).Debug(models.ErrSetVar)
-
-		return "", models.ErrSetVar
-	}
-
-	return respSwitching.ResponseData["reffSwitching"].(string), nil
+	return respSwitching.ResponseData, nil
 }
