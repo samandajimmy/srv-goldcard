@@ -17,6 +17,7 @@ type Repository interface {
 	PostPaymentInquiry(c echo.Context, paymentInq models.PaymentInquiry) error
 	GetPayInquiryByRefTrx(c echo.Context, acc models.Account, refTrx string) (models.PaymentInquiry, error)
 	UpdatePayInquiryStatusPaid(c echo.Context, pay models.PaymentInquiry) error
+	GetAllActiveAccount(c echo.Context) ([]models.Account, error)
 }
 
 // RestRepository represent the rest transactions repository contract

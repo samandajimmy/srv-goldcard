@@ -149,7 +149,7 @@ func (pdsNotif *PdsNotification) MaskChar(txt string, strt int, end int) string 
 // TimeParser to parse date string to date and time
 func (pdsNotif *PdsNotification) TimeParser(param string) (string, string) {
 	trxDate, _ := time.Parse("2006-01-02 15:04:05", param)
-	return trxDate.Format("02-01-2006"), trxDate.Format("15:04:05")
+	return trxDate.Format("02/01/2006"), trxDate.Format("15:04:05")
 }
 
 // GcTransaction to send goldcard transaction notification to pds
@@ -183,6 +183,53 @@ func (pdsNotif *PdsNotification) GcTransaction(trx Transaction) {
 		{
 			Key:   "Tempat",
 			Value: trx.Description,
+		},
+	}
+}
+
+// GcDecreasedSTL to send new card limit notification in cause of decreased STL
+func (pdsNotif *PdsNotification) GcDecreasedSTL(acc Account, oldCard Card, refTrx string) {
+	ac := accounting.Accounting{Symbol: "Rp ", Thousand: "."}
+	trxDate, trxTime := pdsNotif.TimeParser(time.Now().Format(DateTimeFormat))
+
+	pdsNotif.NotificationTitle = "Kartu Emas"
+	pdsNotif.PhoneNumber = acc.PersonalInformation.HandPhoneNumber
+	pdsNotif.CIF = acc.CIF
+	pdsNotif.ContentTitle = "Informasi Limit Kartu Emas"
+	pdsNotif.ContentDescription = []string{"Karena ada penurunan harga emas yang sangat signifikan, berikut informasi perubahan limit Kartu Emas kamu saat ini"}
+	pdsNotif.NotificationDescription = "Informasi Limit Kartu Emas"
+	pdsNotif.ContentList = []ContentList{
+		{
+			Key:   "Tanggal",
+			Value: trxDate,
+		},
+		{
+			Key:   "Waktu",
+			Value: trxTime[:5],
+		},
+		{
+			Key:   "Referensi",
+			Value: refTrx,
+		},
+		{
+			Key:   "Limit Lama",
+			Value: ac.FormatMoney(oldCard.CardLimit),
+		},
+		{
+			Key:   "Saldo Gram Lama",
+			Value: fmt.Sprintf("%.4f", oldCard.GoldLimit) + " gram",
+		},
+		{
+			Key:   "Limit Baru",
+			Value: ac.FormatMoney(acc.Card.CardLimit),
+		},
+		{
+			Key:   "Harga/0.01gr",
+			Value: ac.FormatMoney(acc.Card.StlLimit / 100),
+		},
+		{
+			Key:   "Pengajuan Gram Limit",
+			Value: fmt.Sprintf("%.4f", acc.Card.GoldLimit) + " gram",
 		},
 	}
 }

@@ -16,13 +16,14 @@ type transactionsUseCase struct {
 	trxRepo  transactions.Repository
 	billRepo billings.Repository
 	trxrRepo transactions.RestRepository
+	rRepo    registrations.Repository
 	rrRepo   registrations.RestRepository
 }
 
 // TransactionsUseCase represent Transactions Use Case
 func TransactionsUseCase(trxRepo transactions.Repository, billRepo billings.Repository,
-	trxrRepo transactions.RestRepository, rrRepo registrations.RestRepository) transactions.UseCase {
-	return &transactionsUseCase{trxRepo, billRepo, trxrRepo, rrRepo}
+	trxrRepo transactions.RestRepository, rRepo registrations.Repository, rrRepo registrations.RestRepository) transactions.UseCase {
+	return &transactionsUseCase{trxRepo, billRepo, trxrRepo, rRepo, rrRepo}
 }
 
 func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl models.PayloadBRIPendingTransactions) models.ResponseErrors {
@@ -421,4 +422,53 @@ func (trxUS *transactionsUseCase) payTheBill(c echo.Context, bill *models.Billin
 	bill.DebtSTL = trx.CurrStl
 
 	return nil
+}
+
+// DecreasedSTL is a func to recalculate gold card rupiah limit when occurs stl decreased equal or more than 5%
+func (trxUS *transactionsUseCase) DecreasedSTL(c echo.Context, pcds models.PayloadCoreDecreasedSTL) models.ResponseErrors {
+	var errors models.ResponseErrors
+	var notif models.PdsNotification
+	var oldCard models.Card
+
+	// check if payload decreased five percent is false then return
+	if pcds.DecreasedFivePercent != "true" {
+		return errors
+	}
+
+	// Get CurrentStl from Core payload
+	currStl := pcds.STL
+
+	// Get All Active Account
+	allAccs, err := trxUS.trxRepo.GetAllActiveAccount(c)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
+		return errors
+	}
+
+	for _, acc := range allAccs {
+		notif = models.PdsNotification{}
+		oldCard = acc.Card
+
+		// set card limit
+		err = acc.Card.SetCardLimit(currStl)
+
+		if err != nil {
+			logger.Make(c, nil).Debug(err)
+			continue
+		}
+
+		// update card limit in db
+		refId, err := trxUS.rRepo.UpdateCardLimit(c, acc, true)
+
+		if err != nil {
+			continue
+		}
+
+		// Send notification to user in pds
+		notif.GcDecreasedSTL(acc, oldCard, refId)
+		_ = trxUS.rrRepo.SendNotification(c, notif, "mobile")
+	}
+
+	return errors
 }
