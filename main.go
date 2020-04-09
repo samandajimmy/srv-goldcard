@@ -117,7 +117,6 @@ func main() {
 		logger.Make(nil, nil).Fatal(err)
 	}
 
-	http.Handle("/public/", http.StripPrefix("/public/", http.FileServer(http.Dir("public"))))
 }
 
 func ping(echTx echo.Context) error {
