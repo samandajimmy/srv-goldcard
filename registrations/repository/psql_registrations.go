@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-pg/pg/v9"
+	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -319,16 +320,30 @@ func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, acc
 	return city, zipcode, nil
 }
 
-func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account) error {
+func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account, isRecalculate bool) (string, error) {
 	var nilFilters []string
-	upsertQuery := `INSERT INTO cards (card_limit, created_at, gold_limit, stl_limit, balance,
-		gold_balance, stl_balance) VALUES ($1, $2, $3, $4, $1, $3, $4) RETURNING id;`
-	upsertFilters := []string{"cardID"}
+	var upsertFilters []string
+	var upsertQuery string
+	refId, _ := uuid.NewRandom()
 
-	if acc.CardID != 0 {
+	// query if account has not any card data yet
+	upsertFilters = []string{"cardID"}
+	if acc.CardID == 0 {
+		upsertQuery = `INSERT INTO cards (card_limit, created_at, gold_limit, stl_limit, balance,
+			gold_balance, stl_balance) VALUES ($1, $2, $3, $4, $1, $3, $4) RETURNING id;`
+	}
+
+	// query if account has any card data then update
+	if acc.CardID != 0 && !isRecalculate {
 		upsertQuery = `UPDATE cards set card_limit = $1, updated_at = $2, gold_limit = $3,
 			stl_limit = $4, balance = $1, gold_balance = $3, stl_balance = $4 WHERE id = ` +
 			strconv.Itoa(int(acc.CardID)) + ` RETURNING id;`
+	}
+
+	// query if its recalculating new limit for next card cycle
+	if acc.CardID != 0 && isRecalculate {
+		upsertQuery = `UPDATE cards set card_limit = $1, updated_at = $2, gold_limit = $3,
+			stl_limit = $4 WHERE id = ` + strconv.Itoa(int(acc.CardID)) + ` RETURNING id;`
 	}
 
 	stmts := []*gcdb.PipelineStmt{
@@ -336,6 +351,9 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 			acc.Card.GoldLimit, acc.Card.StlLimit),
 		gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1
 			WHERE id = $2`, nilFilters, time.Now(), acc.ID),
+		gcdb.NewPipelineStmt(`INSERT INTO limit_updates (ref_id, limit_date, account_id, card_limit, gold_limit, stl_limit,
+			created_at) VALUES ($1, $2, $3, $4, $5, $6, $7);`, nilFilters, refId.String(), time.Now(), acc.ID, acc.Card.CardLimit,
+			acc.Card.GoldLimit, acc.Card.StlLimit, time.Now()),
 	}
 
 	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
@@ -345,10 +363,10 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return err
+		return "", err
 	}
 
-	return nil
+	return refId.String(), nil
 }
 
 func (regis *psqlRegistrationsRepository) UpdateBrixkeyID(c echo.Context, acc models.Account) error {

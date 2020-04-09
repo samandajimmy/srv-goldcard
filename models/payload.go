@@ -279,6 +279,12 @@ type PayloadBRIPegadaianBillings struct {
 	RefID         string `json:"refID" validate:"required"`
 }
 
+// PayloadCoreDecreasedSTL a struct store all payload for new gold price when stl decreased bigger than 5 %
+type PayloadCoreDecreasedSTL struct {
+	STL                  int64  `json:"stl" validate:"required"`
+	DecreasedFivePercent string `json:"decreasedFivePercent" validate:"required"`
+}
+
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI
 func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.FirstName = StringNameFormatter(plBRIReg.FirstName, 15)

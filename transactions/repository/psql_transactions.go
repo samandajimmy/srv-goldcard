@@ -217,3 +217,17 @@ func (PSQLTrx *psqlTransactionsRepository) PostPayment(c echo.Context, trx model
 
 	return nil
 }
+
+func (PSQLTrx *psqlTransactionsRepository) GetAllActiveAccount(c echo.Context) ([]models.Account, error) {
+	var listActiveAccount []models.Account
+	err := PSQLTrx.DBpg.Model(&listActiveAccount).Relation("Card").Relation("PersonalInformation").
+		Where("account.status = ?", models.AccStatusActive).Select()
+
+	if err != nil || (listActiveAccount == nil) {
+		logger.Make(nil, nil).Debug(err)
+
+		return listActiveAccount, err
+	}
+
+	return listActiveAccount, nil
+}
