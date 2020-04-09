@@ -4,6 +4,30 @@ import (
 	"time"
 )
 
+var (
+	jobCategoryStr = map[int64]string{
+		1: "Karyawan",
+		2: "Profesional",
+		3: "Pensiunan",
+		4: "TNI/POLRI",
+		5: "Wiraswasta",
+		6: "Lain-lain",
+	}
+
+	jobBidangUsahaStr = map[int64]string{
+		10: "Agricultural & Animal Rising",
+		20: "Aneka Industry",
+		30: "Customer Product",
+		40: "Financial",
+		50: "Goverment",
+		60: "Industry and Chemical",
+		70: "Infrastructure",
+		80: "Mining",
+		90: "Trading and Service",
+		99: "Lain-lain",
+	}
+)
+
 // DefJobTitle to store default value of job title
 const DefJobTitle = "MANAGER"
 
@@ -48,4 +72,26 @@ func (occ *Occupation) MappingOccupation(pl PayloadOccupation) error {
 	occ.Income = pl.Income * 12
 
 	return nil
+}
+
+// GetJobCategory to get job category
+func (occ *Occupation) GetJobCategory(jobCategory int64) string {
+	for k, v := range jobCategoryStr {
+		if k == jobCategory {
+			return v
+		}
+	}
+
+	return ""
+}
+
+// GetJobBidangUsaha to get job bidang usaha
+func (occ *Occupation) GetJobBidangUsaha(jobBidangUsaha int64) string {
+	for k, v := range jobBidangUsahaStr {
+		if k == jobBidangUsaha {
+			return v
+		}
+	}
+
+	return ""
 }

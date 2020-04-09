@@ -26,6 +26,12 @@ const (
 
 	// DefAppDocType is to store var default application document type
 	DefAppDocType = "D"
+
+	// SlipTeTemplatePath is to store path file template Slip TE
+	SlipTeTemplatePath = "template/template_slip.html"
+
+	// ApplicationFormTemplatePath is to store path file Application Form BRI
+	ApplicationFormTemplatePath = "template/template_application_form.html"
 )
 
 var (
@@ -109,6 +115,7 @@ type Applications struct {
 	ApplicationNumber        string     `json:"applicationNumber" validate:"required"`
 	Status                   string     `json:"status"`
 	SavingAccount            string     `json:"savingAccount" validate:"required"`
+	SavingAccountOpeningDate string     `json:"savingAccountOpeningDate" validate:"required"`
 	CurrentStep              int64      `json:"currentStep"`
 	ApplicationProcessedDate time.Time  `json:"applicationProcessedDate,omitempty"`
 	CardProcessedDate        time.Time  `json:"cardProcessedDate,omitempty"`

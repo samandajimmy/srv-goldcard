@@ -10,6 +10,19 @@ var (
 	AccStatusActive = "active"
 
 	appendXCardNumber = "xxxxxx"
+
+	relationStr = map[int64]string{
+		1:  "Suami/Istri",
+		2:  "Anak",
+		3:  "Adik",
+		4:  "Kakak Kandung",
+		5:  "Orang Tua",
+		6:  "Saudara",
+		7:  "HRD",
+		8:  "Atasan",
+		9:  "Lain-lain",
+		10: "Applicant",
+	}
 )
 
 // Account is a struct to store account data
@@ -42,7 +55,7 @@ type Account struct {
 }
 
 // MappingRegistrationData a function to map all data registration
-func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalInformation) error {
+func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalInformation, paf PayloadApplicationForm) error {
 	acc.Card.CardName = pl.CardName
 
 	acc.PersonalInformation.FirstName = pl.FirstName
@@ -78,14 +91,14 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.SetNPWP(pl.Npwp)
 
 	// set gold saving slip Base64
-	slipBase64, err := GenerateGoldSavingPDF(pl)
+	slipBase64, err := GeneratePDF(paf, SlipTeTemplatePath)
 
 	if err != nil {
 		return err
 	}
 
 	// set App Form Base64
-	appFormBase64, err := GenerateAppFormPDF(pl)
+	appFormBase64, err := GeneratePDF(paf, ApplicationFormTemplatePath)
 
 	if err != nil {
 		return err
@@ -170,4 +183,15 @@ type AddressData struct {
 	Province    string `json:"province"`
 	Subdistrict string `json:"subdistrict"`
 	Village     string `json:"village"`
+}
+
+// GetRelation to get relation text
+func (acc *Account) GetRelation(relation int64) string {
+	for k, v := range relationStr {
+		if k == relation {
+			return v
+		}
+	}
+
+	return ""
 }

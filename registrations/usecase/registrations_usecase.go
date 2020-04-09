@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"gade/srv-goldcard/activations"
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -8,8 +9,7 @@ import (
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/retry"
 	"gade/srv-goldcard/transactions"
-
-	u "github.com/Mindinventory/Golang-HTML-TO-PDF-Converter/pdfGenerator"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
@@ -20,11 +20,12 @@ type registrationsUseCase struct {
 	rrr      registrations.RestRepository
 	phUC     process_handler.UseCase
 	tUseCase transactions.UseCase
+	arRepo   activations.RestRepository
 }
 
 // RegistrationsUseCase represent Registrations Use Case
-func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.RestRepository, phUC process_handler.UseCase, tUseCase transactions.UseCase) registrations.UseCase {
-	return &registrationsUseCase{regRepo, rrr, phUC, tUseCase}
+func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.RestRepository, phUC process_handler.UseCase, tUseCase transactions.UseCase, arRepo activations.RestRepository) registrations.UseCase {
+	return &registrationsUseCase{regRepo, rrr, phUC, tUseCase, arRepo}
 }
 
 func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAddress) error {
@@ -141,7 +142,54 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 		return err
 	}
 
-	err = acc.MappingRegistrationData(c, pl)
+	// get user effective balance
+	userDetail, err := reg.arRepo.GetDetailGoldUser(c, acc.Application.SavingAccount)
+
+	if err != nil {
+		return err
+	}
+
+	if _, ok := userDetail["saldoEfektif"].(string); !ok {
+		return err
+	}
+
+	goldEffBalance, err := strconv.ParseFloat(userDetail["saldoEfektif"].(string), 64)
+
+	if err != nil {
+		return err
+	}
+
+	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
+	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID)
+
+	if err != nil {
+		return models.ErrGetDocument
+	}
+
+	// Get Signatory Name for Slip TE Document
+	signatoryName, err := reg.regRepo.GetSignatoryNameParam(c)
+
+	if err != nil {
+		return err
+	}
+
+	// Get Signatory Nip for Slip TE Document
+	signatoryNip, err := reg.regRepo.GetSignatoryNipParam(c)
+
+	if err != nil {
+		return err
+	}
+
+	// Mapping Application Form Data
+	appFormData := models.PayloadApplicationForm{}
+
+	err = appFormData.MappingApplicationForm(acc, docs, signatoryName, signatoryNip, goldEffBalance)
+
+	if err != nil {
+		return models.ErrMappingData
+	}
+
+	err = acc.MappingRegistrationData(c, pl, appFormData)
 
 	if err != nil {
 		return models.ErrMappingData
@@ -280,6 +328,7 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 	}
 
 	acc.Application.SavingAccount = pl.AccountNumber
+	acc.Application.SavingAccountOpeningDate = pl.SavingAccountOpeningDate
 
 	err = reg.regRepo.PostSavingAccount(c, acc)
 
@@ -293,52 +342,6 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 	go func() {
 		_ = reg.regRepo.UpdateApplication(c, acc.Application, []string{"current_step"})
 	}()
-
-	return nil
-}
-
-func (reg *registrationsUseCase) GenerateApplicationForm(c echo.Context, pan models.PayloadAccNumber) error {
-	acc, err := reg.tUseCase.CheckAccountByAccountNumber(c, pan)
-
-	if err != nil {
-		return err
-	}
-
-	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
-	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID)
-
-	if err != nil {
-		return models.ErrGetDocument
-	}
-
-	r := u.NewRequestPdf("")
-
-	// Html template path
-	templatePath := "template/template_application_form.html"
-
-	// Path for download pdf
-	outputPath := "application_form/application_form.pdf"
-
-	appFormData := models.PayloadApplicationForm{}
-
-	// Mapping Application Form Data
-	err = appFormData.MappingApplicationForm(acc, docs)
-
-	if err != nil {
-		return models.ErrMappingData
-	}
-
-	// Mapping Application Form Data to Html
-	err = r.ParseTemplate(templatePath, appFormData)
-	if err != nil {
-		return err
-	}
-
-	// Generate Pdf File
-	_, err = r.GeneratePDF(outputPath)
-	if err != nil {
-		return err
-	}
 
 	return nil
 }

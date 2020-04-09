@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"github.com/leekchan/accounting"
 )
 
 var (
@@ -13,64 +15,6 @@ var (
 
 	//textFileNotFound is var to store if file is not found in database
 	textFileNotFound = "Tidak ada"
-
-	homeStatusStr = map[int64]string{
-		1: "Milik Sendiri",
-		2: "Sewa / Kos",
-		3: "Milik Keluarga",
-		4: "Milik Perusahaan",
-		5: "Lain-lain",
-	}
-
-	educationStr = map[int64]string{
-		1: "SD/SMP",
-		2: "SMA",
-		3: "Diploma",
-		4: "S1",
-		5: "S2",
-		6: "S3",
-	}
-
-	maritalStatusStr = map[int64]string{
-		1: "Single",
-		2: "Menikah",
-		3: "Duda/Janda",
-	}
-
-	jobCategoryStr = map[int64]string{
-		1: "Karyawan",
-		2: "Profesional",
-		3: "Pensiunan",
-		4: "TNI/POLRI",
-		5: "Wiraswasta",
-		6: "Lain-lain",
-	}
-
-	jobBidangUsahaStr = map[int64]string{
-		10: "Agricultural & Animal Rising",
-		20: "Aneka Industry",
-		30: "Customer Product",
-		40: "Financial",
-		50: "Goverment",
-		60: "Industry and Chemical",
-		70: "Infrastructure",
-		80: "Mining",
-		90: "Trading and Service",
-		99: "Lain-lain",
-	}
-
-	relationStr = map[int64]string{
-		1:  "Suami/Istri",
-		2:  "Anak",
-		3:  "Adik",
-		4:  "Kakak Kandung",
-		5:  "Orang Tua",
-		6:  "Saudara",
-		7:  "HRD",
-		8:  "Atasan",
-		9:  "Lain-lain",
-		10: "Applicant",
-	}
 )
 
 // PayloadList a struct to store all payload for a list response
@@ -100,8 +44,9 @@ type PayloadAppNumber struct {
 
 // PayloadSavingAccount a struct to store all payload for saving account
 type PayloadSavingAccount struct {
-	ApplicationNumber string `json:"applicationNumber" validate:"required"`
-	AccountNumber     string `json:"accountNumber" validate:"required"`
+	ApplicationNumber        string `json:"applicationNumber" validate:"required"`
+	AccountNumber            string `json:"accountNumber" validate:"required"`
+	SavingAccountOpeningDate string `json:"savingAccountOpeningDate" validate:"required"`
 }
 
 // PayloadCardLimit a struct to store all payload for card limit
@@ -324,7 +269,8 @@ type PayloadBriGetCardInformation struct {
 // Payload PayloadApplicationForm a struct to store all payload for Application Form BRI
 type PayloadApplicationForm struct {
 	Account            Account `json:"account"`
-	Date               string  `json:"createdAt"`
+	Date               string  `json:"date"`
+	TimeStamp          string  `json:"timeStamp"`
 	TextHomeStatus     string  `json:"textHomeStatus"`
 	TextEducation      string  `json:"textEducation"`
 	TextMaritalStatus  string  `json:"textMaritalStatus"`
@@ -336,6 +282,10 @@ type PayloadApplicationForm struct {
 	FileNpwp           string  `json:"fileNpwp"`
 	FileAppForm        string  `json:"fileAppForm"`
 	FileSlipTe         string  `json:"fileSlipTe"`
+	CardLimitFormat    string  `json:"cardLimitFormat"`
+	SignatoryName      string  `json:"signatoryName"`
+	SignatoryNip       string  `json:"signatoryNip"`
+	GoldEffBalance     float64 `json:"goldEffBalance"`
 }
 
 // PaginationPayload struct to store pagination payload
@@ -401,21 +351,30 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	return nil
 }
 
-// MappingApplicationForm a function to mapping application form data BRI
-func (plAf *PayloadApplicationForm) MappingApplicationForm(acc Account, docs []Document) error {
+// MappingApplicationForm a function to mapping application form BRI and slip te data
+func (plAf *PayloadApplicationForm) MappingApplicationForm(acc Account, docs []Document, signatoryName string, signatoryNip string, goldEffBalance float64) error {
+	time := time.Now().UTC()
+
+	ac := accounting.Accounting{Symbol: "Rp ", Thousand: "."}
+
 	plAf.Account = acc
-	plAf.Date = time.Now().UTC().Format(DateTimeFormat)
-	plAf.TextHomeStatus = plAf.GetHomeStatus(acc.PersonalInformation.HomeStatus)
-	plAf.TextEducation = plAf.GetEducation(acc.PersonalInformation.Education)
-	plAf.TextMaritalStatus = plAf.GetMaritalStatus(acc.PersonalInformation.MaritalStatus)
-	plAf.TextJobBidangUsaha = plAf.GetJobBidangUsaha(acc.Occupation.JobBidangUsaha)
-	plAf.TextJobCategory = plAf.GetJobCategory(acc.Occupation.JobCategory)
-	plAf.TextRelation = plAf.GetRelation(acc.EmergencyContact.Relation)
+	plAf.TimeStamp = time.Format(DateTimeFormat)
+	plAf.Date = time.Format(DDMMYYYY)
+	plAf.TextHomeStatus = acc.PersonalInformation.GetHomeStatus(acc.PersonalInformation.HomeStatus)
+	plAf.TextEducation = acc.PersonalInformation.GetEducation(acc.PersonalInformation.Education)
+	plAf.TextMaritalStatus = acc.PersonalInformation.GetMaritalStatus(acc.PersonalInformation.MaritalStatus)
+	plAf.TextJobBidangUsaha = acc.Occupation.GetJobBidangUsaha(acc.Occupation.JobBidangUsaha)
+	plAf.TextJobCategory = acc.Occupation.GetJobCategory(acc.Occupation.JobCategory)
+	plAf.TextRelation = acc.GetRelation(acc.EmergencyContact.Relation)
+	plAf.SignatoryName = signatoryName
+	plAf.SignatoryNip = signatoryNip
 	plAf.FileKtp = textFileNotFound
 	plAf.FileNpwp = textFileNotFound
 	plAf.FileSelfie = textFileNotFound
-	plAf.FileAppForm = textFileNotFound
+	plAf.FileAppForm = textFileFound
 	plAf.FileSlipTe = textFileNotFound
+	plAf.CardLimitFormat = ac.FormatMoney(acc.Card.CardLimit)
+	plAf.GoldEffBalance = goldEffBalance
 
 	for _, document := range docs {
 		switch document.Type {
@@ -427,76 +386,8 @@ func (plAf *PayloadApplicationForm) MappingApplicationForm(acc Account, docs []D
 			plAf.FileSelfie = textFileFound
 		case "slip_te":
 			plAf.FileSlipTe = textFileFound
-		case "app_form":
-			plAf.FileAppForm = textFileFound
 		}
 	}
 
 	return nil
-}
-
-// GetHomeStatus to get home status
-func (plAf *PayloadApplicationForm) GetHomeStatus(homeStatus int64) string {
-	for k, v := range homeStatusStr {
-		if k == homeStatus {
-			return v
-		}
-	}
-
-	return ""
-}
-
-// GetEducation to get education text
-func (plAf *PayloadApplicationForm) GetEducation(education int64) string {
-	for k, v := range educationStr {
-		if k == education {
-			return v
-		}
-	}
-
-	return ""
-}
-
-// GetMaritalStatus to get marital status text
-func (plAf *PayloadApplicationForm) GetMaritalStatus(maritalStatus int64) string {
-	for k, v := range maritalStatusStr {
-		if k == maritalStatus {
-			return v
-		}
-	}
-
-	return ""
-}
-
-// GetJobCategory to get job category
-func (plAf *PayloadApplicationForm) GetJobCategory(jobCategory int64) string {
-	for k, v := range jobCategoryStr {
-		if k == jobCategory {
-			return v
-		}
-	}
-
-	return ""
-}
-
-// GetJobBidangUsaha to get job bidang usaha
-func (plAf *PayloadApplicationForm) GetJobBidangUsaha(jobBidangUsaha int64) string {
-	for k, v := range jobBidangUsahaStr {
-		if k == jobBidangUsaha {
-			return v
-		}
-	}
-
-	return ""
-}
-
-// GetRelation to get relation text
-func (plAf *PayloadApplicationForm) GetRelation(relation int64) string {
-	for k, v := range relationStr {
-		if k == relation {
-			return v
-		}
-	}
-
-	return ""
 }
