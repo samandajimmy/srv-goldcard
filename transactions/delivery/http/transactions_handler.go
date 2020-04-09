@@ -32,6 +32,7 @@ func NewTransactionsHandler(
 	echoGroup.API.GET("/transactions/balance", handler.GetCardBalance)
 	echoGroup.API.POST("/transactions/payment/inquiry", handler.PaymentInquiry)
 	echoGroup.API.POST("/transactions/payment/core", handler.paymentTransactionCore)
+	echoGroup.API.POST("/transactions/decreasedstl", handler.DecreasedSTL)
 }
 
 // Registrations a handler to handle goldcard registrations
@@ -217,5 +218,35 @@ func (th *TransactionsHandler) PaymentInquiry(c echo.Context) error {
 	}
 
 	th.response.SetResponse(response, &err)
+	return th.response.Body(c, nil)
+}
+
+func (th *TransactionsHandler) DecreasedSTL(c echo.Context) error {
+	var pcds models.PayloadCoreDecreasedSTL //di tiket wasis
+	th.response, th.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pcds); err != nil {
+		th.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		th.response.SetResponse("", &th.respErrors)
+
+		return th.response.Body(c, err)
+	}
+
+	if err := c.Validate(pcds); err != nil {
+		th.respErrors.SetTitle(err.Error())
+		th.response.SetResponse("", &th.respErrors)
+
+		return th.response.Body(c, err)
+	}
+
+	err := th.transactionsUseCase.DecreasedSTL(c, pcds)
+
+	if err.Title != "" {
+		th.response.SetResponse("", &err)
+
+		return th.response.Body(c, nil)
+	}
+
+	th.response.SetResponse("", &err)
 	return th.response.Body(c, nil)
 }
