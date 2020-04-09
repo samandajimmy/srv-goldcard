@@ -1,10 +1,12 @@
 package productreqs
 
 import (
+	"gade/srv-goldcard/models"
+
 	"github.com/labstack/echo"
 )
 
 // UseCase represent the product requirements usecases
 type UseCase interface {
-	ProductRequirements(echo.Context) (map[string]interface{}, error)
+	ProductRequirements(echo.Context) (models.Requirements, error)
 }

@@ -2,47 +2,325 @@ package http
 
 import (
 	"gade/srv-goldcard/models"
-	"net/http"
+	"gade/srv-goldcard/registrations"
 
 	"github.com/labstack/echo"
 )
 
-var response models.Response
-
 // RegistrationsHandler represent the httphandler for registrations
 type RegistrationsHandler struct {
+	response             models.Response
+	respErrors           models.ResponseErrors
+	registrationsUseCase registrations.UseCase
 }
 
 // NewRegistrationsHandler represent to registration gold card
-func NewRegistrationsHandler(echoGroup models.EchoGroup) {
-	handler := &RegistrationsHandler{}
+func NewRegistrationsHandler(
+	echoGroup models.EchoGroup,
+	regUseCase registrations.UseCase) {
+	handler := &RegistrationsHandler{
+		registrationsUseCase: regUseCase,
+	}
 
 	// End Point For External
 	echoGroup.API.POST("/registrations", handler.Registrations)
+	echoGroup.API.POST("/registrations/address", handler.PostAddress)
+	echoGroup.API.POST("/registrations/saving-account", handler.PostSavingAccount)
+	echoGroup.API.POST("/registrations/personal-informations", handler.personalInfomations)
+	echoGroup.API.POST("/registrations/card-limit", handler.cardLimit)
+	echoGroup.API.POST("/registrations/final", handler.final)
+	echoGroup.API.POST("/registrations/application-status", handler.applicationStatus)
+	echoGroup.API.POST("/registrations/occupation", handler.PostOccupation)
+	echoGroup.API.POST("/registrations/scheduler/final", handler.schedulerFinal)
+
 }
 
-// Registrations a handler to create a campaign
+// Registrations a handler to handle goldcard registrations
 func (reg *RegistrationsHandler) Registrations(c echo.Context) error {
-	var registrations models.Registrations
+	var pr models.PayloadRegistration
+	reg.response, reg.respErrors = models.NewResponse()
 
-	response = models.Response{}
-	err := c.Bind(&registrations)
+	if err := c.Bind(&pr); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
 
-	if err != nil {
-		response.Status = models.StatusError
-		response.Message = err.Error()
-		return c.JSON(http.StatusOK, response)
+		return reg.response.Body(c, err)
 	}
 
-	api, _ := models.NewAPI("https://apidigitaldev.pegadaian.co.id/v2", "application/x-www-form-urlencoded")
-	req, _ := api.Request("/profile/testing_go", "POST", registrations)
-	_, _ = api.Do(req, &response)
+	if err := c.Validate(pr); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
 
-	if err != nil {
-		response.Status = models.StatusError
-		response.Message = err.Error()
-		return c.JSON(http.StatusOK, response)
+		return reg.response.Body(c, err)
 	}
 
-	return c.JSON(http.StatusOK, response)
+	resp, err := reg.registrationsUseCase.PostRegistration(c, pr)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse(resp, &reg.respErrors)
+
+	return reg.response.Body(c, err)
+}
+
+// PostAddress a handler to update Address in table personal_informations
+func (reg *RegistrationsHandler) PostAddress(c echo.Context) error {
+	var plAddr models.PayloadAddress
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&plAddr); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(plAddr); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.PostAddress(c, plAddr)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
+
+	return reg.response.Body(c, err)
+}
+
+// PostSavingAccount a handler to update Saving Account in table applications
+func (reg *RegistrationsHandler) PostSavingAccount(c echo.Context) error {
+	var pl models.PayloadSavingAccount
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.PostSavingAccount(c, pl)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
+	return reg.response.Body(c, err)
+}
+
+func (reg *RegistrationsHandler) personalInfomations(c echo.Context) error {
+	var ppi models.PayloadPersonalInformation
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&ppi); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(ppi); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.PostPersonalInfo(c, ppi)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
+
+	return reg.response.Body(c, err)
+}
+
+func (reg *RegistrationsHandler) cardLimit(c echo.Context) error {
+	var pl models.PayloadCardLimit
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.PostCardLimit(c, pl)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
+
+	return reg.response.Body(c, err)
+}
+
+func (reg *RegistrationsHandler) schedulerFinal(c echo.Context) error {
+	var pl models.PayloadAppNumber
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.FinalRegistrationScheduler(c, pl)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
+
+	return reg.response.Body(c, err)
+}
+
+func (reg *RegistrationsHandler) final(c echo.Context) error {
+	var pl models.PayloadAppNumber
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.FinalRegistrationPdsApi(c, pl)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
+
+	return reg.response.Body(c, err)
+}
+
+func (reg *RegistrationsHandler) applicationStatus(c echo.Context) error {
+	var pl models.PayloadAppNumber
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	resp, err := reg.registrationsUseCase.GetAppStatus(c, pl)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse(resp, &reg.respErrors)
+
+	return reg.response.Body(c, err)
+}
+
+// PostOccupation a handler to update occipation in table occupations
+func (reg *RegistrationsHandler) PostOccupation(c echo.Context) error {
+	var pl models.PayloadOccupation
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.PostOccupation(c, pl)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
+	return reg.response.Body(c, err)
 }

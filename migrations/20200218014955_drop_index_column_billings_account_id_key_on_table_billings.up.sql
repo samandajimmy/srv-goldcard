@@ -1,0 +1,2 @@
+ALTER TABLE billings 
+DROP CONSTRAINT billings_account_id_key
