@@ -1,0 +1,2 @@
+ALTER TABLE cards
+ADD COLUMN encrypted_card_number VARCHAR(100) DEFAULT NULL;
