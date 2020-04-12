@@ -129,16 +129,7 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 		return respActNil, err
 	}
 
-	// book hit card information
-	cardInformation, err := aUsecase.trRepo.GetBRICardInformation(c, acc)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return respActNil, err
-	}
-
-	err = acc.MappingCardActivationsData(c, pa, cardInformation)
+	err = acc.MappingCardActivationsData(c, pa)
 
 	if err != nil {
 		return respActNil, models.ErrMappingData
@@ -223,7 +214,17 @@ func (aUsecase *activationsUseCase) afterActivationGoldcard(c echo.Context, acc 
 	}
 
 	updateActivation := func() {
-		err := aUsecase.aRepo.PostActivations(c, *acc)
+		// get card information
+		cardInformation, err := aUsecase.trRepo.GetBRICardInformation(c, *acc)
+
+		if err != nil {
+			logger.Make(c, nil).Debug(err)
+			errActUpdate <- err
+			return
+		}
+
+		acc.Card.EncryptedCardNumber = cardInformation.BillKey
+		err = aUsecase.aRepo.PostActivations(c, *acc)
 
 		if err != nil {
 			logger.Make(c, nil).Debug(err)

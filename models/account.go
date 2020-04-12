@@ -116,14 +116,12 @@ func (acc *Account) MappingAddressData(c echo.Context, pl PayloadAddress) error 
 }
 
 // MappingCardActivationsData a function to map all data activations
-func (acc *Account) MappingCardActivationsData(c echo.Context, pa PayloadActivations, cardInformation BRICardBalance) error {
+func (acc *Account) MappingCardActivationsData(c echo.Context, pa PayloadActivations) error {
 	acc.Card.CardNumber = pa.FirstSixDigits + appendXCardNumber + pa.LastFourDigits
 	acc.Card.ValidUntil = pa.ExpDate
 	acc.Application.Status = AppStatusActive
 	acc.Card.Status = cardStatusActive
 	acc.Status = AccStatusActive
-	// add mapping encryptedCard for mapping convert GTE from scheduler
-	acc.Card.EncryptedCardNumber = cardInformation.BillKey
 
 	return nil
 }
