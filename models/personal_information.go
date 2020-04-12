@@ -16,7 +16,8 @@ var (
 		defWNI: "WNI",
 		defWNA: "WNA",
 	}
-	homeStatusStr = map[int64]string{
+	// HomeStatusStr variable to store Home Status
+	HomeStatusStr = map[int64]string{
 		1: "Milik Sendiri",
 		2: "Sewa / Kos",
 		3: "Milik Keluarga",
@@ -24,7 +25,8 @@ var (
 		5: "Lain-lain",
 	}
 
-	educationStr = map[int64]string{
+	// EducationStr variable to store education grade
+	EducationStr = map[int64]string{
 		1: "SD/SMP",
 		2: "SMA",
 		3: "Diploma",
@@ -33,7 +35,8 @@ var (
 		6: "S3",
 	}
 
-	maritalStatusStr = map[int64]string{
+	// MaritalStatusStr variable to store Marital Status
+	MaritalStatusStr = map[int64]string{
 		1: "Single",
 		2: "Menikah",
 		3: "Duda/Janda",
@@ -113,37 +116,4 @@ func (pi *PersonalInformation) SetNPWP(npwp string) {
 	}
 
 	pi.Npwp = defNPWP
-}
-
-// GetHomeStatus to get home status
-func (pi *PersonalInformation) GetHomeStatus(homeStatus int64) string {
-	for k, v := range homeStatusStr {
-		if k == homeStatus {
-			return v
-		}
-	}
-
-	return ""
-}
-
-// GetEducation to get education text
-func (pi *PersonalInformation) GetEducation(education int64) string {
-	for k, v := range educationStr {
-		if k == education {
-			return v
-		}
-	}
-
-	return ""
-}
-
-// GetMaritalStatus to get marital status text
-func (pi *PersonalInformation) GetMaritalStatus(maritalStatus int64) string {
-	for k, v := range maritalStatusStr {
-		if k == maritalStatus {
-			return v
-		}
-	}
-
-	return ""
 }

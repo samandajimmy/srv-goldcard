@@ -1,11 +1,5 @@
 package models
 
-import (
-	"time"
-
-	"github.com/leekchan/accounting"
-)
-
 var (
 	// UseExistingAddress is var to store use existing address status
 	UseExistingAddress int64
@@ -266,28 +260,6 @@ type PayloadBriGetCardInformation struct {
 	BriXkey string `json:"briXkey" validate:"required"`
 }
 
-// Payload PayloadApplicationForm a struct to store all payload for Application Form BRI
-type PayloadApplicationForm struct {
-	Account            Account `json:"account"`
-	Date               string  `json:"date"`
-	TimeStamp          string  `json:"timeStamp"`
-	TextHomeStatus     string  `json:"textHomeStatus"`
-	TextEducation      string  `json:"textEducation"`
-	TextMaritalStatus  string  `json:"textMaritalStatus"`
-	TextJobBidangUsaha string  `json:"textJobBidangUsaha"`
-	TextJobCategory    string  `json:"textJobCategory"`
-	TextRelation       string  `json:"textrelation"`
-	FileKtp            string  `json:"fileKtp"`
-	FileSelfie         string  `json:"fileSelfie"`
-	FileNpwp           string  `json:"fileNpwp"`
-	FileAppForm        string  `json:"fileAppForm"`
-	FileSlipTe         string  `json:"fileSlipTe"`
-	CardLimitFormat    string  `json:"cardLimitFormat"`
-	SignatoryName      string  `json:"signatoryName"`
-	SignatoryNip       string  `json:"signatoryNip"`
-	GoldEffBalance     float64 `json:"goldEffBalance"`
-}
-
 // PaginationPayload struct to store pagination payload
 type PaginationPayload struct {
 	Limit int64 `json:"limit"`
@@ -353,69 +325,6 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.EmergencyCity = StringCutter(plBRIReg.EmergencyCity, 50)
 	plBRIReg.EmergencyPhoneNumber = StringCutter(plBRIReg.EmergencyPhoneNumber, 13)
 	plBRIReg.ProductRequest = StringCutter(plBRIReg.ProductRequest, 30)
-
-	return nil
-}
-
-// MappingApplicationForm a function to mapping application form BRI and slip te data
-func (plAf *PayloadApplicationForm) MappingApplicationForm(params map[string]interface{}) error {
-	time := time.Now().UTC()
-	acc := params["acc"].(Account)
-	docs := params["docs"].([]Document)
-	ac := accounting.Accounting{Symbol: "Rp ", Thousand: "."}
-
-	plAf.Account = acc
-	plAf.TimeStamp = time.Format(DateTimeFormat)
-	plAf.Date = time.Format(DDMMYYYY)
-	plAf.TextHomeStatus = acc.PersonalInformation.GetHomeStatus(acc.PersonalInformation.HomeStatus)
-	plAf.TextEducation = acc.PersonalInformation.GetEducation(acc.PersonalInformation.Education)
-	plAf.TextMaritalStatus = acc.PersonalInformation.GetMaritalStatus(acc.PersonalInformation.MaritalStatus)
-	plAf.TextJobBidangUsaha = acc.Occupation.GetJobBidangUsaha(acc.Occupation.JobBidangUsaha)
-	plAf.TextJobCategory = acc.Occupation.GetJobCategory(acc.Occupation.JobCategory)
-	plAf.TextRelation = acc.GetRelation(acc.EmergencyContact.Relation)
-	plAf.SignatoryName = params["signatoryName"].(string)
-	plAf.SignatoryNip = params["signatoryNip"].(string)
-	plAf.FileKtp = textFileNotFound
-	plAf.FileNpwp = textFileNotFound
-	plAf.FileSelfie = textFileNotFound
-	plAf.FileAppForm = textFileFound
-	plAf.FileSlipTe = textFileFound
-	plAf.CardLimitFormat = ac.FormatMoney(acc.Card.CardLimit)
-	plAf.GoldEffBalance = params["goldEffBalance"].(float64)
-
-	for _, document := range docs {
-		switch document.Type {
-		case "ktp":
-			plAf.FileKtp = textFileFound
-		case "npwp":
-			plAf.FileNpwp = textFileFound
-		case "selfie":
-			plAf.FileSelfie = textFileFound
-		}
-	}
-
-	// Set gold saving slip Base64
-	slipBase64, err := GeneratePDF(*plAf, SlipTeTemplatePath)
-
-	if err != nil {
-		return err
-	}
-
-	// Set App Form Base64
-	appFormBase64, err := GeneratePDF(*plAf, ApplicationFormTemplatePath)
-
-	if err != nil {
-		return err
-	}
-
-	// Set Application Form and Slip TE
-	personalInformation := PayloadPersonalInformation{}
-	personalInformation.Nik = acc.PersonalInformation.Nik
-	personalInformation.GoldSavingSlipBase64 = slipBase64
-	personalInformation.AppFormBase64 = appFormBase64
-
-	// Set Application Document
-	plAf.Account.Application.SetDocument(personalInformation)
 
 	return nil
 }

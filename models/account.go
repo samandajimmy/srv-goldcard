@@ -11,7 +11,7 @@ var (
 
 	appendXCardNumber = "xxxxxx"
 
-	relationStr = map[int64]string{
+	RelationStr = map[int64]string{
 		1:  "Suami/Istri",
 		2:  "Anak",
 		3:  "Adik",
@@ -166,15 +166,4 @@ type AddressData struct {
 	Province    string `json:"province"`
 	Subdistrict string `json:"subdistrict"`
 	Village     string `json:"village"`
-}
-
-// GetRelation to get relation text
-func (acc *Account) GetRelation(relation int64) string {
-	for k, v := range relationStr {
-		if k == relation {
-			return v
-		}
-	}
-
-	return ""
 }

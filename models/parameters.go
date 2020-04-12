@@ -94,12 +94,33 @@ func DateIsNotEqual(date1, date2 time.Time) bool {
 	return y1 != y2 || m1 != m2 || d1 != d2
 }
 
-func GeneratePDF(paf PayloadApplicationForm, templatePath string) (string, error) {
+func GenerateApplicationFormPDF(af ApplicationForm, templatePath string) (string, error) {
 	generatePdf := RequestPdf{}
 	requestPdf := generatePdf.NewRequestPdf("")
 
 	// Mapping Application Form Data to Html
-	err := requestPdf.ParseTemplate(templatePath, paf)
+	err := requestPdf.ParseTemplate(templatePath, af)
+	if err != nil {
+		return "", err
+	}
+
+	// Generate Pdf File
+	bufPdf, err := requestPdf.GeneratePDF()
+	if err != nil {
+		return "", err
+	}
+
+	// Convert to base64
+	pdfBase64 := base64.StdEncoding.EncodeToString(bufPdf)
+	return pdfBase64, nil
+}
+
+func GenerateSlipTePDF(st SlipTE, templatePath string) (string, error) {
+	generatePdf := RequestPdf{}
+	requestPdf := generatePdf.NewRequestPdf("")
+
+	// Mapping Application Form Data to Html
+	err := requestPdf.ParseTemplate(templatePath, st)
 	if err != nil {
 		return "", err
 	}

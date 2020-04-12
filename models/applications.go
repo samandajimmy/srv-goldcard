@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/leekchan/accounting"
 )
 
 const (
@@ -237,4 +239,115 @@ type AppStatus struct {
 	CardSendDate             *time.Time `json:"cardSendDate,omitempty"`
 	CardSentDate             *time.Time `json:"cardSentDate,omitempty"`
 	FailedDate               *time.Time `json:"failedDate,omitempty"`
+}
+
+// ApplicationForm a struct to store all payload for Application Form BRI
+type ApplicationForm struct {
+	Account            Account `json:"account"`
+	Date               string  `json:"date"`
+	TimeStamp          string  `json:"timeStamp"`
+	TextHomeStatus     string  `json:"textHomeStatus"`
+	TextEducation      string  `json:"textEducation"`
+	TextMaritalStatus  string  `json:"textMaritalStatus"`
+	TextJobBidangUsaha string  `json:"textJobBidangUsaha"`
+	TextJobCategory    string  `json:"textJobCategory"`
+	TextRelation       string  `json:"textrelation"`
+	FileKtp            string  `json:"fileKtp"`
+	FileSelfie         string  `json:"fileSelfie"`
+	FileNpwp           string  `json:"fileNpwp"`
+	FileAppForm        string  `json:"fileAppForm"`
+	FileSlipTe         string  `json:"fileSlipTe"`
+}
+
+// SlipTE a struct to store all payload for Slip TE Document
+type SlipTE struct {
+	Account         Account `json:"account"`
+	Date            string  `json:"date"`
+	TimeStamp       string  `json:"timeStamp"`
+	CardLimitFormat string  `json:"cardLimitFormat"`
+	SignatoryName   string  `json:"signatoryName"`
+	SignatoryNip    string  `json:"signatoryNip"`
+	GoldEffBalance  float64 `json:"goldEffBalance"`
+}
+
+// MappingApplicationForm a function to mapping application form BRI and slip te data
+func (af *ApplicationForm) MappingApplicationForm(params map[string]interface{}) error {
+	time := time.Now().UTC()
+	acc := params["acc"].(Account)
+	docs := params["docs"].([]Document)
+
+	af.Account = acc
+	af.TimeStamp = time.Format(DateTimeFormat)
+	af.Date = time.Format(DDMMYYYY)
+	af.TextHomeStatus = HomeStatusStr[acc.PersonalInformation.HomeStatus]
+	af.TextEducation = EducationStr[acc.PersonalInformation.Education]
+	af.TextMaritalStatus = MaritalStatusStr[acc.PersonalInformation.MaritalStatus]
+	af.TextJobBidangUsaha = JobBidangUsahaStr[acc.Occupation.JobBidangUsaha]
+	af.TextJobCategory = JobCategoryStr[acc.Occupation.JobCategory]
+	af.TextRelation = RelationStr[acc.EmergencyContact.Relation]
+	af.FileKtp = textFileNotFound
+	af.FileNpwp = textFileNotFound
+	af.FileSelfie = textFileNotFound
+	af.FileAppForm = textFileFound
+	af.FileSlipTe = textFileFound
+
+	for _, document := range docs {
+		switch document.Type {
+		case "ktp":
+			af.FileKtp = textFileFound
+		case "npwp":
+			af.FileNpwp = textFileFound
+		case "selfie":
+			af.FileSelfie = textFileFound
+		}
+	}
+
+	// Set App Form Base64
+	appFormBase64, err := GenerateApplicationFormPDF(*af, ApplicationFormTemplatePath)
+
+	if err != nil {
+		return err
+	}
+
+	// Set Application Form and Slip TE
+	personalInformation := PayloadPersonalInformation{}
+	personalInformation.Nik = acc.PersonalInformation.Nik
+	personalInformation.AppFormBase64 = appFormBase64
+
+	// Set Application Document
+	af.Account.Application.SetDocument(personalInformation)
+
+	return nil
+}
+
+// MappingSlipTe a function to mapping slip te data
+func (st *SlipTE) MappingSlipTe(params map[string]interface{}) error {
+	time := time.Now().UTC()
+	acc := params["acc"].(Account)
+	ac := accounting.Accounting{Symbol: "Rp ", Thousand: "."}
+
+	st.Account = acc
+	st.TimeStamp = time.Format(DateTimeFormat)
+	st.Date = time.Format(DDMMYYYY)
+	st.SignatoryName = params["signatoryName"].(string)
+	st.SignatoryNip = params["signatoryNip"].(string)
+	st.CardLimitFormat = ac.FormatMoney(acc.Card.CardLimit)
+	st.GoldEffBalance = params["goldEffBalance"].(float64)
+
+	// Set gold saving slip Base64
+	slipBase64, err := GenerateSlipTePDF(*st, SlipTeTemplatePath)
+
+	if err != nil {
+		return err
+	}
+
+	// Set Application Form and Slip TE
+	personalInformation := PayloadPersonalInformation{}
+	personalInformation.Nik = acc.PersonalInformation.Nik
+	personalInformation.GoldSavingSlipBase64 = slipBase64
+
+	// Set Application Document
+	st.Account.Application.SetDocument(personalInformation)
+
+	return nil
 }

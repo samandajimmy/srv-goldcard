@@ -315,8 +315,15 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		return err
 	}
 
-	// Generate BRI Document (Application Form and Slip TE)
-	err = reg.GenerateBRIDocument(c, acc)
+	// Generate Application Form BRI Document
+	err = reg.GenerateApplicationFormDocument(c, acc)
+
+	if err != nil {
+		return err
+	}
+
+	// Generate Slip TE Document
+	err = reg.GenerateSlipTEDocument(c, acc)
 
 	if err != nil {
 		return err
@@ -444,8 +451,39 @@ func (reg *registrationsUseCase) coreOpenStatus(c echo.Context, acc models.Accou
 	}
 }
 
-// function to Generate Application Form and Slip TE
-func (reg *registrationsUseCase) GenerateBRIDocument(c echo.Context, acc models.Account) error {
+// Function to Generate Application Form
+func (reg *registrationsUseCase) GenerateApplicationFormDocument(c echo.Context, acc models.Account) error {
+	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
+	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID)
+
+	if err != nil {
+		return models.ErrGetDocument
+	}
+
+	// Mapping Application Form Data and Generate PDF
+	appFormData := models.ApplicationForm{}
+
+	paramsAppForm := map[string]interface{}{
+		"docs": docs,
+		"acc":  acc,
+	}
+
+	err = appFormData.MappingApplicationForm(paramsAppForm)
+
+	if err != nil {
+		return models.ErrMappingData
+	}
+
+	// concurrently insert or update all possible documents
+	go retry.DoConcurrent(c, "upsertDocument", func() error {
+		return reg.upsertDocument(c, appFormData.Account.Application)
+	})
+
+	return nil
+}
+
+// Function to Generate Slip TE
+func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc models.Account) error {
 	// get user effective balance
 	userDetail, err := reg.arRepo.GetDetailGoldUser(c, acc.Application.SavingAccount)
 
@@ -463,13 +501,6 @@ func (reg *registrationsUseCase) GenerateBRIDocument(c echo.Context, acc models.
 		return err
 	}
 
-	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
-	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID)
-
-	if err != nil {
-		return models.ErrGetDocument
-	}
-
 	// Get Signatory Name for Slip TE Document
 	signatoryName, err := reg.regRepo.GetSignatoryNameParam(c)
 
@@ -485,17 +516,16 @@ func (reg *registrationsUseCase) GenerateBRIDocument(c echo.Context, acc models.
 	}
 
 	// Mapping Application Form Data and Generate PDF
-	appFormData := models.PayloadApplicationForm{}
+	slipTeData := models.SlipTE{}
 
-	params := map[string]interface{}{
-		"docs":           docs,
+	paramsSlipTe := map[string]interface{}{
+		"acc":            acc,
 		"signatoryName":  signatoryName,
 		"signatoryNip":   signatoryNip,
-		"acc":            acc,
 		"goldEffBalance": goldEffBalance,
 	}
 
-	err = appFormData.MappingApplicationForm(params)
+	err = slipTeData.MappingSlipTe(paramsSlipTe)
 
 	if err != nil {
 		return models.ErrMappingData
@@ -503,7 +533,7 @@ func (reg *registrationsUseCase) GenerateBRIDocument(c echo.Context, acc models.
 
 	// concurrently insert or update all possible documents
 	go retry.DoConcurrent(c, "upsertDocument", func() error {
-		return reg.upsertDocument(c, appFormData.Account.Application)
+		return reg.upsertDocument(c, slipTeData.Account.Application)
 	})
 
 	return nil
