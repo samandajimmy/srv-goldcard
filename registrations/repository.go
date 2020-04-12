@@ -18,7 +18,7 @@ type Repository interface {
 	GetEmergencyContactIDByType(c echo.Context, typeDef string) (int64, error)
 	GetZipcode(c echo.Context, addrData models.AddressData) (string, error)
 	GetCityFromZipcode(c echo.Context, acc models.Account) (string, string, error)
-	UpdateCardLimit(c echo.Context, acc models.Account) error
+	UpdateCardLimit(c echo.Context, acc models.Account, isRecalculate bool) (string, error)
 	UpdateBrixkeyID(c echo.Context, acc models.Account) error
 	UpdateAppDocID(c echo.Context, acc models.Applications) error
 	GetAppStatus(c echo.Context, app models.Applications) (models.AppStatus, error)

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"math"
 	"time"
 )
 
@@ -50,4 +51,14 @@ func (c *Card) ConvertMoneyToGold(money int64, stl int64) float64 {
 // when updating gold limit, gold limit is added with ReservedLockLimitBalance
 func (c *Card) SetGoldLimit(money int64, stl int64) float64 {
 	return c.ConvertMoneyToGold(money, stl) + ReservedLockLimitBalance
+}
+
+// SetCardLimit a function to set card limit in rupiah
+// when updateing card limit, gold limit is subtracted by ReservedLockLimitBalance first, then convert to rupiah
+func (c *Card) SetCardLimit(stl int64) error {
+	// round down to nearest 10.000s
+	c.CardLimit = int64(math.Floor((c.GoldLimit-ReservedLockLimitBalance)*float64(stl)*defMoneyTaken/10000)) * 10000
+	c.StlLimit = stl
+
+	return nil
 }
