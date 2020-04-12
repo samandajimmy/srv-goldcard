@@ -55,7 +55,7 @@ type Account struct {
 }
 
 // MappingRegistrationData a function to map all data registration
-func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalInformation, paf PayloadApplicationForm) error {
+func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalInformation) error {
 	acc.Card.CardName = pl.CardName
 
 	acc.PersonalInformation.FirstName = pl.FirstName
@@ -89,23 +89,6 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 
 	// set npwp
 	acc.PersonalInformation.SetNPWP(pl.Npwp)
-
-	// set gold saving slip Base64
-	slipBase64, err := GeneratePDF(paf, SlipTeTemplatePath)
-
-	if err != nil {
-		return err
-	}
-
-	// set App Form Base64
-	appFormBase64, err := GeneratePDF(paf, ApplicationFormTemplatePath)
-
-	if err != nil {
-		return err
-	}
-
-	pl.GoldSavingSlipBase64 = slipBase64
-	pl.AppFormBase64 = appFormBase64
 
 	// set default base64 to NPWP image if empty
 	if pl.NpwpImageBase64 == "" {

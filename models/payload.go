@@ -358,9 +358,10 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 }
 
 // MappingApplicationForm a function to mapping application form BRI and slip te data
-func (plAf *PayloadApplicationForm) MappingApplicationForm(acc Account, docs []Document, signatoryName string, signatoryNip string, goldEffBalance float64) error {
+func (plAf *PayloadApplicationForm) MappingApplicationForm(params map[string]interface{}) error {
 	time := time.Now().UTC()
-
+	acc := params["acc"].(Account)
+	docs := params["docs"].([]Document)
 	ac := accounting.Accounting{Symbol: "Rp ", Thousand: "."}
 
 	plAf.Account = acc
@@ -372,15 +373,15 @@ func (plAf *PayloadApplicationForm) MappingApplicationForm(acc Account, docs []D
 	plAf.TextJobBidangUsaha = acc.Occupation.GetJobBidangUsaha(acc.Occupation.JobBidangUsaha)
 	plAf.TextJobCategory = acc.Occupation.GetJobCategory(acc.Occupation.JobCategory)
 	plAf.TextRelation = acc.GetRelation(acc.EmergencyContact.Relation)
-	plAf.SignatoryName = signatoryName
-	plAf.SignatoryNip = signatoryNip
+	plAf.SignatoryName = params["signatoryName"].(string)
+	plAf.SignatoryNip = params["signatoryNip"].(string)
 	plAf.FileKtp = textFileNotFound
 	plAf.FileNpwp = textFileNotFound
 	plAf.FileSelfie = textFileNotFound
 	plAf.FileAppForm = textFileFound
-	plAf.FileSlipTe = textFileNotFound
+	plAf.FileSlipTe = textFileFound
 	plAf.CardLimitFormat = ac.FormatMoney(acc.Card.CardLimit)
-	plAf.GoldEffBalance = goldEffBalance
+	plAf.GoldEffBalance = params["goldEffBalance"].(float64)
 
 	for _, document := range docs {
 		switch document.Type {
@@ -390,10 +391,31 @@ func (plAf *PayloadApplicationForm) MappingApplicationForm(acc Account, docs []D
 			plAf.FileNpwp = textFileFound
 		case "selfie":
 			plAf.FileSelfie = textFileFound
-		case "slip_te":
-			plAf.FileSlipTe = textFileFound
 		}
 	}
+
+	// Set gold saving slip Base64
+	slipBase64, err := GeneratePDF(*plAf, SlipTeTemplatePath)
+
+	if err != nil {
+		return err
+	}
+
+	// Set App Form Base64
+	appFormBase64, err := GeneratePDF(*plAf, ApplicationFormTemplatePath)
+
+	if err != nil {
+		return err
+	}
+
+	// Set Application Form and Slip TE
+	personalInformation := PayloadPersonalInformation{}
+	personalInformation.Nik = acc.PersonalInformation.Nik
+	personalInformation.GoldSavingSlipBase64 = slipBase64
+	personalInformation.AppFormBase64 = appFormBase64
+
+	// Set Application Document
+	plAf.Account.Application.SetDocument(personalInformation)
 
 	return nil
 }

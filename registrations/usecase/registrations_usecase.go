@@ -142,54 +142,7 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 		return err
 	}
 
-	// get user effective balance
-	userDetail, err := reg.arRepo.GetDetailGoldUser(c, acc.Application.SavingAccount)
-
-	if err != nil {
-		return err
-	}
-
-	if _, ok := userDetail["saldoEfektif"].(string); !ok {
-		return err
-	}
-
-	goldEffBalance, err := strconv.ParseFloat(userDetail["saldoEfektif"].(string), 64)
-
-	if err != nil {
-		return err
-	}
-
-	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
-	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID)
-
-	if err != nil {
-		return models.ErrGetDocument
-	}
-
-	// Get Signatory Name for Slip TE Document
-	signatoryName, err := reg.regRepo.GetSignatoryNameParam(c)
-
-	if err != nil {
-		return err
-	}
-
-	// Get Signatory Nip for Slip TE Document
-	signatoryNip, err := reg.regRepo.GetSignatoryNipParam(c)
-
-	if err != nil {
-		return err
-	}
-
-	// Mapping Application Form Data
-	appFormData := models.PayloadApplicationForm{}
-
-	err = appFormData.MappingApplicationForm(acc, docs, signatoryName, signatoryNip, goldEffBalance)
-
-	if err != nil {
-		return models.ErrMappingData
-	}
-
-	err = acc.MappingRegistrationData(c, pl, appFormData)
+	err = acc.MappingRegistrationData(c, pl)
 
 	if err != nil {
 		return models.ErrMappingData
@@ -361,6 +314,14 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		logger.Make(c, nil).Debug(err)
 		return err
 	}
+
+	// Generate BRI Document (Application Form and Slip TE)
+	err = reg.GenerateBRIDocument(c, acc)
+
+	if err != nil {
+		return err
+	}
+
 	// open and lock gold limit to core
 	errAppBri := make(chan error)
 	errAppCore := make(chan error)
@@ -481,4 +442,69 @@ func (reg *registrationsUseCase) coreOpenStatus(c echo.Context, acc models.Accou
 		logger.Make(c, nil).Debug(err)
 		return
 	}
+}
+
+// function to Generate Application Form and Slip TE
+func (reg *registrationsUseCase) GenerateBRIDocument(c echo.Context, acc models.Account) error {
+	// get user effective balance
+	userDetail, err := reg.arRepo.GetDetailGoldUser(c, acc.Application.SavingAccount)
+
+	if err != nil {
+		return err
+	}
+
+	if _, ok := userDetail["saldoEfektif"].(string); !ok {
+		return err
+	}
+
+	goldEffBalance, err := strconv.ParseFloat(userDetail["saldoEfektif"].(string), 64)
+
+	if err != nil {
+		return err
+	}
+
+	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
+	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID)
+
+	if err != nil {
+		return models.ErrGetDocument
+	}
+
+	// Get Signatory Name for Slip TE Document
+	signatoryName, err := reg.regRepo.GetSignatoryNameParam(c)
+
+	if err != nil {
+		return err
+	}
+
+	// Get Signatory Nip for Slip TE Document
+	signatoryNip, err := reg.regRepo.GetSignatoryNipParam(c)
+
+	if err != nil {
+		return err
+	}
+
+	// Mapping Application Form Data and Generate PDF
+	appFormData := models.PayloadApplicationForm{}
+
+	params := map[string]interface{}{
+		"docs":           docs,
+		"signatoryName":  signatoryName,
+		"signatoryNip":   signatoryNip,
+		"acc":            acc,
+		"goldEffBalance": goldEffBalance,
+	}
+
+	err = appFormData.MappingApplicationForm(params)
+
+	if err != nil {
+		return models.ErrMappingData
+	}
+
+	// concurrently insert or update all possible documents
+	go retry.DoConcurrent(c, "upsertDocument", func() error {
+		return reg.upsertDocument(c, appFormData.Account.Application)
+	})
+
+	return nil
 }
