@@ -67,6 +67,12 @@ var (
 	// AppStepCompleted is to store var application step completed
 	AppStepCompleted int64 = 99
 
+	// TextFileFound is var to store if file is found in database
+	TextFileFound = "Ada"
+
+	// TextFileNotFound is var to store if file is not found in database
+	TextFileNotFound = "Tidak ada"
+
 	matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 	matchAllCap   = regexp.MustCompile("([a-z0-9])([A-Z])")
 	mapStatusDate = map[string]string{
@@ -285,20 +291,20 @@ func (af *ApplicationForm) MappingApplicationForm(params map[string]interface{})
 	af.TextJobBidangUsaha = JobBidangUsahaStr[acc.Occupation.JobBidangUsaha]
 	af.TextJobCategory = JobCategoryStr[acc.Occupation.JobCategory]
 	af.TextRelation = RelationStr[acc.EmergencyContact.Relation]
-	af.FileKtp = textFileNotFound
-	af.FileNpwp = textFileNotFound
-	af.FileSelfie = textFileNotFound
-	af.FileAppForm = textFileFound
-	af.FileSlipTe = textFileFound
+	af.FileKtp = TextFileNotFound
+	af.FileNpwp = TextFileNotFound
+	af.FileSelfie = TextFileNotFound
+	af.FileAppForm = TextFileFound
+	af.FileSlipTe = TextFileFound
 
 	for _, document := range docs {
 		switch document.Type {
 		case "ktp":
-			af.FileKtp = textFileFound
+			af.FileKtp = TextFileFound
 		case "npwp":
-			af.FileNpwp = textFileFound
+			af.FileNpwp = TextFileFound
 		case "selfie":
-			af.FileSelfie = textFileFound
+			af.FileSelfie = TextFileFound
 		}
 	}
 

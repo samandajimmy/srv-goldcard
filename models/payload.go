@@ -3,12 +3,6 @@ package models
 var (
 	// UseExistingAddress is var to store use existing address status
 	UseExistingAddress int64
-
-	//textFileFound is var to store if file is found in database
-	textFileFound = "Ada"
-
-	//textFileNotFound is var to store if file is not found in database
-	textFileNotFound = "Tidak ada"
 )
 
 // PayloadList a struct to store all payload for a list response
