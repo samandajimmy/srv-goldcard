@@ -6,6 +6,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/transactions"
+	"strconv"
 
 	"github.com/labstack/echo"
 )
@@ -74,4 +75,29 @@ func (rt *restTransactions) CorePaymentInquiry(c echo.Context, pl models.PlPayme
 	}
 
 	return respSwitching.ResponseData, nil
+}
+
+func (rt *restTransactions) PostPaymentTransactionToCore(c echo.Context, pl models.Transaction, acc models.Account) error {
+	respSwitching := api.SwitchingResponse{}
+	requestDataSwitching := map[string]interface{}{
+		"noRek":        acc.Application.SavingAccount,
+		"norekTagihan": acc.AccountNumber,
+		"nominal":      strconv.FormatInt(pl.Nominal, 10),
+		"branchCode":   acc.BranchCode,
+		"cif":          acc.CIF,
+	}
+
+	req := api.MappingRequestSwitching(requestDataSwitching)
+	errSwitching := api.RetryableSwitchingPost(c, req, "/goldcard/transaksi/paymentTagihan", &respSwitching)
+
+	if errSwitching != nil {
+		return errSwitching
+	}
+
+	if respSwitching.ResponseCode != api.APIRCSuccess {
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc}))
+		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc})
+	}
+
+	return nil
 }
