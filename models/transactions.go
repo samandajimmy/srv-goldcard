@@ -68,6 +68,7 @@ type BRICardBalance struct {
 	CurrentBalance  float64 `json:"currentBalance"`
 	CreditLimit     float64 `json:"creditLimit"`
 	AvailableCredit int64   `json:"availableCredit"`
+	BillKey         string  `json:"billKey"`
 }
 
 // MappingTrx is a struct to mapping trx data
