@@ -113,7 +113,7 @@ func (trxUS *transactionsUseCase) PostPaymentTransaction(c echo.Context, pl mode
 	}
 
 	// post payment transaction to core
-	err = trxUS.trxrRepo.PostPaymentTransactionToCore(c, trx, acc)
+	err = trxUS.trxrRepo.PostPaymentTransactionToCore(c, bill)
 	if err != nil {
 		errors.SetTitleCode("22", models.ErrPostPaymentTransactionToCore.Error(), "")
 		return errors

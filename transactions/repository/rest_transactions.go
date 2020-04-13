@@ -77,18 +77,19 @@ func (rt *restTransactions) CorePaymentInquiry(c echo.Context, pl models.PlPayme
 	return respSwitching.ResponseData, nil
 }
 
-func (rt *restTransactions) PostPaymentTransactionToCore(c echo.Context, pl models.Transaction, acc models.Account) error {
+func (rt *restTransactions) PostPaymentTransactionToCore(c echo.Context, bill models.Billing) error {
 	respSwitching := api.SwitchingResponse{}
 	requestDataSwitching := map[string]interface{}{
-		"noRek":        acc.Application.SavingAccount,
-		"norekTagihan": acc.AccountNumber,
-		"nominal":      strconv.FormatInt(pl.Nominal, 10),
-		"branchCode":   acc.BranchCode,
-		"cif":          acc.CIF,
+		"cif":          bill.Account.CIF,
+		"noRek":        bill.Account.Application.SavingAccount,
+		"nominal":      strconv.FormatInt(bill.DebtAmount, 10),
+		"norekTagihan": bill.Account.AccountNumber,
+		"reffBiller":   bill.RefBilling,
+		"isUpdate":     models.BillIsUpdate,
 	}
 
 	req := api.MappingRequestSwitching(requestDataSwitching)
-	errSwitching := api.RetryableSwitchingPost(c, req, "/goldcard/transaksi/paymentTagihan", &respSwitching)
+	errSwitching := api.RetryableSwitchingPost(c, req, "/goldcard/transaksi/sendTagihan", &respSwitching)
 
 	if errSwitching != nil {
 		return errSwitching
