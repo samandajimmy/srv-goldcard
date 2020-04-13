@@ -94,10 +94,10 @@ func main() {
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
 	processHandlerUseCase := _processHandlerUseCase.ProcessHandUseCase(processHandlerRepo, registrationsRepository)
 	tokenUseCase := _tokenUseCase.NewTokenUseCase(tokenRepository, timeoutContext)
-	registrationsUseCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository, restRegistrationsRepo, processHandlerUseCase)
-	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo, registrationsUseCase)
+	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, billingsRepository, restTransactionsRepo, registrationsRepository, restRegistrationsRepo)
+	registrationsUseCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository, restRegistrationsRepo, processHandlerUseCase, transactionsUseCase, restActivationRepository)
+	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo, registrationsUseCase, restTransactionsRepo)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
-	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, billingsRepository, restTransactionsRepo, restRegistrationsRepo)
 	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, restRegistrationsRepo, transactionsUseCase)
 
 	// DELIVERIES
@@ -116,6 +116,7 @@ func main() {
 	if err != nil {
 		logger.Make(nil, nil).Fatal(err)
 	}
+
 }
 
 func ping(echTx echo.Context) error {

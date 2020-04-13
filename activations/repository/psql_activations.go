@@ -33,9 +33,9 @@ func (pa *psqlActivations) PostActivations(c echo.Context, acc models.Account) e
 		gcdb.NewPipelineStmt(`UPDATE applications SET status = $1, updated_at = $2
 			WHERE id = $3`,
 			nilFilters, app.Status, time.Now(), acc.ApplicationID),
-		gcdb.NewPipelineStmt(`UPDATE cards SET status = $1, card_number = $2, valid_until = $3, updated_at = $4
-			WHERE id = $5`,
-			nilFilters, card.Status, card.CardNumber, card.ValidUntil, time.Now(), acc.CardID),
+		gcdb.NewPipelineStmt(`UPDATE cards SET status = $1, card_number = $2, valid_until = $3, encrypted_card_number = $4, updated_at = $5
+			WHERE id = $6`,
+			nilFilters, card.Status, card.CardNumber, card.ValidUntil, card.EncryptedCardNumber, time.Now(), acc.CardID),
 	}
 
 	err := gcdb.WithTransaction(pa.Conn, func(tx gcdb.Transaction) error {

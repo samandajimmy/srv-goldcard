@@ -32,8 +32,9 @@ type PayloadAppNumber struct {
 
 // PayloadSavingAccount a struct to store all payload for saving account
 type PayloadSavingAccount struct {
-	ApplicationNumber string `json:"applicationNumber" validate:"required"`
-	AccountNumber     string `json:"accountNumber" validate:"required"`
+	ApplicationNumber        string `json:"applicationNumber" validate:"required"`
+	AccountNumber            string `json:"accountNumber" validate:"required"`
+	SavingAccountOpeningDate string `json:"savingAccountOpeningDate" validate:"required"`
 }
 
 // PayloadCardLimit a struct to store all payload for card limit
@@ -277,6 +278,12 @@ type PayloadBRIPegadaianBillings struct {
 	FileExtension string `json:"fileExtension" validate:"required"`
 	FileName      string `json:"fileName" validate:"required"`
 	RefID         string `json:"refID" validate:"required"`
+}
+
+// PayloadCoreDecreasedSTL a struct store all payload for new gold price when stl decreased bigger than 5 %
+type PayloadCoreDecreasedSTL struct {
+	STL                  int64  `json:"stl" validate:"required"`
+	DecreasedFivePercent string `json:"decreasedFivePercent" validate:"required"`
 }
 
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI
