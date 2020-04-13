@@ -31,6 +31,7 @@ import (
 	_transactionsHttpDelivery "gade/srv-goldcard/transactions/delivery/http"
 	_transactionsRepository "gade/srv-goldcard/transactions/repository"
 	_transactionsUseCase "gade/srv-goldcard/transactions/usecase"
+	_updateLimitUseCase "gade/srv-goldcard/update_limits/usecase"
 
 	"github.com/go-pg/pg/v9"
 	"github.com/golang-migrate/migrate/v4"
@@ -99,6 +100,7 @@ func main() {
 	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo, registrationsUseCase, restTransactionsRepo)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
 	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, restRegistrationsRepo, transactionsUseCase)
+	_ = _updateLimitUseCase.UpdateLimitUseCase(transactionsRepository, registrationsRepository, restRegistrationsRepo)
 
 	// DELIVERIES
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
