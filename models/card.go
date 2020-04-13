@@ -1,6 +1,7 @@
 package models
 
 import (
+	"math"
 	"time"
 )
 
@@ -19,21 +20,22 @@ const (
 
 // Card is a struct to store card data
 type Card struct {
-	ID          int64     `json:"id"`
-	CardName    string    `json:"cardName"`
-	CardNumber  string    `json:"cardNumber"`
-	CardLimit   int64     `json:"cardLimit"`
-	GoldLimit   float64   `json:"goldLimit"`
-	StlLimit    int64     `json:"stlLimit"`
-	ValidUntil  string    `json:"validUntil"`
-	PinNumber   string    `json:"pinNumber"`
-	Description string    `json:"description"`
-	Balance     int64     `json:"balance"`
-	GoldBalance float64   `json:"goldBalance"`
-	StlBalance  int64     `json:"stlBalance"`
-	Status      string    `json:"status"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-	CreatedAt   time.Time `json:"createdAt"`
+	ID                  int64     `json:"id"`
+	CardName            string    `json:"cardName"`
+	CardNumber          string    `json:"cardNumber"`
+	CardLimit           int64     `json:"cardLimit"`
+	GoldLimit           float64   `json:"goldLimit"`
+	StlLimit            int64     `json:"stlLimit"`
+	ValidUntil          string    `json:"validUntil"`
+	PinNumber           string    `json:"pinNumber"`
+	Description         string    `json:"description"`
+	Balance             int64     `json:"balance"`
+	GoldBalance         float64   `json:"goldBalance"`
+	StlBalance          int64     `json:"stlBalance"`
+	Status              string    `json:"status"`
+	EncryptedCardNumber string    `json:"encryptedCardNumber"`
+	UpdatedAt           time.Time `json:"updatedAt"`
+	CreatedAt           time.Time `json:"createdAt"`
 }
 
 // ConvertMoneyToGold to convert rupiah into gram
@@ -50,4 +52,14 @@ func (c *Card) ConvertMoneyToGold(money int64, stl int64) float64 {
 // when updating gold limit, gold limit is added with ReservedLockLimitBalance
 func (c *Card) SetGoldLimit(money int64, stl int64) float64 {
 	return c.ConvertMoneyToGold(money, stl) + ReservedLockLimitBalance
+}
+
+// SetCardLimit a function to set card limit in rupiah
+// when updateing card limit, gold limit is subtracted by ReservedLockLimitBalance first, then convert to rupiah
+func (c *Card) SetCardLimit(stl int64) error {
+	// round down to nearest 10.000s
+	c.CardLimit = int64(math.Floor((c.GoldLimit-ReservedLockLimitBalance)*float64(stl)*defMoneyTaken/10000)) * 10000
+	c.StlLimit = stl
+
+	return nil
 }

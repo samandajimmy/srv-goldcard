@@ -86,7 +86,7 @@ func (reg *registrationsUseCase) updateSTLPrice(c echo.Context, acc models.Accou
 	}
 
 	acc.Card.StlLimit = hargeEmas
-	err = reg.regRepo.UpdateCardLimit(c, acc)
+	_, err = reg.regRepo.UpdateCardLimit(c, acc, false)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)

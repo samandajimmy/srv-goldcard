@@ -4,6 +4,30 @@ import (
 	"time"
 )
 
+var (
+	JobCategoryStr = map[int64]string{
+		1: "Karyawan",
+		2: "Profesional",
+		3: "Pensiunan",
+		4: "TNI/POLRI",
+		5: "Wiraswasta",
+		6: "Lain-lain",
+	}
+
+	JobBidangUsahaStr = map[int64]string{
+		10: "Agricultural & Animal Rising",
+		20: "Aneka Industry",
+		30: "Customer Product",
+		40: "Financial",
+		50: "Goverment",
+		60: "Industry and Chemical",
+		70: "Infrastructure",
+		80: "Mining",
+		90: "Trading and Service",
+		99: "Lain-lain",
+	}
+)
+
 // DefJobTitle to store default value of job title
 const DefJobTitle = "MANAGER"
 
@@ -18,9 +42,9 @@ type Occupation struct {
 	Company           string    `json:"company"`
 	JobTitle          string    `json:"jobTitle"`
 	WorkSince         string    `json:"workSince"`
-	OfficeAddress1    string    `json:"officeAddress1"`
-	OfficeAddress2    string    `json:"officeAddress2"`
-	OfficeAddress3    string    `json:"officeAddress3"`
+	OfficeAddress1    string    `json:"officeAddress1" pg:"office_address_1"`
+	OfficeAddress2    string    `json:"officeAddress2" pg:"office_address_2"`
+	OfficeAddress3    string    `json:"officeAddress3" pg:"office_address_3"`
 	OfficeZipcode     string    `json:"officeZipcode"`
 	OfficeCity        string    `json:"officeCity"`
 	OfficePhone       string    `json:"officePhone"`

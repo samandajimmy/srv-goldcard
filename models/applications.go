@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/leekchan/accounting"
 )
 
 const (
@@ -26,6 +28,12 @@ const (
 
 	// DefAppDocType is to store var default application document type
 	DefAppDocType = "D"
+
+	// SlipTeTemplatePath is to store path file template Slip TE
+	SlipTeTemplatePath = "template/template_slip.html"
+
+	// ApplicationFormTemplatePath is to store path file Application Form BRI
+	ApplicationFormTemplatePath = "template/template_application_form.html"
 )
 
 var (
@@ -58,6 +66,12 @@ var (
 
 	// AppStepCompleted is to store var application step completed
 	AppStepCompleted int64 = 99
+
+	// TextFileFound is var to store if file is found in database
+	TextFileFound = "Ada"
+
+	// TextFileNotFound is var to store if file is not found in database
+	TextFileNotFound = "Tidak ada"
 
 	matchFirstCap = regexp.MustCompile("(.)([A-Z][a-z]+)")
 	matchAllCap   = regexp.MustCompile("([a-z0-9])([A-Z])")
@@ -109,6 +123,7 @@ type Applications struct {
 	ApplicationNumber        string     `json:"applicationNumber" validate:"required"`
 	Status                   string     `json:"status"`
 	SavingAccount            string     `json:"savingAccount" validate:"required"`
+	SavingAccountOpeningDate string     `json:"savingAccountOpeningDate" validate:"required"`
 	CurrentStep              int64      `json:"currentStep"`
 	ApplicationProcessedDate time.Time  `json:"applicationProcessedDate,omitempty"`
 	CardProcessedDate        time.Time  `json:"cardProcessedDate,omitempty"`
@@ -230,4 +245,115 @@ type AppStatus struct {
 	CardSendDate             *time.Time `json:"cardSendDate,omitempty"`
 	CardSentDate             *time.Time `json:"cardSentDate,omitempty"`
 	FailedDate               *time.Time `json:"failedDate,omitempty"`
+}
+
+// ApplicationForm a struct to store all payload for Application Form BRI
+type ApplicationForm struct {
+	Account            Account `json:"account"`
+	Date               string  `json:"date"`
+	TimeStamp          string  `json:"timeStamp"`
+	TextHomeStatus     string  `json:"textHomeStatus"`
+	TextEducation      string  `json:"textEducation"`
+	TextMaritalStatus  string  `json:"textMaritalStatus"`
+	TextJobBidangUsaha string  `json:"textJobBidangUsaha"`
+	TextJobCategory    string  `json:"textJobCategory"`
+	TextRelation       string  `json:"textrelation"`
+	FileKtp            string  `json:"fileKtp"`
+	FileSelfie         string  `json:"fileSelfie"`
+	FileNpwp           string  `json:"fileNpwp"`
+	FileAppForm        string  `json:"fileAppForm"`
+	FileSlipTe         string  `json:"fileSlipTe"`
+}
+
+// SlipTE a struct to store all payload for Slip TE Document
+type SlipTE struct {
+	Account         Account `json:"account"`
+	Date            string  `json:"date"`
+	TimeStamp       string  `json:"timeStamp"`
+	CardLimitFormat string  `json:"cardLimitFormat"`
+	SignatoryName   string  `json:"signatoryName"`
+	SignatoryNip    string  `json:"signatoryNip"`
+	GoldEffBalance  float64 `json:"goldEffBalance"`
+}
+
+// MappingApplicationForm a function to mapping application form BRI and slip te data
+func (af *ApplicationForm) MappingApplicationForm(params map[string]interface{}) error {
+	time := time.Now().UTC()
+	acc := params["acc"].(Account)
+	docs := params["docs"].([]Document)
+
+	af.Account = acc
+	af.TimeStamp = time.Format(DateTimeFormat)
+	af.Date = time.Format(DDMMYYYY)
+	af.TextHomeStatus = HomeStatusStr[acc.PersonalInformation.HomeStatus]
+	af.TextEducation = EducationStr[acc.PersonalInformation.Education]
+	af.TextMaritalStatus = MaritalStatusStr[acc.PersonalInformation.MaritalStatus]
+	af.TextJobBidangUsaha = JobBidangUsahaStr[acc.Occupation.JobBidangUsaha]
+	af.TextJobCategory = JobCategoryStr[acc.Occupation.JobCategory]
+	af.TextRelation = RelationStr[acc.EmergencyContact.Relation]
+	af.FileKtp = TextFileNotFound
+	af.FileNpwp = TextFileNotFound
+	af.FileSelfie = TextFileNotFound
+	af.FileAppForm = TextFileFound
+	af.FileSlipTe = TextFileFound
+
+	for _, document := range docs {
+		switch document.Type {
+		case "ktp":
+			af.FileKtp = TextFileFound
+		case "npwp":
+			af.FileNpwp = TextFileFound
+		case "selfie":
+			af.FileSelfie = TextFileFound
+		}
+	}
+
+	// Set App Form Base64
+	appFormBase64, err := GenerateApplicationFormPDF(*af, ApplicationFormTemplatePath)
+
+	if err != nil {
+		return err
+	}
+
+	// Set Application Form and Slip TE
+	personalInformation := PayloadPersonalInformation{}
+	personalInformation.Nik = acc.PersonalInformation.Nik
+	personalInformation.AppFormBase64 = appFormBase64
+
+	// Set Application Document
+	af.Account.Application.SetDocument(personalInformation)
+
+	return nil
+}
+
+// MappingSlipTe a function to mapping slip te data
+func (st *SlipTE) MappingSlipTe(params map[string]interface{}) error {
+	time := time.Now().UTC()
+	acc := params["acc"].(Account)
+	ac := accounting.Accounting{Symbol: "Rp ", Thousand: "."}
+
+	st.Account = acc
+	st.TimeStamp = time.Format(DateTimeFormat)
+	st.Date = time.Format(DDMMYYYY)
+	st.SignatoryName = params["signatoryName"].(string)
+	st.SignatoryNip = params["signatoryNip"].(string)
+	st.CardLimitFormat = ac.FormatMoney(acc.Card.CardLimit)
+	st.GoldEffBalance = params["goldEffBalance"].(float64)
+
+	// Set gold saving slip Base64
+	slipBase64, err := GenerateSlipTePDF(*st, SlipTeTemplatePath)
+
+	if err != nil {
+		return err
+	}
+
+	// Set Application Form and Slip TE
+	personalInformation := PayloadPersonalInformation{}
+	personalInformation.Nik = acc.PersonalInformation.Nik
+	personalInformation.GoldSavingSlipBase64 = slipBase64
+
+	// Set Application Document
+	st.Account.Application.SetDocument(personalInformation)
+
+	return nil
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-pg/pg/v9"
+	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -113,8 +114,8 @@ func (regis *psqlRegistrationsRepository) PostAddress(c echo.Context, acc models
 }
 
 func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc models.Account) error {
-	query := `UPDATE applications set saving_account = $1, updated_at = $2
-		WHERE id = $3;`
+	query := `UPDATE applications set saving_account = $1,saving_account_opening_date = $2,  updated_at = $3
+		WHERE id = $4;`
 	stmt, err := regis.Conn.Prepare(query)
 
 	if err != nil {
@@ -123,7 +124,7 @@ func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc 
 		return err
 	}
 
-	_, err = stmt.Exec(acc.Application.SavingAccount, time.Now(), acc.ApplicationID)
+	_, err = stmt.Exec(acc.Application.SavingAccount, acc.Application.SavingAccountOpeningDate, time.Now(), acc.ApplicationID)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
@@ -138,7 +139,7 @@ func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, 
 	newAcc := models.Account{}
 	docs := []models.Document{}
 	err := regis.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
-		Relation("Card").
+		Relation("Card").Relation("Occupation").Relation("EmergencyContact").Relation("Correspondence").
 		Where("application_number = ?", acc.Application.ApplicationNumber).Select()
 
 	if err != nil && err != pg.ErrNoRows {
@@ -319,16 +320,30 @@ func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, acc
 	return city, zipcode, nil
 }
 
-func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account) error {
+func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account, isRecalculate bool) (string, error) {
 	var nilFilters []string
-	upsertQuery := `INSERT INTO cards (card_limit, created_at, gold_limit, stl_limit, balance,
-		gold_balance, stl_balance) VALUES ($1, $2, $3, $4, $1, $3, $4) RETURNING id;`
-	upsertFilters := []string{"cardID"}
+	var upsertFilters []string
+	var upsertQuery string
+	refId, _ := uuid.NewRandom()
 
-	if acc.CardID != 0 {
+	// query if account has not any card data yet
+	upsertFilters = []string{"cardID"}
+	if acc.CardID == 0 {
+		upsertQuery = `INSERT INTO cards (card_limit, created_at, gold_limit, stl_limit, balance,
+			gold_balance, stl_balance) VALUES ($1, $2, $3, $4, $1, $3, $4) RETURNING id;`
+	}
+
+	// query if account has any card data then update
+	if acc.CardID != 0 && !isRecalculate {
 		upsertQuery = `UPDATE cards set card_limit = $1, updated_at = $2, gold_limit = $3,
 			stl_limit = $4, balance = $1, gold_balance = $3, stl_balance = $4 WHERE id = ` +
 			strconv.Itoa(int(acc.CardID)) + ` RETURNING id;`
+	}
+
+	// query if its recalculating new limit for next card cycle
+	if acc.CardID != 0 && isRecalculate {
+		upsertQuery = `UPDATE cards set card_limit = $1, updated_at = $2, gold_limit = $3,
+			stl_limit = $4 WHERE id = ` + strconv.Itoa(int(acc.CardID)) + ` RETURNING id;`
 	}
 
 	stmts := []*gcdb.PipelineStmt{
@@ -336,6 +351,9 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 			acc.Card.GoldLimit, acc.Card.StlLimit),
 		gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1
 			WHERE id = $2`, nilFilters, time.Now(), acc.ID),
+		gcdb.NewPipelineStmt(`INSERT INTO limit_updates (ref_id, limit_date, account_id, card_limit, gold_limit, stl_limit,
+			created_at) VALUES ($1, $2, $3, $4, $5, $6, $7);`, nilFilters, refId.String(), time.Now(), acc.ID, acc.Card.CardLimit,
+			acc.Card.GoldLimit, acc.Card.StlLimit, time.Now()),
 	}
 
 	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
@@ -345,10 +363,10 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return err
+		return "", err
 	}
 
-	return nil
+	return refId.String(), nil
 }
 
 func (regis *psqlRegistrationsRepository) UpdateBrixkeyID(c echo.Context, acc models.Account) error {
@@ -493,4 +511,58 @@ func (regis *psqlRegistrationsRepository) insertAppDocument(c echo.Context, doc 
 	}
 
 	return nil
+}
+
+func (regis *psqlRegistrationsRepository) GetDocumentByApplicationId(appId int64) ([]models.Document, error) {
+	var listDocument []models.Document
+	err := regis.DBpg.Model(&listDocument).
+		Where("application_id = ?", appId).Select()
+
+	if err != nil || (listDocument == nil) {
+		logger.Make(nil, nil).Debug(err)
+
+		return listDocument, err
+	}
+
+	return listDocument, nil
+}
+
+func (regis *psqlRegistrationsRepository) GetSignatoryNameParam(c echo.Context) (string, error) {
+	newPrm := models.Parameter{}
+	err := regis.DBpg.Model(&newPrm).
+		Where("key = ?", "SIGNATORY_NAME").Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", err
+	}
+
+	if err == pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", models.ErrGetParameter
+	}
+
+	return newPrm.Value, nil
+}
+
+func (regis *psqlRegistrationsRepository) GetSignatoryNipParam(c echo.Context) (string, error) {
+	newPrm := models.Parameter{}
+	err := regis.DBpg.Model(&newPrm).
+		Where("key = ?", "SIGNATORY_NIP").Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", err
+	}
+
+	if err == pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", models.ErrGetParameter
+	}
+
+	return newPrm.Value, nil
 }

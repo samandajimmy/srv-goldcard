@@ -101,7 +101,7 @@ func (PSQLTrx *psqlTransactionsRepository) GetPgTransactionsHistory(c echo.Conte
 func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Context, acc *models.Account) error {
 	newAcc := models.Account{}
 	err := PSQLTrx.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
-		Relation("Card").
+		Relation("Card").Relation("Occupation").Relation("Correspondence").Relation("EmergencyContact").
 		Where("account_number = ? AND account.status = ?", acc.AccountNumber, models.AccStatusActive).
 		Limit(1).Select()
 
@@ -216,4 +216,18 @@ func (PSQLTrx *psqlTransactionsRepository) PostPayment(c echo.Context, trx model
 	}
 
 	return nil
+}
+
+func (PSQLTrx *psqlTransactionsRepository) GetAllActiveAccount(c echo.Context) ([]models.Account, error) {
+	var listActiveAccount []models.Account
+	err := PSQLTrx.DBpg.Model(&listActiveAccount).Relation("Card").Relation("PersonalInformation").
+		Where("account.status = ?", models.AccStatusActive).Select()
+
+	if err != nil || (listActiveAccount == nil) {
+		logger.Make(nil, nil).Debug(err)
+
+		return listActiveAccount, err
+	}
+
+	return listActiveAccount, nil
 }
