@@ -16,6 +16,31 @@ var (
 		defWNI: "WNI",
 		defWNA: "WNA",
 	}
+	// HomeStatusStr variable to store Home Status
+	HomeStatusStr = map[int64]string{
+		1: "Milik Sendiri",
+		2: "Sewa / Kos",
+		3: "Milik Keluarga",
+		4: "Milik Perusahaan",
+		5: "Lain-lain",
+	}
+
+	// EducationStr variable to store education grade
+	EducationStr = map[int64]string{
+		1: "SD/SMP",
+		2: "SMA",
+		3: "Diploma",
+		4: "S1",
+		5: "S2",
+		6: "S3",
+	}
+
+	// MaritalStatusStr variable to store Marital Status
+	MaritalStatusStr = map[int64]string{
+		1: "Single",
+		2: "Menikah",
+		3: "Duda/Janda",
+	}
 )
 
 // PersonalInformation is a struct to store personal info data

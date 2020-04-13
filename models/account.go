@@ -10,6 +10,19 @@ var (
 	AccStatusActive = "active"
 
 	appendXCardNumber = "xxxxxx"
+
+	RelationStr = map[int64]string{
+		1:  "Suami/Istri",
+		2:  "Anak",
+		3:  "Adik",
+		4:  "Kakak Kandung",
+		5:  "Orang Tua",
+		6:  "Saudara",
+		7:  "HRD",
+		8:  "Atasan",
+		9:  "Lain-lain",
+		10: "Applicant",
+	}
 )
 
 // Account is a struct to store account data
@@ -76,23 +89,6 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 
 	// set npwp
 	acc.PersonalInformation.SetNPWP(pl.Npwp)
-
-	// set gold saving slip Base64
-	slipBase64, err := GenerateGoldSavingPDF(pl)
-
-	if err != nil {
-		return err
-	}
-
-	// set App Form Base64
-	appFormBase64, err := GenerateAppFormPDF(pl)
-
-	if err != nil {
-		return err
-	}
-
-	pl.GoldSavingSlipBase64 = slipBase64
-	pl.AppFormBase64 = appFormBase64
 
 	// set default base64 to NPWP image if empty
 	if pl.NpwpImageBase64 == "" {

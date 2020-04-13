@@ -1,26 +1,31 @@
 package usecase
 
 import (
+	"gade/srv-goldcard/activations"
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/process_handler"
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/retry"
+	"gade/srv-goldcard/transactions"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
 type registrationsUseCase struct {
-	regRepo registrations.Repository
-	rrr     registrations.RestRepository
-	phUC    process_handler.UseCase
+	regRepo  registrations.Repository
+	rrr      registrations.RestRepository
+	phUC     process_handler.UseCase
+	tUseCase transactions.UseCase
+	arRepo   activations.RestRepository
 }
 
 // RegistrationsUseCase represent Registrations Use Case
-func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.RestRepository, phUC process_handler.UseCase) registrations.UseCase {
-	return &registrationsUseCase{regRepo, rrr, phUC}
+func RegistrationsUseCase(regRepo registrations.Repository, rrr registrations.RestRepository, phUC process_handler.UseCase, tUseCase transactions.UseCase, arRepo activations.RestRepository) registrations.UseCase {
+	return &registrationsUseCase{regRepo, rrr, phUC, tUseCase, arRepo}
 }
 
 func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAddress) error {
@@ -276,6 +281,7 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 	}
 
 	acc.Application.SavingAccount = pl.AccountNumber
+	acc.Application.SavingAccountOpeningDate = pl.SavingAccountOpeningDate
 
 	err = reg.regRepo.PostSavingAccount(c, acc)
 
@@ -308,6 +314,21 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 		logger.Make(c, nil).Debug(err)
 		return err
 	}
+
+	// Generate Application Form BRI Document
+	err = reg.GenerateApplicationFormDocument(c, acc)
+
+	if err != nil {
+		return err
+	}
+
+	// Generate Slip TE Document
+	err = reg.GenerateSlipTEDocument(c, acc)
+
+	if err != nil {
+		return err
+	}
+
 	// open and lock gold limit to core
 	errAppBri := make(chan error)
 	errAppCore := make(chan error)
@@ -428,4 +449,92 @@ func (reg *registrationsUseCase) coreOpenStatus(c echo.Context, acc models.Accou
 		logger.Make(c, nil).Debug(err)
 		return
 	}
+}
+
+// Function to Generate Application Form
+func (reg *registrationsUseCase) GenerateApplicationFormDocument(c echo.Context, acc models.Account) error {
+	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
+	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID)
+
+	if err != nil {
+		return models.ErrGetDocument
+	}
+
+	// Mapping Application Form Data and Generate PDF
+	appFormData := models.ApplicationForm{}
+
+	paramsAppForm := map[string]interface{}{
+		"docs": docs,
+		"acc":  acc,
+	}
+
+	err = appFormData.MappingApplicationForm(paramsAppForm)
+
+	if err != nil {
+		return models.ErrMappingData
+	}
+
+	// concurrently insert or update all possible documents
+	go retry.DoConcurrent(c, "upsertDocument", func() error {
+		return reg.upsertDocument(c, appFormData.Account.Application)
+	})
+
+	return nil
+}
+
+// Function to Generate Slip TE
+func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc models.Account) error {
+	// get user effective balance
+	userDetail, err := reg.arRepo.GetDetailGoldUser(c, acc.Application.SavingAccount)
+
+	if err != nil {
+		return err
+	}
+
+	if _, ok := userDetail["saldoEfektif"].(string); !ok {
+		return err
+	}
+
+	goldEffBalance, err := strconv.ParseFloat(userDetail["saldoEfektif"].(string), 64)
+
+	if err != nil {
+		return err
+	}
+
+	// Get Signatory Name for Slip TE Document
+	signatoryName, err := reg.regRepo.GetSignatoryNameParam(c)
+
+	if err != nil {
+		return err
+	}
+
+	// Get Signatory Nip for Slip TE Document
+	signatoryNip, err := reg.regRepo.GetSignatoryNipParam(c)
+
+	if err != nil {
+		return err
+	}
+
+	// Mapping Application Form Data and Generate PDF
+	slipTeData := models.SlipTE{}
+
+	paramsSlipTe := map[string]interface{}{
+		"acc":            acc,
+		"signatoryName":  signatoryName,
+		"signatoryNip":   signatoryNip,
+		"goldEffBalance": goldEffBalance,
+	}
+
+	err = slipTeData.MappingSlipTe(paramsSlipTe)
+
+	if err != nil {
+		return models.ErrMappingData
+	}
+
+	// concurrently insert or update all possible documents
+	go retry.DoConcurrent(c, "upsertDocument", func() error {
+		return reg.upsertDocument(c, slipTeData.Account.Application)
+	})
+
+	return nil
 }

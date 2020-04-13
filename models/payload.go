@@ -32,8 +32,9 @@ type PayloadAppNumber struct {
 
 // PayloadSavingAccount a struct to store all payload for saving account
 type PayloadSavingAccount struct {
-	ApplicationNumber string `json:"applicationNumber" validate:"required"`
-	AccountNumber     string `json:"accountNumber" validate:"required"`
+	ApplicationNumber        string `json:"applicationNumber" validate:"required"`
+	AccountNumber            string `json:"accountNumber" validate:"required"`
+	SavingAccountOpeningDate string `json:"savingAccountOpeningDate" validate:"required"`
 }
 
 // PayloadCardLimit a struct to store all payload for card limit

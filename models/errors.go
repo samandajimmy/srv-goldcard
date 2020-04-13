@@ -123,6 +123,9 @@ var (
 	// ErrPostActivationsFailed to errors post activations failed
 	ErrPostActivationsFailed = errors.New("Gagal melakukan aktivasi")
 
+	// ErrGetDocument to errors get document failed
+	ErrGetDocument = errors.New("Gagal mendapatkan dokumen")
+
 	// ErrAlreadyActivated to errors already activated
 	ErrAlreadyActivated = errors.New("Akun ini sudah pernah di aktivasi sebelumnya")
 
