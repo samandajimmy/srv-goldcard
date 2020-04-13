@@ -231,3 +231,21 @@ func (PSQLTrx *psqlTransactionsRepository) GetAllActiveAccount(c echo.Context) (
 
 	return listActiveAccount, nil
 }
+
+func (PSQLTrx *psqlTransactionsRepository) GetPaymentInquiryNotificationData(c echo.Context, pi models.PaymentInquiry) (models.PaymentInquiryNotificationData, error) {
+	var pind models.PaymentInquiryNotificationData
+
+	nilPind := models.PaymentInquiryNotificationData{}
+	query := `SELECT id, core_response->>'reffSwitching' as reff_switching, core_response->>'administrasi' as administration
+	FROM payment_inquiries where id = ? limit 1;`
+
+	_, err := PSQLTrx.DBpg.Query(&pind, query, pi.ID)
+
+	if err != nil || (pind == nilPind) {
+		logger.Make(nil, nil).Debug(err)
+
+		return nilPind, err
+	}
+
+	return pind, nil
+}
