@@ -7,13 +7,10 @@ import (
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/transactions"
-	"log"
-	"os"
 	"reflect"
 	"strconv"
 
 	"github.com/labstack/echo"
-	"gopkg.in/gomail.v2"
 )
 
 type transactionsUseCase struct {
@@ -447,99 +444,3 @@ func (trxUS *transactionsUseCase) payTheBill(c echo.Context, bill *models.Billin
 
 	return nil
 }
-<<<<<<< HEAD
-
-// DecreasedSTL is a func to recalculate gold card rupiah limit when occurs stl decreased equal or more than 5%
-func (trxUS *transactionsUseCase) DecreasedSTL(c echo.Context, pcds models.PayloadCoreDecreasedSTL) models.ResponseErrors {
-	var errors models.ResponseErrors
-	var notif models.PdsNotification
-	var oldCard models.Card
-
-	// check if payload decreased five percent is false then return
-	if pcds.DecreasedFivePercent != "true" {
-		return errors
-	}
-
-	// Get CurrentStl from Core payload
-	currStl := pcds.STL
-
-	// Get All Active Account
-	allAccs, err := trxUS.trxRepo.GetAllActiveAccount(c)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
-		return errors
-	}
-
-	for _, acc := range allAccs {
-		notif = models.PdsNotification{}
-		oldCard = acc.Card
-
-		// set card limit
-		err = acc.Card.SetCardLimit(currStl)
-
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			continue
-		}
-
-		// update card limit in db
-		refId, err := trxUS.rRepo.UpdateCardLimit(c, acc, true)
-
-		if err != nil {
-			continue
-		}
-
-		// Send notification to user in pds
-		notif.GcDecreasedSTL(acc, oldCard, refId)
-		_ = trxUS.rrRepo.SendNotification(c, notif, "mobile")
-
-		// Send notification to email if STL > 5%
-		trxUS.SendNotificationEmail(c, acc, oldCard)
-	}
-
-	return errors
-}
-
-func (trxUS *transactionsUseCase) SendNotificationEmail(c echo.Context, acc models.Account, oldCard models.Card) {
-	name := acc.PersonalInformation.FirstName
-	ktpNo := acc.PersonalInformation.Nik
-	dob := acc.PersonalInformation.BirthDate
-	oldLimit := strconv.FormatInt(oldCard.CardLimit, 10)
-	newLimit := strconv.FormatInt(acc.Card.CardLimit, 10)
-
-	// call the smtp config from .env
-	smtpHost := os.Getenv(`PDS_EMAIL_HOST`)
-	smtpPort, _ := strconv.Atoi(os.Getenv(`PDS_EMAIL_PORT`))
-	smtpEmail := os.Getenv(`PDS_EMAIL_USERNAME`)
-	smtpPass := os.Getenv(`PDS_EMAIL_PASSWORD`)
-
-	// gomail instance to sending an email
-	mailer := gomail.NewMessage()
-	mailer.SetHeader("From", smtpEmail)
-	mailer.SetHeader("To", "erwin.ardiantha@pegadaian.co.id") // todo - mengganti alamat email dengan email yang sesuai
-	mailer.SetHeader("Subject", "Pegadaian Kartu Emas - STL Turun 5%")
-	mailer.SetBody("text/plain",
-		"Terjadi Perubahan Kartu STL Kartu Emas dengan rincian sebagai berikut \n\n - Nama: "+name+"\n"+
-			" - No. KTP: "+ktpNo+"\n"+
-			" - Tanggal Lahir: "+dob+"\n"+
-			" - Limit Lama: "+oldLimit+"\n"+
-			" - Limit Baru: "+newLimit+"\n"+
-			"\n Lampiran file perubahan STL akan dikirimkan dalam email berbeda \n Terima Kasih")
-
-	dialer := gomail.NewDialer(
-		smtpHost,
-		smtpPort,
-		smtpEmail,
-		smtpPass,
-	)
-
-	err := dialer.DialAndSend(mailer)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	log.Println("\nMail sent!")
-}
-=======
->>>>>>> 8ca597b13cc7d68871a7f63670763cf3ce0b5553
