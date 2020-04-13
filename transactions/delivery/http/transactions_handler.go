@@ -222,7 +222,7 @@ func (th *TransactionsHandler) PaymentInquiry(c echo.Context) error {
 }
 
 func (th *TransactionsHandler) DecreasedSTL(c echo.Context) error {
-	var pcds models.PayloadCoreDecreasedSTL //di tiket wasis
+	var pcds models.PayloadCoreDecreasedSTL
 	th.response, th.respErrors = models.NewResponse()
 
 	if err := c.Bind(&pcds); err != nil {
