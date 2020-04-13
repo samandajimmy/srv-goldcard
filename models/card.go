@@ -20,21 +20,22 @@ const (
 
 // Card is a struct to store card data
 type Card struct {
-	ID          int64     `json:"id"`
-	CardName    string    `json:"cardName"`
-	CardNumber  string    `json:"cardNumber"`
-	CardLimit   int64     `json:"cardLimit"`
-	GoldLimit   float64   `json:"goldLimit"`
-	StlLimit    int64     `json:"stlLimit"`
-	ValidUntil  string    `json:"validUntil"`
-	PinNumber   string    `json:"pinNumber"`
-	Description string    `json:"description"`
-	Balance     int64     `json:"balance"`
-	GoldBalance float64   `json:"goldBalance"`
-	StlBalance  int64     `json:"stlBalance"`
-	Status      string    `json:"status"`
-	UpdatedAt   time.Time `json:"updatedAt"`
-	CreatedAt   time.Time `json:"createdAt"`
+	ID                  int64     `json:"id"`
+	CardName            string    `json:"cardName"`
+	CardNumber          string    `json:"cardNumber"`
+	CardLimit           int64     `json:"cardLimit"`
+	GoldLimit           float64   `json:"goldLimit"`
+	StlLimit            int64     `json:"stlLimit"`
+	ValidUntil          string    `json:"validUntil"`
+	PinNumber           string    `json:"pinNumber"`
+	Description         string    `json:"description"`
+	Balance             int64     `json:"balance"`
+	GoldBalance         float64   `json:"goldBalance"`
+	StlBalance          int64     `json:"stlBalance"`
+	Status              string    `json:"status"`
+	EncryptedCardNumber string    `json:"encryptedCardNumber"`
+	UpdatedAt           time.Time `json:"updatedAt"`
+	CreatedAt           time.Time `json:"createdAt"`
 }
 
 // ConvertMoneyToGold to convert rupiah into gram

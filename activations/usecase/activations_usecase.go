@@ -6,6 +6,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
+	"gade/srv-goldcard/transactions"
 	"strconv"
 	"time"
 
@@ -18,12 +19,13 @@ type activationsUseCase struct {
 	rRepo    registrations.Repository
 	rrRepo   registrations.RestRepository
 	rUsecase registrations.UseCase
+	trRepo   transactions.RestRepository
 }
 
 // ActivationUseCase represent Activation Use Case
 func ActivationUseCase(aRepo activations.Repository, arRepo activations.RestRepository,
-	rRepo registrations.Repository, rrRepo registrations.RestRepository, rUsecase registrations.UseCase) activations.UseCase {
-	return &activationsUseCase{aRepo, arRepo, rRepo, rrRepo, rUsecase}
+	rRepo registrations.Repository, rrRepo registrations.RestRepository, rUsecase registrations.UseCase, trRepo transactions.RestRepository) activations.UseCase {
+	return &activationsUseCase{aRepo, arRepo, rRepo, rrRepo, rUsecase, trRepo}
 }
 
 func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.PayloadAppNumber) models.ResponseErrors {
@@ -212,7 +214,17 @@ func (aUsecase *activationsUseCase) afterActivationGoldcard(c echo.Context, acc 
 	}
 
 	updateActivation := func() {
-		err := aUsecase.aRepo.PostActivations(c, *acc)
+		// get card information
+		cardInformation, err := aUsecase.trRepo.GetBRICardInformation(c, *acc)
+
+		if err != nil {
+			logger.Make(c, nil).Debug(err)
+			errActUpdate <- err
+			return
+		}
+
+		acc.Card.EncryptedCardNumber = cardInformation.BillKey
+		err = aUsecase.aRepo.PostActivations(c, *acc)
 
 		if err != nil {
 			logger.Make(c, nil).Debug(err)
