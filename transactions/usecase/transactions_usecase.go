@@ -447,6 +447,7 @@ func (trxUS *transactionsUseCase) payTheBill(c echo.Context, bill *models.Billin
 
 	return nil
 }
+<<<<<<< HEAD
 
 // DecreasedSTL is a func to recalculate gold card rupiah limit when occurs stl decreased equal or more than 5%
 func (trxUS *transactionsUseCase) DecreasedSTL(c echo.Context, pcds models.PayloadCoreDecreasedSTL) models.ResponseErrors {
@@ -540,3 +541,5 @@ func (trxUS *transactionsUseCase) SendNotificationEmail(c echo.Context, acc mode
 
 	log.Println("\nMail sent!")
 }
+=======
+>>>>>>> 8ca597b13cc7d68871a7f63670763cf3ce0b5553
