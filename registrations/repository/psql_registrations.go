@@ -114,8 +114,8 @@ func (regis *psqlRegistrationsRepository) PostAddress(c echo.Context, acc models
 }
 
 func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc models.Account) error {
-	query := `UPDATE applications set saving_account = $1, updated_at = $2
-		WHERE id = $3;`
+	query := `UPDATE applications set saving_account = $1,saving_account_opening_date = $2,  updated_at = $3
+		WHERE id = $4;`
 	stmt, err := regis.Conn.Prepare(query)
 
 	if err != nil {
@@ -124,7 +124,7 @@ func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc 
 		return err
 	}
 
-	_, err = stmt.Exec(acc.Application.SavingAccount, time.Now(), acc.ApplicationID)
+	_, err = stmt.Exec(acc.Application.SavingAccount, acc.Application.SavingAccountOpeningDate, time.Now(), acc.ApplicationID)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
@@ -139,7 +139,7 @@ func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, 
 	newAcc := models.Account{}
 	docs := []models.Document{}
 	err := regis.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
-		Relation("Card").
+		Relation("Card").Relation("Occupation").Relation("EmergencyContact").Relation("Correspondence").
 		Where("application_number = ?", acc.Application.ApplicationNumber).Select()
 
 	if err != nil && err != pg.ErrNoRows {
@@ -511,4 +511,58 @@ func (regis *psqlRegistrationsRepository) insertAppDocument(c echo.Context, doc 
 	}
 
 	return nil
+}
+
+func (regis *psqlRegistrationsRepository) GetDocumentByApplicationId(appId int64) ([]models.Document, error) {
+	var listDocument []models.Document
+	err := regis.DBpg.Model(&listDocument).
+		Where("application_id = ?", appId).Select()
+
+	if err != nil || (listDocument == nil) {
+		logger.Make(nil, nil).Debug(err)
+
+		return listDocument, err
+	}
+
+	return listDocument, nil
+}
+
+func (regis *psqlRegistrationsRepository) GetSignatoryNameParam(c echo.Context) (string, error) {
+	newPrm := models.Parameter{}
+	err := regis.DBpg.Model(&newPrm).
+		Where("key = ?", "SIGNATORY_NAME").Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", err
+	}
+
+	if err == pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", models.ErrGetParameter
+	}
+
+	return newPrm.Value, nil
+}
+
+func (regis *psqlRegistrationsRepository) GetSignatoryNipParam(c echo.Context) (string, error) {
+	newPrm := models.Parameter{}
+	err := regis.DBpg.Model(&newPrm).
+		Where("key = ?", "SIGNATORY_NIP").Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", err
+	}
+
+	if err == pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", models.ErrGetParameter
+	}
+
+	return newPrm.Value, nil
 }
