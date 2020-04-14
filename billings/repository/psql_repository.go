@@ -23,7 +23,7 @@ func NewPsqlBillingsRepository(Conn *sql.DB, dbpg *pg.DB) billings.Repository {
 
 func (PSQLBill *psqlBillings) GetBillingInquiry(c echo.Context, bill *models.Billing) error {
 	// Get last billing published
-	newBill := models.Billing{}
+	newBill := *bill
 	err := PSQLBill.DBpg.Model(&newBill).Relation("Account").
 		Where("account_number = ? AND billing.status = ?", bill.Account.AccountNumber, models.BillUnpaid).
 		Order("billing_date DESC").Limit(1).Select()
