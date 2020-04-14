@@ -120,7 +120,7 @@ func (ulUS *updateLimitUseCase) SendNotificationEmail(c echo.Context, acc models
 	// gomail instance to sending an email
 	mailer := gomail.NewMessage()
 	mailer.SetHeader("From", smtpEmail)
-	mailer.SetHeader("To", param.Value) // todo - taorh di parameter
+	mailer.SetHeader("To", param.Value)
 	mailer.SetHeader("Subject", "Pegadaian Kartu Emas - STL Turun 5%")
 	mailer.SetBody("text/plain", "Selamat Pagi \n\n Berikut terlampir file perubahan STL yang turun >5% \n\n Terima Kasih")
 	mailer.Attach("./data-stl.csv")
