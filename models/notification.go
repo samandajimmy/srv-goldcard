@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"gade/srv-goldcard/logger"
+	"strconv"
 	"strings"
 	"time"
 
@@ -183,6 +184,53 @@ func (pdsNotif *PdsNotification) GcTransaction(trx Transaction) {
 		{
 			Key:   "Tempat",
 			Value: trx.Description,
+		},
+	}
+}
+
+// GcPayment to send goldcard payment notification to pds
+func (pdsNotif *PdsNotification) GcPayment(trx Transaction, bill Billing, pind PaymentInquiryNotificationData) {
+	ac := accounting.Accounting{Symbol: "Rp ", Thousand: "."}
+	time := time.Now().UTC()
+
+	administration, _ := strconv.ParseInt(pind.Administration, 10, 64)
+	dateTime := time.Format("02/01/2006") + " " + time.Format("15:04:05")
+	totalPayment := trx.Nominal + administration
+	pdsNotif.NotificationTitle = "Kartu Emas"
+	pdsNotif.EmailSubject = "Transaksi Pembayaran Kartu Emas Sukses"
+	pdsNotif.PhoneNumber = trx.Account.PersonalInformation.HandPhoneNumber
+	pdsNotif.CIF = trx.Account.CIF
+	pdsNotif.ContentTitle = "Transaksi Pembayaran Kartu Emas Sukses"
+	pdsNotif.ContentDescription = []string{"Terima kasih telah melakukan pembayaran.", "Transaksi Kamu Berhasil:"}
+	pdsNotif.NotificationDescription = "Terima kasih telah melakukan pembayaran."
+	pdsNotif.ContentList = []ContentList{
+		{
+			Key:   "Metode Pembayaran",
+			Value: "",
+		},
+		{
+			Key:   "Referensi",
+			Value: pind.ReffSwitching,
+		},
+		{
+			Key:   "Jenis Transaksi",
+			Value: "Pembayaran Kartu Emas",
+		},
+		{
+			Key:   "Waktu Transaksi",
+			Value: dateTime,
+		},
+		{
+			Key:   "Biaya Channel",
+			Value: ac.FormatMoney(administration),
+		},
+		{
+			Key:   "Total Pembayaran",
+			Value: ac.FormatMoney(totalPayment),
+		},
+		{
+			Key:   "Sisa Tagihan",
+			Value: ac.FormatMoney(bill.DebtAmount),
 		},
 	}
 }

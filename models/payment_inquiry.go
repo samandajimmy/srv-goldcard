@@ -19,3 +19,10 @@ type PaymentInquiry struct {
 	CreatedAt    time.Time       `json:"createdAt"`
 	Billing      Billing         `json:"billing"`
 }
+
+// PaymentInquiryNotificationData is a struct to store PaymentInquiryNotificationData data
+type PaymentInquiryNotificationData struct {
+	ID             string `json:"id"`
+	Administration string `json:"administration"`
+	ReffSwitching  string `json:"reffSwitching" pg:"reff_switching"`
+}
