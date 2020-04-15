@@ -133,6 +133,7 @@ func (trxUS *transactionsUseCase) PostPaymentTransaction(c echo.Context, pl mode
 
 func (trxUS *transactionsUseCase) PostPaymentTrxCore(c echo.Context, pl models.PlPaymentTrxCore) models.ResponseErrors {
 	var errors models.ResponseErrors
+	var notif models.PdsNotification
 	acc, err := trxUS.CheckAccountByAccountNumber(c, pl)
 
 	if err != nil {
@@ -177,6 +178,21 @@ func (trxUS *transactionsUseCase) PostPaymentTrxCore(c echo.Context, pl models.P
 		errors.SetTitle(err.Error())
 		return errors
 	}
+
+	// Get Payment Inquiry Notification data
+	pind, err := trxUS.trxRepo.GetPaymentInquiryNotificationData(c, payment)
+
+	if err != nil {
+		errors.SetTitle(err.Error())
+		return errors
+	}
+
+	// Send notification to user in pds and email
+	go func() {
+		notif.GcPayment(trx, bill, pind)
+		_ = trxUS.rrRepo.SendNotification(c, notif, "email")
+		_ = trxUS.rrRepo.SendNotification(c, notif, "mobile")
+	}()
 
 	return errors
 }
