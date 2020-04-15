@@ -12,27 +12,27 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo"
-	"gopkg.in/gomail.v2"
 )
 
 type updateLimitUseCase struct {
-	trxRepo transactions.Repository
-	rRepo   registrations.Repository
-	rrRepo  registrations.RestRepository
-	psqlUL  update_limits.Repository
+	trxRepo   transactions.Repository
+	rRepo     registrations.Repository
+	rrRepo    registrations.RestRepository
+	upLimRepo update_limits.Repository
 }
 
 // UpdateLimitUseCase represent Update Limit Use Case
 func UpdateLimitUseCase(trxRepo transactions.Repository, rRepo registrations.Repository,
-	rrRepo registrations.RestRepository, psqlUL update_limits.Repository) update_limits.UseCase {
-	return &updateLimitUseCase{trxRepo, rRepo, rrRepo, psqlUL}
+	rrRepo registrations.RestRepository, upLimRepo update_limits.Repository) update_limits.UseCase {
+	return &updateLimitUseCase{trxRepo, rRepo, rrRepo, upLimRepo}
 }
 
 // DecreasedSTL is a func to recalculate gold card rupiah limit when occurs stl decreased equal or more than 5%
-func (ulUS *updateLimitUseCase) DecreasedSTL(c echo.Context, pcds models.PayloadCoreDecreasedSTL) models.ResponseErrors {
+func (upLimUC *updateLimitUseCase) DecreasedSTL(c echo.Context, pcds models.PayloadCoreDecreasedSTL) models.ResponseErrors {
 	var errors models.ResponseErrors
 	var notif models.PdsNotification
 	var oldCard models.Card
+	var cul []models.CardUpdateLimit
 
 	// check if payload decreased five percent is false then return
 	if pcds.DecreasedFivePercent != "true" {
@@ -43,7 +43,7 @@ func (ulUS *updateLimitUseCase) DecreasedSTL(c echo.Context, pcds models.Payload
 	currStl := pcds.STL
 
 	// Get All Active Account
-	allAccs, err := ulUS.trxRepo.GetAllActiveAccount(c)
+	allAccs, err := upLimUC.trxRepo.GetAllActiveAccount(c)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
@@ -63,7 +63,7 @@ func (ulUS *updateLimitUseCase) DecreasedSTL(c echo.Context, pcds models.Payload
 		}
 
 		// update card limit in db
-		refId, err := ulUS.rRepo.UpdateCardLimit(c, acc, true)
+		refId, err := upLimUC.rRepo.UpdateCardLimit(c, acc, true)
 
 		if err != nil {
 			continue
@@ -71,21 +71,18 @@ func (ulUS *updateLimitUseCase) DecreasedSTL(c echo.Context, pcds models.Payload
 
 		// Send notification to user in pds
 		notif.GcDecreasedSTL(acc, oldCard, refId)
-		_ = ulUS.rrRepo.SendNotification(c, notif, "mobile")
-
-		// Send email notification to user in pds
-		ulUS.SendNotificationEmail(c, acc, oldCard)
+		_ = upLimUC.rrRepo.SendNotification(c, notif, "mobile")
 	}
+
+	// Send email notification
+	upLimUC.SendNotificationEmail(c, cul)
 
 	return errors
 }
 
-func (ulUS *updateLimitUseCase) SendNotificationEmail(c echo.Context, acc models.Account, oldCard models.Card) {
-	name := acc.PersonalInformation.FirstName
-	ktpNo := acc.PersonalInformation.Nik
-	dob := acc.PersonalInformation.BirthDate
-	oldLimit := strconv.FormatInt(oldCard.CardLimit, 10)
-	newLimit := strconv.FormatInt(acc.Card.CardLimit, 10)
+func (upLimUC *updateLimitUseCase) SendNotificationEmail(c echo.Context, cul []models.CardUpdateLimit) {
+
+	var data [][]string
 
 	// create csv file based on data
 	file, err := os.Create("./data-stl.csv")
@@ -94,18 +91,24 @@ func (ulUS *updateLimitUseCase) SendNotificationEmail(c echo.Context, acc models
 	}
 
 	writer := csv.NewWriter(file)
-	var data = [][]string{
-		{"nama", "no_ktp", "tanggal_lahir", "limit_lama", "limit_baru"},
-		{name, ktpNo, dob, oldLimit, newLimit}}
+
+	for _, val := range cul {
+		data = [][]string{
+			{
+				val.Account.PersonalInformation.FirstName,
+				val.Account.PersonalInformation.Nik,
+				val.Account.PersonalInformation.BirthDate,
+				strconv.FormatInt(val.OldCard.CardLimit, 10),
+				strconv.FormatInt(val.OldCard.CardLimit, 10),
+			}}
+	}
 
 	err = writer.WriteAll(data)
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 	}
 
-	keyParam := "UPDATE_LIMIT_EMAIL_ADDRESS"
-	param, err := ulUS.psqlUL.GetParameterByKey(keyParam)
-	fmt.Println(param.Value)
+	/* emailAddres, err := upLimUC.upLimRepo.GetEmailByKey(c)
 
 	if err != nil {
 		logger.Make(nil, nil).Debug(err)
@@ -120,9 +123,9 @@ func (ulUS *updateLimitUseCase) SendNotificationEmail(c echo.Context, acc models
 	// gomail instance to sending an email
 	mailer := gomail.NewMessage()
 	mailer.SetHeader("From", smtpEmail)
-	mailer.SetHeader("To", param.Value)
+	mailer.SetHeader("To", emailAddres)
 	mailer.SetHeader("Subject", "Pegadaian Kartu Emas - STL Turun 5%")
-	mailer.SetBody("text/plain", "Selamat Pagi \n\n Berikut terlampir file perubahan STL yang turun >5% \n\n Terima Kasih")
+	mailer.SetBody("text/plain", "Selamat Pagi \n\nBerikut terlampir file perubahan STL yang turun >5% \n\nTerima Kasih")
 	mailer.Attach("./data-stl.csv")
 
 	dialer := gomail.NewDialer(
@@ -138,5 +141,5 @@ func (ulUS *updateLimitUseCase) SendNotificationEmail(c echo.Context, acc models
 	}
 
 	// delete csv file
-	os.Remove("./data-stl.csv")
+	os.Remove("./data-stl.csv") */
 }

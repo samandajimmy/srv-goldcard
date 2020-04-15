@@ -1,10 +1,8 @@
 package update_limits
 
-import (
-	"gade/srv-goldcard/models"
-)
+import "github.com/labstack/echo"
 
 // Repository represent the transactions Repository
 type Repository interface {
-	GetParameterByKey(key string) (models.Parameter, error)
+	GetEmailByKey(c echo.Context) (string, error)
 }

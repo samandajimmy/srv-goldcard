@@ -7,6 +7,7 @@ import (
 	"gade/srv-goldcard/update_limits"
 
 	"github.com/go-pg/pg/v9"
+	"github.com/labstack/echo"
 )
 
 type psqlUpdateLimitsRepository struct {
@@ -19,7 +20,7 @@ func NewPsqlUpdateLimitsRepository(Conn *sql.DB, DBpg *pg.DB) update_limits.Repo
 	return &psqlUpdateLimitsRepository{Conn, DBpg}
 }
 
-func (psqlUL *psqlUpdateLimitsRepository) GetParameterByKey(key string) (models.Parameter, error) {
+/* func (psqlUL *psqlUpdateLimitsRepository) GetEmailByKey(key string) (models.Parameter, error) {
 	var param models.Parameter
 	query := `select id, key, value, description, created_at, updated_at
 		from parameters where key = ? limit 1;`
@@ -33,4 +34,24 @@ func (psqlUL *psqlUpdateLimitsRepository) GetParameterByKey(key string) (models.
 	}
 
 	return param, nil
+} */
+
+func (psqlUL *psqlUpdateLimitsRepository) GetEmailByKey(c echo.Context) (string, error) {
+	param := models.Parameter{}
+	err := psqlUL.DBpg.Model(&param).
+		Where("key = ?", "UPDATE_LIMIT_EMAIL_ADDRESS").Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", err
+	}
+
+	if err == pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", models.ErrGetParameter
+	}
+
+	return param.Value, nil
 }

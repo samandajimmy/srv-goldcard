@@ -17,3 +17,10 @@ type LimitUpdate struct {
 	CreatedAt time.Time `json:"createdAt"`
 	Account   Account   `json:"account"`
 }
+
+// CardUpdateLimit is a struct to store oldcard & newcard data limit
+type CardUpdateLimit struct {
+	OldCard Card
+	NewCard Card
+	Account Account
+}
