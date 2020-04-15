@@ -20,22 +20,7 @@ func NewPsqlUpdateLimitsRepository(Conn *sql.DB, DBpg *pg.DB) update_limits.Repo
 	return &psqlUpdateLimitsRepository{Conn, DBpg}
 }
 
-/* func (psqlUL *psqlUpdateLimitsRepository) GetEmailByKey(key string) (models.Parameter, error) {
-	var param models.Parameter
-	query := `select id, key, value, description, created_at, updated_at
-		from parameters where key = ? limit 1;`
-
-	_, err := psqlUL.DBpg.Query(&param, query, key)
-
-	if err != nil || (param == models.Parameter{}) {
-		logger.Make(nil, nil).Debug(err)
-
-		return param, err
-	}
-
-	return param, nil
-} */
-
+// function to get email address by key
 func (psqlUL *psqlUpdateLimitsRepository) GetEmailByKey(c echo.Context) (string, error) {
 	param := models.Parameter{}
 	err := psqlUL.DBpg.Model(&param).

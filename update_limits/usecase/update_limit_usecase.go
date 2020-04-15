@@ -12,6 +12,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo"
+	"gopkg.in/gomail.v2"
 )
 
 type updateLimitUseCase struct {
@@ -72,17 +73,32 @@ func (upLimUC *updateLimitUseCase) DecreasedSTL(c echo.Context, pcds models.Payl
 		// Send notification to user in pds
 		notif.GcDecreasedSTL(acc, oldCard, refId)
 		_ = upLimUC.rrRepo.SendNotification(c, notif, "mobile")
+
+		// Insert all STL data that changes to cul struct
+		cul = append(cul, models.CardUpdateLimit{OldCard: oldCard, NewCard: acc.Card, Account: acc})
 	}
 
-	// Send email notification
+	// Send an notification with its attachment to email
 	upLimUC.SendNotificationEmail(c, cul)
 
 	return errors
 }
 
+// function to send list of decreased STL to email
 func (upLimUC *updateLimitUseCase) SendNotificationEmail(c echo.Context, cul []models.CardUpdateLimit) {
 
 	var data [][]string
+
+	// append all cul data to 2D array
+	for _, val := range cul {
+		data = append(data, [][]string{{
+			val.Account.PersonalInformation.FirstName,
+			val.Account.PersonalInformation.Nik,
+			val.Account.PersonalInformation.BirthDate,
+			strconv.FormatInt(val.OldCard.CardLimit, 10),
+			strconv.FormatInt(val.OldCard.CardLimit, 10),
+		}}...)
+	}
 
 	// create csv file based on data
 	file, err := os.Create("./data-stl.csv")
@@ -92,23 +108,12 @@ func (upLimUC *updateLimitUseCase) SendNotificationEmail(c echo.Context, cul []m
 
 	writer := csv.NewWriter(file)
 
-	for _, val := range cul {
-		data = [][]string{
-			{
-				val.Account.PersonalInformation.FirstName,
-				val.Account.PersonalInformation.Nik,
-				val.Account.PersonalInformation.BirthDate,
-				strconv.FormatInt(val.OldCard.CardLimit, 10),
-				strconv.FormatInt(val.OldCard.CardLimit, 10),
-			}}
-	}
-
 	err = writer.WriteAll(data)
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 	}
 
-	/* emailAddres, err := upLimUC.upLimRepo.GetEmailByKey(c)
+	emailAddres, err := upLimUC.upLimRepo.GetEmailByKey(c)
 
 	if err != nil {
 		logger.Make(nil, nil).Debug(err)
@@ -141,5 +146,5 @@ func (upLimUC *updateLimitUseCase) SendNotificationEmail(c echo.Context, cul []m
 	}
 
 	// delete csv file
-	os.Remove("./data-stl.csv") */
+	os.Remove("./data-stl.csv")
 }
