@@ -31,7 +31,7 @@ import (
 	_transactionsHttpDelivery "gade/srv-goldcard/transactions/delivery/http"
 	_transactionsRepository "gade/srv-goldcard/transactions/repository"
 	_transactionsUseCase "gade/srv-goldcard/transactions/usecase"
-	_updateLimitRepository "gade/srv-goldcard/update_limits/repository"
+	_updateLimitHttpDelivery "gade/srv-goldcard/update_limits/delivery/http"
 	_updateLimitUseCase "gade/srv-goldcard/update_limits/usecase"
 
 	"github.com/go-pg/pg/v9"
@@ -102,7 +102,7 @@ func main() {
 	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo, registrationsUseCase, restTransactionsRepo)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
 	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, restRegistrationsRepo, transactionsUseCase)
-	_ = _updateLimitUseCase.UpdateLimitUseCase(transactionsRepository, registrationsRepository, restRegistrationsRepo, updateLimitRepo)
+	updateLimitUseCase := _updateLimitUseCase.UpdateLimitUseCase(transactionsRepository, registrationsRepository, restRegistrationsRepo)
 
 	// DELIVERIES
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
@@ -111,6 +111,7 @@ func main() {
 	_activationHttpDelivery.NewActivationsHandler(echoGroup, activationUserCase)
 	_transactionsHttpDelivery.NewTransactionsHandler(echoGroup, transactionsUseCase)
 	_billingsHttpDelivery.NewBillingsHandler(echoGroup, billingsUseCase)
+	_updateLimitHttpDelivery.NewUpdateLimitHandler(echoGroup, updateLimitUseCase)
 
 	// PING
 	ech.GET("/ping", ping)

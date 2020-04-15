@@ -112,6 +112,13 @@ func (trxUS *transactionsUseCase) PostPaymentTransaction(c echo.Context, pl mode
 		return errors
 	}
 
+	// post payment transaction to core
+	err = trxUS.trxrRepo.PostPaymentTransactionToCore(c, bill)
+	if err != nil {
+		errors.SetTitleCode("22", models.ErrPostPaymentTransactionToCore.Error(), "")
+		return errors
+	}
+
 	// update card balance to BRI after success receive billing payment
 	go func() {
 		_, err = trxUS.UpdateAndGetCardBalance(c, trx.Account)
@@ -394,7 +401,7 @@ func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPay
 
 func (trxUS *transactionsUseCase) prepareTrxAndBill(c echo.Context, acc models.Account, pl interface{}) (models.Transaction,
 	models.Billing, models.ResponseErrors) {
-	var errors models.ResponseErrors
+	var errors = models.ResponseErrors{Code: "00"}
 	var err error
 	// init account trx
 	trx := models.Transaction{AccountId: acc.ID, Account: acc}
