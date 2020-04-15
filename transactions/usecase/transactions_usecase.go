@@ -8,9 +8,9 @@ import (
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/transactions"
 	"reflect"
-	"strconv"
 
 	"github.com/labstack/echo"
+	"github.com/leekchan/accounting"
 )
 
 type transactionsUseCase struct {
@@ -338,6 +338,7 @@ func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc mo
 
 func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPaymentInquiry) (map[string]interface{}, models.ResponseErrors) {
 	var errors models.ResponseErrors
+	var ac = accounting.Accounting{Symbol: "Rp ", Thousand: "."}
 	response := map[string]interface{}{}
 	// Get Account by Account Number
 	acc, err := trxUS.CheckAccountByAccountNumber(c, pl)
@@ -383,15 +384,31 @@ func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPay
 		return response, errors
 	}
 
-	// check over payment
-	if bill.DebtAmount < pl.PaymentAmount {
-		errors.SetTitleCode("22", models.ErrOverPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
+	// check payment amount validation if equal or less than zero
+	if pl.PaymentAmount <= 0 {
+		errors.SetTitleCode("22", models.ErrPaymentAmountZero.Error(), "")
 		return response, errors
 	}
 
-	// check payment less than 10% remaining payment but only at the first payment
-	if bill.DebtAmount == bill.Amount && pl.PaymentAmount <= int64(bill.MinimumPayment) {
-		errors.SetTitleCode("22", models.ErrMinimumPayment.Error(), strconv.FormatInt(bill.DebtAmount, 10))
+	// minimum payment amount validation on first payment of billing
+	if bill.Amount == bill.DebtAmount {
+		// if less than 50.000, payment amount must be equal to bill amount
+		if bill.Amount < 50000 && pl.PaymentAmount != bill.Amount {
+			errors.SetTitleCode("22", models.DynamicErr(models.ErrExactMatchPaymentAmount, []interface{}{ac.FormatMoney(bill.Amount)}).Error(), "")
+			return response, errors
+		}
+
+		// if equal or greater than 50.000 AND less than 500.000, minimum payment amount equal to 50.000
+		// if equal or greater than 500.000, minimum payment amount equal to 10% of bill amount
+		if pl.PaymentAmount < int64(bill.MinimumPayment) {
+			errors.SetTitleCode("22", models.DynamicErr(models.ErrMinPaymentAmount, []interface{}{ac.FormatMoney(bill.MinimumPayment)}).Error(), "")
+			return response, errors
+		}
+	}
+
+	// check over payment
+	if bill.DebtAmount < pl.PaymentAmount {
+		errors.SetTitleCode("22", models.DynamicErr(models.ErrOverPayment, []interface{}{ac.FormatMoney(bill.DebtAmount)}).Error(), "")
 		return response, errors
 	}
 
