@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"encoding/csv"
-	"fmt"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
@@ -103,7 +102,7 @@ func (upLimUC *updateLimitUseCase) SendNotificationEmail(c echo.Context, cul []m
 	// create csv file based on data
 	file, err := os.Create("./data-stl.csv")
 	if err != nil {
-		fmt.Println(err)
+		logger.Make(c, nil).Debug(err)
 	}
 
 	writer := csv.NewWriter(file)
