@@ -24,5 +24,5 @@ type PaymentInquiry struct {
 type PaymentInquiryNotificationData struct {
 	ID             string `json:"id"`
 	Administration string `json:"administration"`
-	ReffSwitching  string `json:"reff_switching"`
+	ReffSwitching  string `json:"reffSwitching" pg:"reff_switching"`
 }
