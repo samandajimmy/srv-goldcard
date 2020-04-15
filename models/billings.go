@@ -9,6 +9,9 @@ import (
 var (
 	// BillUnpaid is to store var billing status unpaid
 	BillUnpaid = "unpaid"
+
+	// BillIsUpdate to store a value of billing is updated
+	BillIsUpdate = "1"
 )
 
 // Billing is a struct to store billing data
@@ -25,6 +28,7 @@ type Billing struct {
 	STL            int64     `json:"stl"`
 	DebtSTL        int64     `json:"debtStl"`
 	Status         string    `json:"status"`
+	RefBilling     string    `json:"refBilling"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
 	Account        Account   `json:"account"`
