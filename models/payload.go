@@ -214,7 +214,7 @@ type PayloadBRIPendingTransactions struct {
 // PlPaymentInquiry a struct to store all payload for payment inquiry
 type PlPaymentInquiry struct {
 	AccountNumber string `json:"accountNumber" validate:"required"`
-	PaymentAmount int64  `json:"paymentAmount" validate:"omitempty,required"`
+	PaymentAmount int64  `json:"paymentAmount" validate:"required"`
 	RefTrx        string `json:"refTrx"`
 }
 

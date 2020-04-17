@@ -384,16 +384,10 @@ func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPay
 		return response, errors
 	}
 
-	// check payment amount validation if equal or less than zero
-	if pl.PaymentAmount <= 0 {
-		errors.SetTitleCode("22", models.ErrPaymentAmountZero.Error(), "")
-		return response, errors
-	}
-
 	// minimum payment amount validation on first payment of billing
 	if bill.Amount == bill.DebtAmount {
 		// if less than 50.000, payment amount must be equal to bill amount
-		if bill.Amount < 50000 && pl.PaymentAmount != bill.Amount {
+		if bill.Amount < int64(models.BillFiftyThousands) && pl.PaymentAmount != bill.Amount {
 			errors.SetTitleCode("22", models.DynamicErr(models.ErrExactMatchPaymentAmount, []interface{}{ac.FormatMoney(bill.Amount)}).Error(), "")
 			return response, errors
 		}
