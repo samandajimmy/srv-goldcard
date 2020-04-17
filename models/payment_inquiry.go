@@ -5,11 +5,6 @@ import (
 	"time"
 )
 
-var (
-	//BillFiftyThousands to store parameter when billing is less than fifty thousands rupiah
-	BillFiftyThousands = 50000
-)
-
 // PaymentInquiry is a struct to store paymentInquiry data
 type PaymentInquiry struct {
 	ID           string          `json:"id"`
