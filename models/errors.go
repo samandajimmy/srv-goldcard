@@ -177,11 +177,17 @@ var (
 	// ErrNoBilling to store get billing statement error message
 	ErrNoBilling = errors.New("Anda belum memiliki tagihan")
 
-	// ErrMinimumPayment to store error message minimum payment
-	ErrMinimumPayment = errors.New("Pembayaran kamu kurang dari 10%")
+	// ErrExactMatchPaymentAmount to store error message when payment amount is not match exact
+	ErrExactMatchPaymentAmount = "Jumlah pembayaran harus sebesar %s"
+
+	// ErrMinPaymentAmount to store error message when payment amount is lesser than minimum payment amount
+	ErrMinPaymentAmount = "Jumlah pembayaran harus lebih besar dari %s"
+
+	// ErrPaymentAmountZero to store error message when payment amount is zero
+	ErrPaymentAmountZero = errors.New("Jumlah pembayaran harus diisi")
 
 	// ErrOverPayment to store error message payment over debt_amount
-	ErrOverPayment = errors.New("Input melebihi sisa tagihan")
+	ErrOverPayment = "Jumlah pembayaran harus lebih kecil dari %s"
 
 	// ErrGetAccByAccountNumber to store account number not found error message
 	ErrGetAccByAccountNumber = errors.New("Nomor akun kartu emas tidak di temukan")
