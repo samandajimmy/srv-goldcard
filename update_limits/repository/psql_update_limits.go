@@ -1,0 +1,42 @@
+package repository
+
+import (
+	"database/sql"
+	"gade/srv-goldcard/logger"
+	"gade/srv-goldcard/models"
+	"gade/srv-goldcard/update_limits"
+
+	"github.com/go-pg/pg/v9"
+	"github.com/labstack/echo"
+)
+
+type psqlUpdateLimitsRepository struct {
+	Conn *sql.DB
+	DBpg *pg.DB
+}
+
+// NewPsqlUpdateLimitsRepository will create an object that represent the transactions.Repository interface
+func NewPsqlUpdateLimitsRepository(Conn *sql.DB, DBpg *pg.DB) update_limits.Repository {
+	return &psqlUpdateLimitsRepository{Conn, DBpg}
+}
+
+// function to get email address by key
+func (psqlUL *psqlUpdateLimitsRepository) GetEmailByKey(c echo.Context) (string, error) {
+	param := models.Parameter{}
+	err := psqlUL.DBpg.Model(&param).
+		Where("key = ?", "UPDATE_LIMIT_EMAIL_ADDRESS").Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", err
+	}
+
+	if err == pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", models.ErrGetParameter
+	}
+
+	return param.Value, nil
+}
