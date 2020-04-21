@@ -33,13 +33,6 @@ func (cus *cardsUseCase) BlockCard(c echo.Context, pl models.PayloadCardBlock) e
 		return err
 	}
 
-	// Update Table Cards status to "inactive"
-	acc.Card.Status = models.CardStatusInactive
-	err = cus.cRepo.UpdateCardStatus(c, acc.Card)
-	if err != nil {
-		return models.ErrUpdateCardStatus
-	}
-
 	// Mapping Card Statuses
 	cardStatuses := models.CardStatuses{}
 	err = cardStatuses.MappingBlockCard(briCardBlockStatus, pl, acc.Card)
@@ -47,8 +40,9 @@ func (cus *cardsUseCase) BlockCard(c echo.Context, pl models.PayloadCardBlock) e
 		return models.ErrMappingData
 	}
 
-	// Insert Table Card Statuses
-	err = cus.cRepo.PostCardStatuses(cardStatuses)
+	// Update Table Cards status to "inactive" and Insert Table Card Statuses
+	acc.Card.Status = models.CardStatusInactive
+	err = cus.cRepo.UpdateCardStatus(c, acc.Card, cardStatuses)
 	if err != nil {
 		return models.ErrUpdateCardStatus
 	}

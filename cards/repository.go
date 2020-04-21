@@ -8,8 +8,7 @@ import (
 
 // Repository represent the cards repository contract
 type Repository interface {
-	UpdateCardStatus(c echo.Context, card models.Card) error
-	PostCardStatuses(cs models.CardStatuses) error
+	UpdateCardStatus(c echo.Context, card models.Card, cs models.CardStatuses) error
 }
 
 // RestRepository represent the rest cards repository contract
