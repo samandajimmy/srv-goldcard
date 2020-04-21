@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"encoding/csv"
+	"gade/srv-goldcard/activations"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
@@ -15,16 +16,19 @@ import (
 )
 
 type updateLimitUseCase struct {
+	arRepo    activations.RestRepository
 	trxRepo   transactions.Repository
+	trxUS     transactions.UseCase
 	rRepo     registrations.Repository
 	rrRepo    registrations.RestRepository
 	upLimRepo update_limits.Repository
 }
 
 // UpdateLimitUseCase represent Update Limit Use Case
-func UpdateLimitUseCase(trxRepo transactions.Repository, rRepo registrations.Repository,
-	rrRepo registrations.RestRepository, upLimRepo update_limits.Repository) update_limits.UseCase {
-	return &updateLimitUseCase{trxRepo, rRepo, rrRepo, upLimRepo}
+func UpdateLimitUseCase(arRepo activations.RestRepository, trxRepo transactions.Repository,
+	trxUS transactions.UseCase, rRepo registrations.Repository, rrRepo registrations.RestRepository,
+	upLimRepo update_limits.Repository) update_limits.UseCase {
+	return &updateLimitUseCase{arRepo, trxRepo, trxUS, rRepo, rrRepo, upLimRepo}
 }
 
 // DecreasedSTL is a func to recalculate gold card rupiah limit when occurs stl decreased equal or more than 5%
@@ -146,4 +150,83 @@ func (upLimUC *updateLimitUseCase) SendNotificationEmail(c echo.Context, cul []m
 
 	// delete csv file
 	os.Remove("./data-stl.csv")
+}
+
+func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.PayloadInquiryUpdateLimit) models.ResponseErrors {
+	var errors models.ResponseErrors
+
+	// get acc by account number
+	acc, err := upLimUC.trxUS.CheckAccountByAccountNumber(c, pl)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
+		return errors
+	}
+
+	// get user gold effective balance
+	userGoldDetail, err := upLimUC.arRepo.GetDetailGoldUser(c, acc.Application.SavingAccount)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetUserDetail.Error())
+		return errors
+	}
+
+	if _, ok := userGoldDetail["saldoEfektif"].(string); !ok {
+		errors.SetTitle(models.ErrSetVar.Error())
+		return errors
+	}
+
+	goldEffBalance, err := strconv.ParseFloat(userGoldDetail["saldoEfektif"].(string), 64)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetEffBalance.Error())
+		return errors
+	}
+
+	// get current STL first
+	currStl, err := upLimUC.rrRepo.GetCurrentGoldSTL(c)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetCurrSTL.Error())
+		return errors
+	}
+
+	// check if gold effective balance is sufficient
+	sufficientGoldEffBal := upLimUC.checkGoldEffBalanceSufficient(pl.NominalLimit, acc.Card, currStl, goldEffBalance)
+	if !sufficientGoldEffBal {
+		errors.SetTitle(models.ErrInsufGoldSavingEffBalance.Error())
+		return errors
+	}
+
+	// check if new inquired card limit is above 50 millions rupiah, then npwp is required
+	docs, err := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID)
+	if err != nil {
+		errors.SetTitle(models.ErrGetDocument.Error())
+		return errors
+	}
+
+	npwp := acc.Application.GetCurrentDoc(docs, models.MapDocType["NpwpImageBase64"])
+	if npwp.ID == 0 && pl.NominalLimit > models.LimitFiftyMillions {
+		errors.SetTitleCode("11", models.ErrNPWPRequired.Error(), "")
+		return errors
+	}
+
+	return errors
+}
+
+// checkGoldEffBalanceSufficient is a function to check whether remaining effective gold balance is sufficient when trying to increase card limit
+func (upLimUC *updateLimitUseCase) checkGoldEffBalanceSufficient(newLimit int64, currentCard models.Card, currStl int64, goldEffBalance float64) bool {
+	var isSufficient bool = true
+
+	appliedGoldLimit := currentCard.GoldLimit
+	newGoldLimit := currentCard.SetGoldLimit(newLimit, currStl)
+	// because we need user to have at least 0.1 effective gold balance
+	deficitGoldLimit := models.CustomRound("round", newGoldLimit-appliedGoldLimit, 10000) + models.MinEffBalance
+
+	// got not enough effective gold balance
+	if goldEffBalance < deficitGoldLimit {
+		isSufficient = false
+	}
+
+	return isSufficient
 }

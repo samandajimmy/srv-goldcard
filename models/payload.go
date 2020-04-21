@@ -286,6 +286,12 @@ type PayloadCoreDecreasedSTL struct {
 	DecreasedFivePercent string `json:"decreasedFivePercent" validate:"required"`
 }
 
+// PayloadInquiryUpdateLimit a struct to store all payload for inquiry update limit
+type PayloadInquiryUpdateLimit struct {
+	AccountNumber string `json:"accountNumber" validate:"required"`
+	NominalLimit  int64  `json:"nominalLimit" validate:"required"`
+}
+
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI
 func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.FirstName = StringNameFormatter(plBRIReg.FirstName, 15)

@@ -206,6 +206,12 @@ var (
 
 	// ErrBirthDateNotMatch to store error birth date if not match
 	ErrBirthDateNotMatch = errors.New("Tanggal lahir yang dimasukan tidak sesuai")
+
+	// ErrNPWPRequired to store error if NPWP required when card limit submission is above 50 millions rupiah
+	ErrNPWPRequired = errors.New("Upload NPWP kamu untuk mendapatkan limit lebih dari 50 juta")
+
+	// ErrInsufGoldSavingEffBalance to store error if gold saving effective balance is not sufficient when submit new card limit
+	ErrInsufGoldSavingEffBalance = errors.New("Sisa saldo efektif tidak mencukupi")
 )
 
 // DynamicErr to return parameterize errors

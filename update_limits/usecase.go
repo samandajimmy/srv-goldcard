@@ -9,4 +9,5 @@ import (
 // UseCase represent the registrations usecases
 type UseCase interface {
 	DecreasedSTL(c echo.Context, pl models.PayloadCoreDecreasedSTL) models.ResponseErrors
+	InquiryUpdateLimit(c echo.Context, pl models.PayloadInquiryUpdateLimit) models.ResponseErrors
 }
