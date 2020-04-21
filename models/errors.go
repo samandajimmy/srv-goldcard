@@ -75,6 +75,9 @@ var (
 	// ErrUpdateCardBalance to store updating card balance data error message
 	ErrUpdateCardBalance = errors.New("Terjadi kesalahan saat update saldo kartu emas")
 
+	// ErrUpdateCardStatus to store updating card status data error message
+	ErrUpdateCardStatus = errors.New("Terjadi kesalahan saat update status kartu")
+
 	// ErrZipcodeNotFound to store zip code not found error message
 	ErrZipcodeNotFound = errors.New("Kode pos tidak ditemukan")
 
