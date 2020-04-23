@@ -80,7 +80,7 @@ var (
 		"card_processed":        "CardProcessedDate",
 		"card_send":             "CardSendDate",
 		"card_sent":             "CardSentDate",
-		"failed":                "FailedDate",
+		"rejected":              "RejectedDate",
 	}
 	mapDocType = map[string]string{
 		"KtpImageBase64":       "ktp",
@@ -129,7 +129,7 @@ type Applications struct {
 	CardProcessedDate        time.Time  `json:"cardProcessedDate,omitempty"`
 	CardSendDate             time.Time  `json:"cardSendDate,omitempty"`
 	CardSentDate             time.Time  `json:"cardSentDate,omitempty"`
-	FailedDate               time.Time  `json:"failedDate,omitempty"`
+	RejectedDate             time.Time  `json:"rejectedDate,omitempty"`
 	Documents                []Document `json:"documents" pg:"-"`
 	CoreOpen                 bool       `json:"coreOpen"`
 	CreatedAt                time.Time  `json:"createdAt"`
@@ -205,9 +205,9 @@ func (app *Applications) getStatus(msg string) string {
 	case "on printing", "ready to deliver", "on deliver":
 		return "card_send"
 	case "application rejected":
-		return "failed" // TODO: not related naming status
+		return "rejected"
 	case "card suspended":
-		return "inactive" // TODO: not related naming status
+		return "card_suspended"
 	case "delivered":
 		return "card_sent"
 	default:
@@ -244,7 +244,7 @@ type AppStatus struct {
 	CardProcessedDate        *time.Time `json:"cardProcessedDate,omitempty"`
 	CardSendDate             *time.Time `json:"cardSendDate,omitempty"`
 	CardSentDate             *time.Time `json:"cardSentDate,omitempty"`
-	FailedDate               *time.Time `json:"failedDate,omitempty"`
+	RejectedDate             *time.Time `json:"rejectedDate,omitempty"`
 }
 
 // ApplicationForm a struct to store all payload for Application Form BRI
