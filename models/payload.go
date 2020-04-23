@@ -203,7 +203,7 @@ type PayloadActivations struct {
 // PayloadCardBlock a struct to store all payload for block a card
 type PayloadCardBlock struct {
 	AccountNumber string `json:"accountNumber" validate:"required"`
-	Reason        string `json:"reason"`
+	Reason        string `json:"reason" validate:"required"`
 	ReasonCode    string `json:"reasonCode" validate:"required"`
 }
 

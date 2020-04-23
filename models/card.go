@@ -94,15 +94,11 @@ type CardStatuses struct {
 }
 
 func (cs *CardStatuses) MappingBlockCard(briCardBlockStatus BRICardBlockStatus, pl PayloadCardBlock, card Card) error {
-	cs.Reason = briCardBlockStatus.ReportDesc
+	cs.Reason = pl.Reason
 	cs.ReasonCode = pl.ReasonCode
 	cs.CardID = card.ID
 	cs.IsReactivated = IsReactivatedNo
 	cs.BlockedDate, _ = time.Parse(DateTimeFormat, briCardBlockStatus.ReportingDate)
-
-	if pl.Reason != "" {
-		cs.Reason = pl.Reason
-	}
 
 	return nil
 }
