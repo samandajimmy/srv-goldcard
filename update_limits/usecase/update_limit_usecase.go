@@ -191,10 +191,16 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 		return errors
 	}
 
+	// check minimum increase limit 1 million rupiah
+	if pl.NominalLimit-acc.Card.CardLimit < models.MinIncreaseLimit {
+		errors.SetTitle(models.ErrMinimumIncreaseLimit.Error())
+		return errors
+	}
+
 	// check if gold effective balance is sufficient
-	sufficientGoldEffBal := upLimUC.checkGoldEffBalanceSufficient(pl.NominalLimit, acc.Card, currStl, goldEffBalance)
-	if !sufficientGoldEffBal {
-		errors.SetTitle(models.ErrInsufGoldSavingEffBalance.Error())
+	err = upLimUC.checkGoldEffBalanceSufficient(pl.NominalLimit, acc.Card, currStl, goldEffBalance)
+	if err != nil {
+		errors.SetTitle(err.Error())
 		return errors
 	}
 
@@ -215,18 +221,20 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 }
 
 // checkGoldEffBalanceSufficient is a function to check whether remaining effective gold balance is sufficient when trying to increase card limit
-func (upLimUC *updateLimitUseCase) checkGoldEffBalanceSufficient(newLimit int64, currentCard models.Card, currStl int64, goldEffBalance float64) bool {
-	var isSufficient bool = true
-
+func (upLimUC *updateLimitUseCase) checkGoldEffBalanceSufficient(newLimit int64, currentCard models.Card, currStl int64, goldEffBalance float64) error {
 	appliedGoldLimit := currentCard.GoldLimit
 	newGoldLimit := currentCard.SetGoldLimit(newLimit, currStl)
-	// because we need user to have at least 0.1 effective gold balance
-	deficitGoldLimit := models.CustomRound("round", newGoldLimit-appliedGoldLimit, 10000) + models.MinEffBalance
+	deficitGoldLimit := models.CustomRound("round", newGoldLimit-appliedGoldLimit, 10000)
 
 	// got not enough effective gold balance
 	if goldEffBalance < deficitGoldLimit {
-		isSufficient = false
+		return models.ErrInsufGoldSavingEffBalance
 	}
 
-	return isSufficient
+	// got not enough minimum effective balance 0.1 gram
+	if goldEffBalance < deficitGoldLimit+models.MinEffBalance {
+		return models.ErrMinimumGoldSavingEffBal
+	}
+
+	return nil
 }

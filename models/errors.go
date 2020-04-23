@@ -211,7 +211,13 @@ var (
 	ErrNPWPRequired = errors.New("Upload NPWP kamu untuk mendapatkan limit lebih dari 50 juta")
 
 	// ErrInsufGoldSavingEffBalance to store error if gold saving effective balance is not sufficient when submit new card limit
-	ErrInsufGoldSavingEffBalance = errors.New("Sisa saldo efektif tidak mencukupi")
+	ErrInsufGoldSavingEffBalance = errors.New("Saldo efektif kamu tidak mencukupi")
+
+	// ErrMinimumGoldSavingEffBal to store error if gold saving effective balance doesn't fulfill minimum 0.1 gram
+	ErrMinimumGoldSavingEffBal = errors.New("Sisa saldo efektif mengendap minimal 0,1 gram")
+
+	// ErrMinimumIncreaseLimit to store error minimum increase limit 1 million rupiah
+	ErrMinimumIncreaseLimit = errors.New("Pengajuan limit minimal Rp 1.000.000")
 )
 
 // DynamicErr to return parameterize errors

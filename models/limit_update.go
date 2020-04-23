@@ -7,6 +7,9 @@ import (
 var (
 	// LimitFiftyMillions is a param to store value if increase limit inquiry is above 50 millions rupiah
 	LimitFiftyMillions int64 = 50000000
+
+	// MinIncreaseLimit is a param to store value of minimum increase limit goldcard
+	MinIncreaseLimit int64 = 1000000
 )
 
 // LimitUpdate is a struct to store historical card limit update data
