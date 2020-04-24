@@ -387,7 +387,7 @@ func (regis *psqlRegistrationsRepository) GetAppStatus(c echo.Context, app model
 	var appStatus models.AppStatus
 
 	query := `select status, application_processed_date, card_processed_date, card_send_date,
-		card_sent_date, failed_date from applications where id = ?;`
+		card_sent_date, rejected_date from applications where id = ?;`
 
 	_, err := regis.DBpg.Query(&appStatus, query, app.ID)
 

@@ -23,4 +23,5 @@ require (
 	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/go-playground/validator.v9 v9.30.2
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
