@@ -351,7 +351,7 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 			acc.Card.GoldLimit, acc.Card.StlLimit),
 		gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1
 			WHERE id = $2`, nilFilters, time.Now(), acc.ID),
-		gcdb.NewPipelineStmt(`INSERT INTO limit_updates (ref_id, limit_date, account_id, card_limit, gold_limit, stl_limit,
+		gcdb.NewPipelineStmt(`INSERT INTO limit_updates (ref_id, applied_limit_date, account_id, card_limit, gold_limit, stl_limit,
 			created_at) VALUES ($1, $2, $3, $4, $5, $6, $7);`, nilFilters, refId.String(), time.Now(), acc.ID, acc.Card.CardLimit,
 			acc.Card.GoldLimit, acc.Card.StlLimit, time.Now()),
 	}
