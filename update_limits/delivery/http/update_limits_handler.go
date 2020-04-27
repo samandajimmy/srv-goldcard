@@ -20,7 +20,11 @@ func NewUpdateLimitHandler(
 		updateLimitUseCase: ulUseCase,
 	}
 
+	// Endpoint For Core
 	echoGroup.API.POST("/update-limit/decreased-stl", handler.DecreasedSTL)
+
+	// Endpoint For PDS
+	echoGroup.API.POST("/update-limit/increase/inquiry", handler.InquiryUpdateLimit)
 }
 
 func (ul *updateLimitHandler) DecreasedSTL(c echo.Context) error {
@@ -42,6 +46,36 @@ func (ul *updateLimitHandler) DecreasedSTL(c echo.Context) error {
 	}
 
 	err := ul.updateLimitUseCase.DecreasedSTL(c, pcds)
+
+	if err.Title != "" {
+		ul.response.SetResponse("", &err)
+
+		return ul.response.Body(c, nil)
+	}
+
+	ul.response.SetResponse("", &err)
+	return ul.response.Body(c, nil)
+}
+
+func (ul *updateLimitHandler) InquiryUpdateLimit(c echo.Context) error {
+	var piul models.PayloadInquiryUpdateLimit
+	ul.response, ul.respErrors = models.NewResponse()
+
+	if err := c.Bind(&piul); err != nil {
+		ul.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		ul.response.SetResponse("", &ul.respErrors)
+
+		return ul.response.Body(c, err)
+	}
+
+	if err := c.Validate(piul); err != nil {
+		ul.respErrors.SetTitle(err.Error())
+		ul.response.SetResponse("", &ul.respErrors)
+
+		return ul.response.Body(c, err)
+	}
+
+	err := ul.updateLimitUseCase.InquiryUpdateLimit(c, piul)
 
 	if err.Title != "" {
 		ul.response.SetResponse("", &err)

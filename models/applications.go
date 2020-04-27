@@ -82,7 +82,7 @@ var (
 		"card_sent":             "CardSentDate",
 		"rejected":              "RejectedDate",
 	}
-	mapDocType = map[string]string{
+	MapDocType = map[string]string{
 		"KtpImageBase64":       "ktp",
 		"NpwpImageBase64":      "npwp",
 		"SelfieImageBase64":    "selfie",
@@ -172,13 +172,13 @@ func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 			continue
 		}
 
-		doc := app.getCurrentDoc(currDoc, mapDocType[docName])
+		doc := app.GetCurrentDoc(currDoc, MapDocType[docName])
 
 		if doc.ID == 0 {
 			doc = Document{
-				FileName:      pl.Nik + "-" + mapDocType[docName],
+				FileName:      pl.Nik + "-" + MapDocType[docName],
 				FileExtension: mapFileExt[docName],
-				Type:          mapDocType[docName],
+				Type:          MapDocType[docName],
 				ApplicationID: app.ID,
 			}
 		}
@@ -188,7 +188,7 @@ func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 	}
 }
 
-func (app *Applications) getCurrentDoc(currDocs []Document, docType string) Document {
+func (app *Applications) GetCurrentDoc(currDocs []Document, docType string) Document {
 	for _, appDoc := range currDocs {
 		if appDoc.Type == docType {
 			return appDoc
