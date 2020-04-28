@@ -538,3 +538,21 @@ func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc mode
 
 	return nil
 }
+
+func (reg *registrationsUseCase) ResetRegistration(c echo.Context, pl models.PayloadAppNumber) error {
+	// Get account
+	acc, err := reg.CheckApplication(c, pl)
+
+	if err != nil {
+		return err
+	}
+
+	// Deactive account
+	err = reg.regRepo.DeactiveAccount(c, acc)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
