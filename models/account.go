@@ -9,8 +9,6 @@ import (
 var (
 	AccStatusActive = "active"
 
-	AccStatusInactive = "inactive"
-
 	appendXCardNumber = "xxxxxx"
 
 	RelationStr = map[int64]string{
