@@ -5,6 +5,8 @@ import (
 	"time"
 )
 
+var IsReactivatedNo = "no"
+
 const (
 	// DecreasedLimit to store a value of decreasing limit
 	DecreasedLimit float64 = 0.0115
@@ -16,6 +18,14 @@ const (
 	defMoneyTaken float64 = 0.94
 
 	cardStatusActive string = "active"
+	// RequestPathCardBlock to store path BRI endpoint for block card
+	RequestPathCardBlock string = "/v1/cobranding/card/block"
+	// RequestPathCardStolen to store path BRI endpoint for stolen card
+	RequestPathCardStolen string = "/v1/cobranding/card/stolen"
+	// ReasonCodeStolen reason code stolen
+	ReasonCodeStolen string = "stolen"
+	// CardStatusInactive card status inactive
+	CardStatusInactive string = "inactive"
 )
 
 // Card is a struct to store card data
@@ -60,6 +70,35 @@ func (c *Card) SetCardLimit(stl int64) error {
 	// round down to nearest 10.000s
 	c.CardLimit = int64(math.Floor((c.GoldLimit-ReservedLockLimitBalance)*float64(stl)*defMoneyTaken/10000)) * 10000
 	c.StlLimit = stl
+
+	return nil
+}
+
+// BRICardBlockStatus to store response BRI card block status
+type BRICardBlockStatus struct {
+	ReportingDate string `json:"reportingDate"`
+	ReportDesc    string `json:"reportDesc"`
+}
+
+// CardStatuses is a struct to store card statuses
+type CardStatuses struct {
+	ID              int64     `json:"id"`
+	Reason          string    `json:"reason"`
+	ReasonCode      string    `json:"reasonCode"`
+	IsReactivated   string    `json:"isReactivated"`
+	CardID          int64     `json:"cardId"`
+	BlockedDate     time.Time `json:"blockedDate"`
+	ReactivatedDate time.Time `json:"reactivatedDate"`
+	UpdatedAt       time.Time `json:"updatedAt"`
+	CreatedAt       time.Time `json:"createdAt"`
+}
+
+func (cs *CardStatuses) MappingBlockCard(briCardBlockStatus BRICardBlockStatus, pl PayloadCardBlock, card Card) error {
+	cs.Reason = pl.Reason
+	cs.ReasonCode = pl.ReasonCode
+	cs.CardID = card.ID
+	cs.IsReactivated = IsReactivatedNo
+	cs.BlockedDate, _ = time.Parse(DateTimeFormat, briCardBlockStatus.ReportingDate)
 
 	return nil
 }
