@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"encoding/json"
+	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/billings"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -168,6 +169,14 @@ func (trxUS *transactionsUseCase) PostPaymentTrxCore(c echo.Context, pl models.P
 
 	if err != nil {
 		errors.SetTitle(models.ErrInsertPaymentTransactions.Error())
+		return errors
+	}
+
+	// post payment to bri
+	err = trxUS.postPaymentBRI(c, acc, pl.PaymentAmount)
+
+	if err != nil {
+		errors.SetTitle(models.ErrPostPaymentBRI.Error())
 		return errors
 	}
 
@@ -475,6 +484,22 @@ func (trxUS *transactionsUseCase) payTheBill(c echo.Context, bill *models.Billin
 	bill.DebtGold = bill.Account.Card.ConvertMoneyToGold(bill.DebtAmount, trx.CurrStl)
 	// set debt stl
 	bill.DebtSTL = trx.CurrStl
+
+	return nil
+}
+
+func (trxUS *transactionsUseCase) postPaymentBRI(c echo.Context, acc models.Account, amount int64) error {
+	resp := api.BriResponse{}
+	requestDataBRI := map[string]interface{}{
+		"briXkey":        acc.BrixKey,
+		"amount":         amount,
+		"productRequest": acc.ProductRequest,
+	}
+	errBRI := api.RetryableBriPost(c, "/v1/cobranding/limit/payment", requestDataBRI, &resp)
+
+	if errBRI != nil {
+		return errBRI
+	}
 
 	return nil
 }
