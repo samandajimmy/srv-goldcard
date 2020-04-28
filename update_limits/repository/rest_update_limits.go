@@ -1,0 +1,79 @@
+package repository
+
+import (
+	"fmt"
+	"gade/srv-goldcard/api"
+	"gade/srv-goldcard/logger"
+	"gade/srv-goldcard/models"
+	"gade/srv-goldcard/update_limits"
+	"strconv"
+
+	"github.com/labstack/echo"
+)
+
+type restUpdateLimits struct{}
+
+// NewRestActivations will create an object that represent the activations.RestRepository interface
+func NewRestUpdateLimits() update_limits.RestRepository {
+	return &restUpdateLimits{}
+}
+
+func (rul *restUpdateLimits) CorePostUpdateLimit(c echo.Context, savingAccNum string, card models.Card) error {
+	const (
+		isBlokirTrue      = "1"
+		isRecalculateTrue = "1"
+	)
+
+	r := api.SwitchingResponse{}
+	body := map[string]interface{}{
+		"isBlokir":         isBlokirTrue,
+		"noRek":            savingAccNum,
+		"gramTransaksi":    fmt.Sprintf("%f", card.GoldLimit),
+		"nominalTransaksi": strconv.FormatInt(card.CardLimit, 10),
+		"isRecalculate":    isRecalculateTrue,
+	}
+
+	req := api.MappingRequestSwitching(body)
+	err := api.RetryableSwitchingPost(c, req, "/goldcard/updateLimit", &r)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	if r.ResponseCode != "00" {
+		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode,
+			r.ResponseDesc})
+	}
+
+	return nil
+}
+
+func (rul *restUpdateLimits) BRIPostUpdateLimit(c echo.Context, acc models.Account, doc models.Document) error {
+	respBRI := api.BriResponse{}
+	requestDataBRI := map[string]interface{}{
+		"briXkey":         acc.BrixKey,
+		"limit":           acc.Card.CardLimit,
+		"productRequest":  models.DefBriProductRequestUpLimit,
+		"handPhoneNumber": acc.PersonalInformation.HandPhoneNumber,
+		"email":           acc.PersonalInformation.Email,
+		"file":            map[string]string{"OTHR": models.MapBRIExtBase64File[doc.FileExtension] + doc.FileBase64},
+	}
+
+	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
+	errBRI := api.RetryableBriPost(c, "/v1/cobranding/limit/update", reqBRIBody.RequestData, &respBRI)
+
+	if errBRI != nil {
+		logger.Make(c, nil).Debug(errBRI)
+
+		return errBRI
+	}
+
+	if respBRI.ResponseCode != "00" {
+		return models.DynamicErr(models.ErrBriAPIRequest, []interface{}{respBRI.ResponseCode,
+			respBRI.ResponseMessage})
+	}
+
+	return nil
+}

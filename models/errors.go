@@ -218,6 +218,15 @@ var (
 
 	// ErrMinimumIncreaseLimit to store error minimum increase limit 1 million rupiah
 	ErrMinimumIncreaseLimit = errors.New("Pengajuan limit minimal Rp 1.000.000")
+
+	// ErrPostUpdateLimitToCore to store error when posting update limit to core endpoint
+	ErrPostUpdateLimitToCore = errors.New("Terjadi kesalahan ketika memposting data update limit ke Core")
+
+	// ErrGetSlipTE to store error when trying to get Slip TE Document
+	ErrGetSlipTE = errors.New("Slip Tabungan Emas tidak dapat ditemukan")
+
+	// ErrPostUpdateLimitToBRI to store error when posting update limit to BRI endpoint
+	ErrPostUpdateLimitToBRI = errors.New("Terjadi kesalahan ketika memposting data update limit ke BRI")
 )
 
 // DynamicErr to return parameterize errors

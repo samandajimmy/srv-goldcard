@@ -10,6 +10,9 @@ var (
 
 	// MinIncreaseLimit is a param to store value of minimum increase limit goldcard
 	MinIncreaseLimit int64 = 1000000
+
+	// DefBriProductRequestUpLimit is to store default bri update limit product request
+	DefBriProductRequestUpLimit string = "KARTUEMAS"
 )
 
 // LimitUpdate is a struct to store historical card limit update data
