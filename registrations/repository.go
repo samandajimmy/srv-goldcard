@@ -31,7 +31,7 @@ type Repository interface {
 	GetDocumentByApplicationId(appId int64) ([]models.Document, error)
 	GetSignatoryNameParam(c echo.Context) (string, error)
 	GetSignatoryNipParam(c echo.Context) (string, error)
-	InactiveAccount(c echo.Context, acc models.Account) error
+	DeactiveAccount(c echo.Context, acc models.Account) error
 }
 
 // RestRepository represent the rest registrations repository contract

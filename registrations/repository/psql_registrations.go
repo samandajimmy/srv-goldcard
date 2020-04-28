@@ -567,7 +567,7 @@ func (regis *psqlRegistrationsRepository) GetSignatoryNipParam(c echo.Context) (
 	return newPrm.Value, nil
 }
 
-func (regis *psqlRegistrationsRepository) InactiveAccount(c echo.Context, acc models.Account) error {
+func (regis *psqlRegistrationsRepository) DeactiveAccount(c echo.Context, acc models.Account) error {
 	acc.UpdatedAt = models.NowDbpg()
 	acc.Status = models.AccStatusInactive
 	col := []string{"status", "updated_at"}

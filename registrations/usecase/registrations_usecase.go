@@ -547,8 +547,8 @@ func (reg *registrationsUseCase) ResetRegistration(c echo.Context, pl models.Pay
 		return err
 	}
 
-	// Inactive account
-	err = reg.regRepo.InactiveAccount(c, acc)
+	// Deactive account
+	err = reg.regRepo.DeactiveAccount(c, acc)
 
 	if err != nil {
 		return err
