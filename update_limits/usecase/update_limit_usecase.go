@@ -238,3 +238,10 @@ func (upLimUC *updateLimitUseCase) checkGoldEffBalanceSufficient(newLimit int64,
 
 	return nil
 }
+
+// check if core already pass the payload for endpoint
+func (upLimUC *updateLimitUseCase) CoreGtePayment(c echo.Context, pcgp models.PayloadCoreGtePayment) models.ResponseErrors {
+	// kalau sukses tembak ke BRI kalau gagal kasi pesan error
+
+	return models.ResponseErrors{}
+}

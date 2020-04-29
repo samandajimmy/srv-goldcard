@@ -10,4 +10,5 @@ import (
 type UseCase interface {
 	DecreasedSTL(c echo.Context, pl models.PayloadCoreDecreasedSTL) models.ResponseErrors
 	InquiryUpdateLimit(c echo.Context, pl models.PayloadInquiryUpdateLimit) models.ResponseErrors
+	CoreGtePayment(c echo.Context, pl models.PayloadCoreGtePayment) models.ResponseErrors
 }
