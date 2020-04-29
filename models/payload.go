@@ -299,6 +299,13 @@ type PayloadInquiryUpdateLimit struct {
 	NominalLimit  int64  `json:"nominalLimit" validate:"required"`
 }
 
+// PayloadCoreGtePayment is a struct to store all payload for get
+type PayloadCoreGtePayment struct {
+	AccountNumber      string `json:"accountNumber" validate:"required"`
+	AvailableGram      string `json:"availableGram" validate:"required"`
+	NominalTransaction int64  `json:"nominalTransaction" validate:"required"`
+}
+
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI
 func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.FirstName = StringNameFormatter(plBRIReg.FirstName, 15)

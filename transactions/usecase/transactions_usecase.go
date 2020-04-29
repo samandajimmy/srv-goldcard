@@ -171,6 +171,14 @@ func (trxUS *transactionsUseCase) PostPaymentTrxCore(c echo.Context, pl models.P
 		return errors
 	}
 
+	// post payment to bri
+	err = trxUS.trxrRepo.PostPaymentBRI(c, acc, pl.PaymentAmount)
+
+	if err != nil {
+		errors.SetTitle(models.ErrPostPaymentBRI.Error())
+		return errors
+	}
+
 	// update payment inquiry status to paid
 	err = trxUS.trxRepo.UpdatePayInquiryStatusPaid(c, payment)
 
