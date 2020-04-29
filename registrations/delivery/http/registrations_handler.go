@@ -32,6 +32,7 @@ func NewRegistrationsHandler(
 	echoGroup.API.POST("/registrations/application-status", handler.applicationStatus)
 	echoGroup.API.POST("/registrations/occupation", handler.PostOccupation)
 	echoGroup.API.POST("/registrations/scheduler/final", handler.schedulerFinal)
+	echoGroup.API.POST("/registrations/reset", handler.ResetRegistration)
 
 }
 
@@ -313,6 +314,38 @@ func (reg *RegistrationsHandler) PostOccupation(c echo.Context) error {
 	}
 
 	err := reg.registrationsUseCase.PostOccupation(c, pl)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse("", &reg.respErrors)
+	return reg.response.Body(c, err)
+}
+
+// ResetRegistration a handler to reset registration
+func (reg *RegistrationsHandler) ResetRegistration(c echo.Context) error {
+	var pl models.PayloadAppNumber
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	err := reg.registrationsUseCase.ResetRegistration(c, pl)
 
 	if err != nil {
 		reg.respErrors.SetTitle(err.Error())

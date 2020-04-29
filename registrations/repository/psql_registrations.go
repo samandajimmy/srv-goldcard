@@ -566,3 +566,18 @@ func (regis *psqlRegistrationsRepository) GetSignatoryNipParam(c echo.Context) (
 
 	return newPrm.Value, nil
 }
+
+func (regis *psqlRegistrationsRepository) DeactiveAccount(c echo.Context, acc models.Account) error {
+	acc.UpdatedAt = models.NowDbpg()
+	acc.Status = models.AccStatusInactive
+	col := []string{"status", "updated_at"}
+	_, err := regis.DBpg.Model(&acc).Column(col...).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
