@@ -528,6 +528,7 @@ func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc mode
 	err = slipTeData.MappingSlipTe(paramsSlipTe)
 
 	if err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return models.ErrMappingData
 	}
 
@@ -535,6 +536,24 @@ func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc mode
 	go retry.DoConcurrent(c, "upsertDocument", func() error {
 		return reg.upsertDocument(c, slipTeData.Account.Application)
 	})
+
+	return nil
+}
+
+func (reg *registrationsUseCase) ResetRegistration(c echo.Context, pl models.PayloadAppNumber) error {
+	// Get account
+	acc, err := reg.CheckApplication(c, pl)
+
+	if err != nil {
+		return err
+	}
+
+	// Deactive account
+	err = reg.regRepo.DeactiveAccount(c, acc)
+
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

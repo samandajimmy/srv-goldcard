@@ -10,6 +10,7 @@ import (
 	"gade/srv-goldcard/update_limits"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo"
 	"gopkg.in/gomail.v2"
@@ -21,15 +22,16 @@ type updateLimitUseCase struct {
 	trxUS      transactions.UseCase
 	rRepo      registrations.Repository
 	rrRepo     registrations.RestRepository
+	rUS        registrations.UseCase
 	upLimRepo  update_limits.Repository
 	rupLimRepo update_limits.RestRepository
 }
 
 // UpdateLimitUseCase represent Update Limit Use Case
 func UpdateLimitUseCase(arRepo activations.RestRepository, trxRepo transactions.Repository,
-	trxUS transactions.UseCase, rRepo registrations.Repository, rrRepo registrations.RestRepository,
+	trxUS transactions.UseCase, rRepo registrations.Repository, rrRepo registrations.RestRepository, rUS registrations.UseCase,
 	upLimRepo update_limits.Repository, rupLimRepo update_limits.RestRepository) update_limits.UseCase {
-	return &updateLimitUseCase{arRepo, trxRepo, trxUS, rRepo, rrRepo, upLimRepo, rupLimRepo}
+	return &updateLimitUseCase{arRepo, trxRepo, trxUS, rRepo, rrRepo, rUS, upLimRepo, rupLimRepo}
 }
 
 // DecreasedSTL is a func to recalculate gold card rupiah limit when occurs stl decreased equal or more than 5%
@@ -277,6 +279,8 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 		return errors
 	}
 
+	// validate inquiries
+	// do minimum increase limit, is npwp required, effective balance, and minimum effective balance validation
 	errors = upLimUC.validateUpdateLimitInquiries(c, acc, docs, models.PayloadInquiryUpdateLimit(pl), currStl)
 	if errors.Title != "" {
 		return errors
@@ -301,9 +305,17 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 		return errors
 	}
 
-	// try get slip TE
-	slipTE := acc.Application.GetCurrentDoc(docs, models.MapDocType["GoldSavingSlipBase64"])
-	if slipTE.ID == 0 {
+	// try get latest slip TE
+	err = upLimUC.rUS.GenerateSlipTEDocument(c, acc)
+	if err != nil {
+		errors.SetTitle(models.ErrGenerateSlipTE.Error())
+		return errors
+	}
+	// sleep current go routine a sec until generate slip TE document go routine done
+	time.Sleep(time.Second)
+
+	slipTE, err := upLimUC.upLimRepo.GetDocumentByTypeAndApplicationId(acc.ApplicationID, models.MapDocType["GoldSavingSlipBase64"])
+	if err != nil {
 		errors.SetTitle(models.ErrGetSlipTE.Error())
 		return errors
 	}

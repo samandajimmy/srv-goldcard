@@ -1,0 +1,2 @@
+ALTER TABLE cards
+ADD COLUMN activated_date TIMESTAMP DEFAULT NULL;

@@ -75,6 +75,9 @@ var (
 	// ErrUpdateCardBalance to store updating card balance data error message
 	ErrUpdateCardBalance = errors.New("Terjadi kesalahan saat update saldo kartu emas")
 
+	// ErrUpdateCardStatus to store updating card status data error message
+	ErrUpdateCardStatus = errors.New("Terjadi kesalahan saat update status kartu")
+
 	// ErrZipcodeNotFound to store zip code not found error message
 	ErrZipcodeNotFound = errors.New("Kode pos tidak ditemukan")
 
@@ -224,6 +227,9 @@ var (
 
 	// ErrGetSlipTE to store error when trying to get Slip TE Document
 	ErrGetSlipTE = errors.New("Slip Tabungan Emas tidak dapat ditemukan")
+
+	// ErrGenerateSlipTE to store error when trying to generate Slip TE Document from Core
+	ErrGenerateSlipTE = errors.New("Terjadi kesalahan ketika generate PDF Slip TE")
 
 	// ErrPostUpdateLimitToBRI to store error when posting update limit to BRI endpoint
 	ErrPostUpdateLimitToBRI = errors.New("Terjadi kesalahan ketika memposting data update limit ke BRI")

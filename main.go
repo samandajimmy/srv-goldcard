@@ -35,6 +35,10 @@ import (
 	_updateLimitRepository "gade/srv-goldcard/update_limits/repository"
 	_updateLimitUseCase "gade/srv-goldcard/update_limits/usecase"
 
+	_cardsHttpDelivery "gade/srv-goldcard/cards/delivery/http"
+	_cardsRepository "gade/srv-goldcard/cards/repository"
+	_cardsUseCase "gade/srv-goldcard/cards/usecase"
+
 	"github.com/go-pg/pg/v9"
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
@@ -94,6 +98,8 @@ func main() {
 	processHandlerRepo := _processHandlerRepository.NewPsqlProcHandlerRepository(dbConn, dbpg)
 	updateLimitRepo := _updateLimitRepository.NewPsqlUpdateLimitsRepository(dbConn, dbpg)
 	restUpdateLimitRepo := _updateLimitRepository.NewRestUpdateLimits()
+	cardsRepository := _cardsRepository.NewPsqlCardsRepository(dbConn, dbpg)
+	restCardsRepo := _cardsRepository.NewRestCards()
 
 	// USECASES
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
@@ -104,7 +110,8 @@ func main() {
 	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo, registrationsUseCase, restTransactionsRepo)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
 	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, restRegistrationsRepo, transactionsUseCase)
-	updateLimitUseCase := _updateLimitUseCase.UpdateLimitUseCase(restActivationRepository, transactionsRepository, transactionsUseCase, registrationsRepository, restRegistrationsRepo, updateLimitRepo, restUpdateLimitRepo)
+	updateLimitUseCase := _updateLimitUseCase.UpdateLimitUseCase(restActivationRepository, transactionsRepository, transactionsUseCase, registrationsRepository, restRegistrationsRepo, registrationsUseCase, updateLimitRepo, restUpdateLimitRepo)
+	cardsUseCase := _cardsUseCase.CardsUseCase(cardsRepository, restCardsRepo, transactionsUseCase)
 
 	// DELIVERIES
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
@@ -114,6 +121,7 @@ func main() {
 	_transactionsHttpDelivery.NewTransactionsHandler(echoGroup, transactionsUseCase)
 	_billingsHttpDelivery.NewBillingsHandler(echoGroup, billingsUseCase)
 	_updateLimitHttpDelivery.NewUpdateLimitHandler(echoGroup, updateLimitUseCase)
+	_cardsHttpDelivery.NewCardsHandler(echoGroup, cardsUseCase)
 
 	// PING
 	ech.GET("/ping", ping)
