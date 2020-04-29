@@ -246,6 +246,11 @@ func (upLimUC *updateLimitUseCase) CoreGtePayment(c echo.Context, pcgp models.Pa
 	var errors models.ResponseErrors
 	acc, err := upLimUC.trxUS.CheckAccountByAccountNumber(c, pcgp)
 
+	if err != nil {
+		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
+		return errors
+	}
+
 	// send information to BRI after GTE already paid from core
 	err = upLimUC.trResRepo.PostPaymentBRI(c, acc, pcgp.NominalTransaction)
 
