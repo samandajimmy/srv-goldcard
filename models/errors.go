@@ -221,6 +221,9 @@ var (
 
 	// ErrMinimumIncreaseLimit to store error minimum increase limit 1 million rupiah
 	ErrMinimumIncreaseLimit = errors.New("Pengajuan limit minimal Rp 1.000.000")
+
+	// ErrPostPaymentBRI to store get failed when post payment data to BRI
+	ErrPostPaymentBRI = errors.New("Gagal saat memposting data pembayaran ke BRI")
 )
 
 // DynamicErr to return parameterize errors
