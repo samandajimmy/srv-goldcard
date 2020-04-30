@@ -532,10 +532,13 @@ func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc mode
 		return models.ErrMappingData
 	}
 
-	// concurrently insert or update all possible documents
-	go retry.DoConcurrent(c, "upsertDocument", func() error {
-		return reg.upsertDocument(c, slipTeData.Account.Application)
-	})
+	//  insert or update all possible documents
+	err = reg.upsertDocument(c, slipTeData.Account.Application)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return err
+	}
 
 	return nil
 }

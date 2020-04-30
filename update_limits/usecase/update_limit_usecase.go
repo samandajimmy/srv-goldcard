@@ -10,7 +10,6 @@ import (
 	"gade/srv-goldcard/update_limits"
 	"os"
 	"strconv"
-	"time"
 
 	"github.com/labstack/echo"
 	"gopkg.in/gomail.v2"
@@ -333,8 +332,6 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 		errors.SetTitle(models.ErrGenerateSlipTE.Error())
 		return errors
 	}
-	// sleep current go routine a sec until generate slip TE document go routine done
-	time.Sleep(time.Second)
 
 	slipTE, err := upLimUC.upLimRepo.GetDocumentByTypeAndApplicationId(acc.ApplicationID, models.MapDocType["GoldSavingSlipBase64"])
 	if err != nil {
