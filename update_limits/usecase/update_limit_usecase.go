@@ -10,6 +10,7 @@ import (
 	"gade/srv-goldcard/update_limits"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo"
 	"gopkg.in/gomail.v2"
@@ -285,8 +286,22 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 		return errors
 	}
 
+	// check if already do update limit before within same day
+	lastLimitUpdate, err := upLimUC.upLimRepo.GetLastLimitUpdate(acc.ID)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetLastLimitUpdate.Error())
+		return errors
+	}
+
+	if lastLimitUpdate.AppliedLimitDate.Format(models.DDMMYYYY) == time.Now().Format(models.DDMMYYYY) {
+		errors.SetTitle(models.ErrSameDayUpdateLimitAttempt.Error())
+		return errors
+	}
+
 	// get all account documents
 	docs, err := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID)
+
 	if err != nil {
 		errors.SetTitle(models.ErrGetDocument.Error())
 		return errors
@@ -303,14 +318,31 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 	// validate inquiries
 	// do minimum increase limit, is npwp required, effective balance, and minimum effective balance validation
 	errors = upLimUC.validateUpdateLimitInquiries(c, acc, docs, models.PayloadInquiryUpdateLimit(pl), currStl)
+
 	if errors.Title != "" {
 		return errors
 	}
 
 	// set card limit along with gold limit
+	tempCard := acc.Card
 	acc.Card.CardLimit = pl.NominalLimit
 	acc.Card.GoldLimit = acc.Card.SetGoldLimit(acc.Card.CardLimit, currStl)
 	acc.Card.StlLimit = currStl
+
+	// try get latest slip TE
+	err = upLimUC.rUS.GenerateSlipTEDocument(c, acc)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGenerateSlipTE.Error())
+		return errors
+	}
+
+	slipTE, err := upLimUC.upLimRepo.GetDocumentByTypeAndApplicationId(acc.ApplicationID, models.MapDocType["GoldSavingSlipBase64"])
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetSlipTE.Error())
+		return errors
+	}
 
 	// post update limit to core
 	err = upLimUC.rupLimRepo.CorePostUpdateLimit(c, acc.Application.SavingAccount, acc.Card)
@@ -319,30 +351,28 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 		return errors
 	}
 
-	// save updated card into db, and insert into limit updates table
-	_, err = upLimUC.rRepo.UpdateCardLimit(c, acc, true)
-	if err != nil {
-		errors.SetTitle(models.ErrUpdateCardLimit.Error())
-		return errors
-	}
-
-	// try get latest slip TE
-	err = upLimUC.rUS.GenerateSlipTEDocument(c, acc)
-	if err != nil {
-		errors.SetTitle(models.ErrGenerateSlipTE.Error())
-		return errors
-	}
-
-	slipTE, err := upLimUC.upLimRepo.GetDocumentByTypeAndApplicationId(acc.ApplicationID, models.MapDocType["GoldSavingSlipBase64"])
-	if err != nil {
-		errors.SetTitle(models.ErrGetSlipTE.Error())
-		return errors
-	}
-
 	// post update limit to BRI
 	err = upLimUC.rupLimRepo.BRIPostUpdateLimit(c, acc, slipTE)
+
 	if err != nil {
-		errors.SetTitle(models.ErrPostUpdateLimitToBRI.Error())
+		errors.SetTitle(err.Error())
+
+		// if error happen when post update limit to BRI, then rollback to previous nominal and gold limit in Core
+		err = upLimUC.rupLimRepo.CorePostUpdateLimit(c, acc.Application.SavingAccount, tempCard)
+
+		if err != nil {
+			errors.SetTitle(models.ErrRollbackUpdateLimitToCore.Error())
+			return errors
+		}
+
+		return errors
+	}
+
+	// save updated card into db, and insert into limit updates table
+	_, err = upLimUC.rRepo.UpdateCardLimit(c, acc, true)
+
+	if err != nil {
+		errors.SetTitle(models.ErrUpdateCardLimit.Error())
 		return errors
 	}
 

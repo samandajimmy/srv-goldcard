@@ -54,3 +54,17 @@ func (psqlUL *psqlUpdateLimitsRepository) GetDocumentByTypeAndApplicationId(appI
 
 	return listDocument, nil
 }
+
+func (psqlUL *psqlUpdateLimitsRepository) GetLastLimitUpdate(accId int64) (models.LimitUpdate, error) {
+	var limitUpdate models.LimitUpdate
+	err := psqlUL.DBpg.Model(&limitUpdate).
+		Where("account_id = ?", accId).Order("created_at DESC").Limit(1).Select()
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return limitUpdate, err
+	}
+
+	return limitUpdate, nil
+}
