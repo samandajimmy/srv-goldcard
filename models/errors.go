@@ -233,6 +233,8 @@ var (
 
 	// ErrPostUpdateLimitToBRI to store error when posting update limit to BRI endpoint
 	ErrPostUpdateLimitToBRI = errors.New("Terjadi kesalahan ketika memposting data update limit ke BRI")
+	// ErrPostPaymentBRI to store get failed when post payment data to BRI
+	ErrPostPaymentBRI = errors.New("Gagal saat memposting data pembayaran ke BRI")
 )
 
 // DynamicErr to return parameterize errors

@@ -19,6 +19,7 @@ import (
 type updateLimitUseCase struct {
 	arRepo     activations.RestRepository
 	trxRepo    transactions.Repository
+	trResRepo  transactions.RestRepository
 	trxUS      transactions.UseCase
 	rRepo      registrations.Repository
 	rrRepo     registrations.RestRepository
@@ -28,10 +29,10 @@ type updateLimitUseCase struct {
 }
 
 // UpdateLimitUseCase represent Update Limit Use Case
-func UpdateLimitUseCase(arRepo activations.RestRepository, trxRepo transactions.Repository,
+func UpdateLimitUseCase(arRepo activations.RestRepository, trxRepo transactions.Repository, trResRepo transactions.RestRepository,
 	trxUS transactions.UseCase, rRepo registrations.Repository, rrRepo registrations.RestRepository, rUS registrations.UseCase,
 	upLimRepo update_limits.Repository, rupLimRepo update_limits.RestRepository) update_limits.UseCase {
-	return &updateLimitUseCase{arRepo, trxRepo, trxUS, rRepo, rrRepo, rUS, upLimRepo, rupLimRepo}
+	return &updateLimitUseCase{arRepo, trxRepo, trResRepo, trxUS, rRepo, rrRepo, rUS, upLimRepo, rupLimRepo}
 }
 
 // DecreasedSTL is a func to recalculate gold card rupiah limit when occurs stl decreased equal or more than 5%
@@ -251,6 +252,27 @@ func (upLimUC *updateLimitUseCase) checkGoldEffBalanceSufficient(newLimit int64,
 	}
 
 	return nil
+}
+
+// check if core already pass the payload for endpoint
+func (upLimUC *updateLimitUseCase) CoreGtePayment(c echo.Context, pcgp models.PayloadCoreGtePayment) models.ResponseErrors {
+	var errors models.ResponseErrors
+	acc, err := upLimUC.trxUS.CheckAccountByAccountNumber(c, pcgp)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
+		return errors
+	}
+
+	// send information to BRI after GTE already paid from core
+	err = upLimUC.trResRepo.PostPaymentBRI(c, acc, pcgp.NominalTransaction)
+
+	if err != nil {
+		errors.SetTitle(models.ErrPostPaymentBRI.Error())
+		return errors
+	}
+
+	return errors
 }
 
 // PostUpdateLimit is a func to submit update limit after inquiry update limit

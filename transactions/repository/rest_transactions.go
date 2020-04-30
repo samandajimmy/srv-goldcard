@@ -102,3 +102,20 @@ func (rt *restTransactions) PostPaymentTransactionToCore(c echo.Context, bill mo
 
 	return nil
 }
+
+func (rt *restTransactions) PostPaymentBRI(c echo.Context, acc models.Account, amount int64) error {
+	resp := api.BriResponse{}
+	requestDataBRI := map[string]interface{}{
+		"briXkey":        acc.BrixKey,
+		"amount":         amount,
+		"productRequest": acc.ProductRequest,
+	}
+	errBRI := api.RetryableBriPost(c, "/v1/cobranding/limit/payment", requestDataBRI, &resp)
+
+	if errBRI != nil {
+		logger.Make(c, nil).Debug(errBRI)
+		return errBRI
+	}
+
+	return nil
+}

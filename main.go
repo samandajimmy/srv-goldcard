@@ -110,7 +110,7 @@ func main() {
 	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo, registrationsUseCase, restTransactionsRepo)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
 	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, restRegistrationsRepo, transactionsUseCase)
-	updateLimitUseCase := _updateLimitUseCase.UpdateLimitUseCase(restActivationRepository, transactionsRepository, transactionsUseCase, registrationsRepository, restRegistrationsRepo, registrationsUseCase, updateLimitRepo, restUpdateLimitRepo)
+	updateLimitUseCase := _updateLimitUseCase.UpdateLimitUseCase(restActivationRepository, transactionsRepository, restTransactionsRepo, transactionsUseCase, registrationsRepository, restRegistrationsRepo, registrationsUseCase, updateLimitRepo, restUpdateLimitRepo)
 	cardsUseCase := _cardsUseCase.CardsUseCase(cardsRepository, restCardsRepo, transactionsUseCase)
 
 	// DELIVERIES
