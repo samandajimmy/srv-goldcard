@@ -40,3 +40,31 @@ func (psqlUL *psqlUpdateLimitsRepository) GetEmailByKey(c echo.Context) (string,
 
 	return param.Value, nil
 }
+
+func (psqlUL *psqlUpdateLimitsRepository) GetDocumentByTypeAndApplicationId(appId int64, docType string) (models.Document, error) {
+	var listDocument models.Document
+	err := psqlUL.DBpg.Model(&listDocument).
+		Where("application_id = ? AND type = ?", appId, docType).Order("created_at DESC").Limit(1).Select()
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return listDocument, err
+	}
+
+	return listDocument, nil
+}
+
+func (psqlUL *psqlUpdateLimitsRepository) GetLastLimitUpdate(accId int64) (models.LimitUpdate, error) {
+	var limitUpdate models.LimitUpdate
+	err := psqlUL.DBpg.Model(&limitUpdate).
+		Where("account_id = ?", accId).Order("created_at DESC").Limit(1).Select()
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return limitUpdate, err
+	}
+
+	return limitUpdate, nil
+}

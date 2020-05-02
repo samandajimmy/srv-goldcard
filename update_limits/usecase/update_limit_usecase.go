@@ -10,27 +10,29 @@ import (
 	"gade/srv-goldcard/update_limits"
 	"os"
 	"strconv"
+	"time"
 
 	"github.com/labstack/echo"
 	"gopkg.in/gomail.v2"
 )
 
 type updateLimitUseCase struct {
-	arRepo    activations.RestRepository
-	trxRepo   transactions.Repository
-	trResRepo transactions.RestRepository
-	trxUS     transactions.UseCase
-	rRepo     registrations.Repository
-	rrRepo    registrations.RestRepository
-	upLimRepo update_limits.Repository
+	arRepo     activations.RestRepository
+	trxRepo    transactions.Repository
+	trResRepo  transactions.RestRepository
+	trxUS      transactions.UseCase
+	rRepo      registrations.Repository
+	rrRepo     registrations.RestRepository
+	rUS        registrations.UseCase
+	upLimRepo  update_limits.Repository
+	rupLimRepo update_limits.RestRepository
 }
 
 // UpdateLimitUseCase represent Update Limit Use Case
-func UpdateLimitUseCase(arRepo activations.RestRepository, trxRepo transactions.Repository,
-	trResRepo transactions.RestRepository, trxUS transactions.UseCase,
-	rRepo registrations.Repository, rrRepo registrations.RestRepository,
-	upLimRepo update_limits.Repository) update_limits.UseCase {
-	return &updateLimitUseCase{arRepo, trxRepo, trResRepo, trxUS, rRepo, rrRepo, upLimRepo}
+func UpdateLimitUseCase(arRepo activations.RestRepository, trxRepo transactions.Repository, trResRepo transactions.RestRepository,
+	trxUS transactions.UseCase, rRepo registrations.Repository, rrRepo registrations.RestRepository, rUS registrations.UseCase,
+	upLimRepo update_limits.Repository, rupLimRepo update_limits.RestRepository) update_limits.UseCase {
+	return &updateLimitUseCase{arRepo, trxRepo, trResRepo, trxUS, rRepo, rrRepo, rUS, upLimRepo, rupLimRepo}
 }
 
 // DecreasedSTL is a func to recalculate gold card rupiah limit when occurs stl decreased equal or more than 5%
@@ -165,6 +167,31 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 		return errors
 	}
 
+	// get all account documents
+	docs, err := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID)
+	if err != nil {
+		errors.SetTitle(models.ErrGetDocument.Error())
+		return errors
+	}
+
+	// get current STL
+	currStl, err := upLimUC.rrRepo.GetCurrentGoldSTL(c)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetCurrSTL.Error())
+		return errors
+	}
+
+	// validate inquiries
+	// do minimum increase limit, is npwp required, effective balance, and minimum effective balance validation
+	errors = upLimUC.validateUpdateLimitInquiries(c, acc, docs, pl, currStl)
+	return errors
+}
+
+// validateUpdateLimitInq is function to validate business requirement to update limit goldcard
+func (upLimUC *updateLimitUseCase) validateUpdateLimitInquiries(c echo.Context, acc models.Account, docs []models.Document, pl models.PayloadInquiryUpdateLimit, currStl int64) models.ResponseErrors {
+	var errors models.ResponseErrors
+
 	// get user gold effective balance
 	userGoldDetail, err := upLimUC.arRepo.GetDetailGoldUser(c, acc.Application.SavingAccount)
 
@@ -185,14 +212,6 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 		return errors
 	}
 
-	// get current STL first
-	currStl, err := upLimUC.rrRepo.GetCurrentGoldSTL(c)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetCurrSTL.Error())
-		return errors
-	}
-
 	// check minimum increase limit 1 million rupiah
 	if pl.NominalLimit-acc.Card.CardLimit < models.MinIncreaseLimit {
 		errors.SetTitle(models.ErrMinimumIncreaseLimit.Error())
@@ -207,12 +226,6 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 	}
 
 	// check if new inquired card limit is above 50 millions rupiah, then npwp is required
-	docs, err := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID)
-	if err != nil {
-		errors.SetTitle(models.ErrGetDocument.Error())
-		return errors
-	}
-
 	npwp := acc.Application.GetCurrentDoc(docs, models.MapDocType["NpwpImageBase64"])
 	if npwp.ID == 0 && pl.NominalLimit > models.LimitFiftyMillions {
 		errors.SetTitleCode("11", models.ErrNPWPRequired.Error(), "")
@@ -256,6 +269,110 @@ func (upLimUC *updateLimitUseCase) CoreGtePayment(c echo.Context, pcgp models.Pa
 
 	if err != nil {
 		errors.SetTitle(models.ErrPostPaymentBRI.Error())
+		return errors
+	}
+
+	return errors
+}
+
+// PostUpdateLimit is a func to submit update limit after inquiry update limit
+func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.PayloadUpdateLimit) models.ResponseErrors {
+	var errors models.ResponseErrors
+	// get acc by account number
+	acc, err := upLimUC.trxUS.CheckAccountByAccountNumber(c, pl)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
+		return errors
+	}
+
+	// check if already do update limit before within same day
+	lastLimitUpdate, err := upLimUC.upLimRepo.GetLastLimitUpdate(acc.ID)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetLastLimitUpdate.Error())
+		return errors
+	}
+
+	if lastLimitUpdate.AppliedLimitDate.Format(models.DDMMYYYY) == time.Now().Format(models.DDMMYYYY) {
+		errors.SetTitle(models.ErrSameDayUpdateLimitAttempt.Error())
+		return errors
+	}
+
+	// get all account documents
+	docs, err := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetDocument.Error())
+		return errors
+	}
+
+	// get current STL
+	currStl, err := upLimUC.rrRepo.GetCurrentGoldSTL(c)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetCurrSTL.Error())
+		return errors
+	}
+
+	// validate inquiries
+	// do minimum increase limit, is npwp required, effective balance, and minimum effective balance validation
+	errors = upLimUC.validateUpdateLimitInquiries(c, acc, docs, models.PayloadInquiryUpdateLimit(pl), currStl)
+
+	if errors.Title != "" {
+		return errors
+	}
+
+	// set card limit along with gold limit
+	tempCard := acc.Card
+	acc.Card.CardLimit = pl.NominalLimit
+	acc.Card.GoldLimit = acc.Card.SetGoldLimit(acc.Card.CardLimit, currStl)
+	acc.Card.StlLimit = currStl
+
+	// try get latest slip TE
+	err = upLimUC.rUS.GenerateSlipTEDocument(c, acc)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGenerateSlipTE.Error())
+		return errors
+	}
+
+	slipTE, err := upLimUC.upLimRepo.GetDocumentByTypeAndApplicationId(acc.ApplicationID, models.MapDocType["GoldSavingSlipBase64"])
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetSlipTE.Error())
+		return errors
+	}
+
+	// post update limit to core
+	err = upLimUC.rupLimRepo.CorePostUpdateLimit(c, acc.Application.SavingAccount, acc.Card)
+	if err != nil {
+		errors.SetTitle(models.ErrPostUpdateLimitToCore.Error())
+		return errors
+	}
+
+	// post update limit to BRI
+	err = upLimUC.rupLimRepo.BRIPostUpdateLimit(c, acc, slipTE)
+
+	if err != nil {
+		errors.SetTitle(err.Error())
+
+		// if error happen when post update limit to BRI, then rollback to previous nominal and gold limit in Core
+		err = upLimUC.rupLimRepo.CorePostUpdateLimit(c, acc.Application.SavingAccount, tempCard)
+
+		if err != nil {
+			errors.SetTitle(models.ErrRollbackUpdateLimitToCore.Error())
+			return errors
+		}
+
+		return errors
+	}
+
+	// save updated card into db, and insert into limit updates table
+	_, err = upLimUC.rRepo.UpdateCardLimit(c, acc, true)
+
+	if err != nil {
+		errors.SetTitle(models.ErrUpdateCardLimit.Error())
 		return errors
 	}
 

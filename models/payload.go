@@ -299,6 +299,12 @@ type PayloadInquiryUpdateLimit struct {
 	NominalLimit  int64  `json:"nominalLimit" validate:"required"`
 }
 
+// PayloadUpdateLimit a struct to store all payload for submit update limit
+type PayloadUpdateLimit struct {
+	AccountNumber string `json:"accountNumber" validate:"required"`
+	NominalLimit  int64  `json:"nominalLimit" validate:"required"`
+}
+
 // PayloadCoreGtePayment is a struct to store all payload for get
 type PayloadCoreGtePayment struct {
 	AccountNumber      string `json:"accountNumber" validate:"required"`

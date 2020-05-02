@@ -19,4 +19,5 @@ type UseCase interface {
 	PostOccupation(echo.Context, models.PayloadOccupation) error
 	CheckApplication(c echo.Context, pl interface{}) (models.Account, error)
 	ResetRegistration(c echo.Context, pl models.PayloadAppNumber) error
+	GenerateSlipTEDocument(c echo.Context, acc models.Account) error
 }

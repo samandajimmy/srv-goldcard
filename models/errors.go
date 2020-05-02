@@ -222,8 +222,29 @@ var (
 	// ErrMinimumIncreaseLimit to store error minimum increase limit 1 million rupiah
 	ErrMinimumIncreaseLimit = errors.New("Pengajuan limit minimal Rp 1.000.000")
 
+	// ErrPostUpdateLimitToCore to store error when posting update limit to core endpoint
+	ErrPostUpdateLimitToCore = errors.New("Terjadi kesalahan ketika memposting data update limit ke Core")
+
+	// ErrRollbackUpdateLimitToCore to store error when rollback update limit to core endpoint
+	ErrRollbackUpdateLimitToCore = errors.New("Terjadi kesalahan ketika rollback data update limit ke Core")
+
+	// ErrGetSlipTE to store error when trying to get Slip TE Document
+	ErrGetSlipTE = errors.New("Slip Tabungan Emas tidak dapat ditemukan")
+
+	// ErrGenerateSlipTE to store error when trying to generate Slip TE Document from Core
+	ErrGenerateSlipTE = errors.New("Terjadi kesalahan ketika generate PDF Slip TE")
+
+	// ErrPostUpdateLimitToBRI to store error when posting update limit to BRI endpoint
+	ErrPostUpdateLimitToBRI = errors.New("Terjadi kesalahan ketika memposting data update limit ke BRI")
+
 	// ErrPostPaymentBRI to store get failed when post payment data to BRI
 	ErrPostPaymentBRI = errors.New("Gagal saat memposting data pembayaran ke BRI")
+
+	// ErrBRISameDayUpdateLimitAttempt to store error when try to update limit to BRI more than one times in a day
+	ErrSameDayUpdateLimitAttempt = errors.New("Pengajuan limit baru hanya dapat dilakukan maksimal satu kali per hari")
+
+	// ErrGetLimitUpdate to store error when try to get last limit update
+	ErrGetLastLimitUpdate = errors.New("Gagal mendapatkan data limit update terakhir")
 )
 
 // DynamicErr to return parameterize errors
