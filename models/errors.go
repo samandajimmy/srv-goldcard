@@ -245,6 +245,9 @@ var (
 
 	// ErrGetLimitUpdate to store error when try to get last limit update
 	ErrGetLastLimitUpdate = errors.New("Gagal mendapatkan data limit update terakhir")
+
+	// ErrPostPaymentCoreNotif to store get failed when post payment data to core notif
+	ErrPostPaymentCoreNotif = errors.New("Gagal saat memposting data pembayaran ke core")
 )
 
 // DynamicErr to return parameterize errors

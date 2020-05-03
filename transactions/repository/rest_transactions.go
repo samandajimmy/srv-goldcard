@@ -53,17 +53,19 @@ func (ra *restTransactions) GetBRICardInformation(c echo.Context, acc models.Acc
 	return briCardBal, nil
 }
 
-func (rt *restTransactions) CorePaymentInquiry(c echo.Context, pl models.PlPaymentInquiry) (map[string]interface{}, error) {
+func (rt *restTransactions) CorePaymentInquiry(c echo.Context, pl models.PlPaymentInquiry, acc models.Account) (map[string]interface{}, error) {
 	response := map[string]interface{}{}
 	respSwitching := api.SwitchingResponse{}
 	requestDataSwitching := map[string]interface{}{
-		"amount":         pl.PaymentAmount,
-		"jenisTransaksi": "CC",
-		"norek":          pl.AccountNumber,
+		"cif":            acc.CIF,
+		"noRek":          acc.Application.SavingAccount,
+		"norekTagihan":   acc.AccountNumber,
+		"nominal":        pl.PaymentAmount,
+		"jenisTransaksi": "PB",
 	}
 
 	req := api.MappingRequestSwitching(requestDataSwitching)
-	errSwitching := api.RetryableSwitchingPost(c, req, "/gadai/inquiry", &respSwitching)
+	errSwitching := api.RetryableSwitchingPost(c, req, "/goldcard/transaksi/inquiryTagihan", &respSwitching)
 
 	if errSwitching != nil {
 		return response, errSwitching
@@ -90,6 +92,32 @@ func (rt *restTransactions) PostPaymentTransactionToCore(c echo.Context, bill mo
 
 	req := api.MappingRequestSwitching(requestDataSwitching)
 	errSwitching := api.RetryableSwitchingPost(c, req, "/goldcard/transaksi/sendTagihan", &respSwitching)
+
+	if errSwitching != nil {
+		return errSwitching
+	}
+
+	if respSwitching.ResponseCode != api.APIRCSuccess {
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc}))
+		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respSwitching.ResponseCode, respSwitching.ResponseDesc})
+	}
+
+	return nil
+}
+
+func (rt *restTransactions) PostPaymentCoreNotif(c echo.Context, acc models.Account, pl models.PlPaymentTrxCore) error {
+	respSwitching := api.SwitchingResponse{}
+	requestDataSwitching := map[string]interface{}{
+		"noRek":         acc.Application.SavingAccount,
+		"norekTagihan":  acc.AccountNumber,
+		"nominal":       pl.PaymentAmount,
+		"branchCode":    acc.BranchCode,
+		"cif":           acc.CIF,
+		"reffSwitching": pl.RefTrx,
+	}
+
+	req := api.MappingRequestSwitching(requestDataSwitching)
+	errSwitching := api.RetryableSwitchingPost(c, req, "/goldcard/tagihan/payment", &respSwitching)
 
 	if errSwitching != nil {
 		return errSwitching

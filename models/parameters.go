@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/base64"
+	"gade/srv-goldcard/logger"
 	"math"
 	"reflect"
 	"strings"
@@ -101,12 +102,14 @@ func GenerateApplicationFormPDF(af ApplicationForm, templatePath string) (string
 	// Mapping Application Form Data to Html
 	err := requestPdf.ParseTemplate(templatePath, af)
 	if err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return "", err
 	}
 
 	// Generate Pdf File
 	bufPdf, err := requestPdf.GeneratePDF()
 	if err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return "", err
 	}
 
@@ -122,12 +125,14 @@ func GenerateSlipTePDF(st SlipTE, templatePath string) (string, error) {
 	// Mapping Application Form Data to Html
 	err := requestPdf.ParseTemplate(templatePath, st)
 	if err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return "", err
 	}
 
 	// Generate Pdf File
 	bufPdf, err := requestPdf.GeneratePDF()
 	if err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return "", err
 	}
 
