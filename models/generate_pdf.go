@@ -2,9 +2,9 @@ package models
 
 import (
 	"bytes"
+	"gade/srv-goldcard/logger"
 	"html/template"
 	"io/ioutil"
-	"log"
 	"os"
 	"strconv"
 	"time"
@@ -29,11 +29,13 @@ func (reqPdf *RequestPdf) ParseTemplate(templateFileName string, data interface{
 
 	template, err := template.ParseFiles(templateFileName)
 	if err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return err
 	}
 
 	buf := new(bytes.Buffer)
 	if err = template.Execute(buf, data); err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return err
 	}
 
@@ -45,12 +47,12 @@ func (reqPdf *RequestPdf) ParseTemplate(templateFileName string, data interface{
 // GeneratePDF Function to generate pdf file
 func (reqPdf *RequestPdf) GeneratePDF() ([]byte, error) {
 	time := time.Now().Unix()
-
 	uniqueNumber := strconv.FormatInt(int64(time), 10)
-
 	// Write Temporary HTML File
 	err := ioutil.WriteFile("template/"+uniqueNumber+".html", []byte(reqPdf.body), 0644)
+
 	if err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return nil, err
 	}
 
@@ -61,12 +63,15 @@ func (reqPdf *RequestPdf) GeneratePDF() ([]byte, error) {
 	}
 
 	if err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return nil, err
 	}
 
 	// Generate New PDF File
 	pdfg, err := wkhtmltopdf.NewPDFGenerator()
+
 	if err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return nil, err
 	}
 
@@ -86,6 +91,7 @@ func (reqPdf *RequestPdf) GeneratePDF() ([]byte, error) {
 	// Create PDF Buffer File
 	err = pdfg.Create()
 	if err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return nil, err
 	}
 
@@ -94,7 +100,8 @@ func (reqPdf *RequestPdf) GeneratePDF() ([]byte, error) {
 	// Delete Temporary HTML File
 	err = os.Remove("template/" + uniqueNumber + ".html")
 	if err != nil {
-		log.Fatal(err)
+		logger.Make(nil, nil).Debug(err)
+		return nil, err
 	}
 
 	return bufPDF, nil

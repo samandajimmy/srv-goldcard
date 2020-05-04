@@ -281,8 +281,6 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 	}
 
 	acc.Application.SavingAccount = pl.AccountNumber
-	acc.Application.SavingAccountOpeningDate = pl.SavingAccountOpeningDate
-
 	err = reg.regRepo.PostSavingAccount(c, acc)
 
 	if err != nil {

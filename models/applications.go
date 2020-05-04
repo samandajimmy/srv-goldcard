@@ -312,6 +312,7 @@ func (af *ApplicationForm) MappingApplicationForm(params map[string]interface{})
 	appFormBase64, err := GenerateApplicationFormPDF(*af, ApplicationFormTemplatePath)
 
 	if err != nil {
+		logger.Make(nil, nil).Debug(err)
 		return err
 	}
 

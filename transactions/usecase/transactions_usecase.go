@@ -179,6 +179,14 @@ func (trxUS *transactionsUseCase) PostPaymentTrxCore(c echo.Context, pl models.P
 		return errors
 	}
 
+	// post payment to core when post to bri succeded
+	err = trxUS.trxrRepo.PostPaymentCoreNotif(c, acc, pl)
+
+	if err != nil {
+		errors.SetTitle(models.ErrPostPaymentCoreNotif.Error())
+		return errors
+	}
+
 	// update payment inquiry status to paid
 	err = trxUS.trxRepo.UpdatePayInquiryStatusPaid(c, payment)
 
@@ -367,26 +375,19 @@ func (trxUS *transactionsUseCase) PaymentInquiry(c echo.Context, pl models.PlPay
 	}
 
 	// payment inquiry to core
-	respInquiry, err := trxUS.trxrRepo.CorePaymentInquiry(c, pl)
+	respInquiry, err := trxUS.trxrRepo.CorePaymentInquiry(c, pl, acc)
 
 	if err != nil {
 		errors.SetTitleCode("11", models.ErrNoBilling.Error(), "")
 		return response, errors
 	}
 
-	if _, ok := respInquiry["reffSwitching"].(string); !ok {
-		errors.SetTitle(models.ErrSetVar.Error())
-
-		return response, errors
-	}
-
+	// convert respInquiry to json
+	respJSON, err := trxUS.mappingCoreInquiry(c, respInquiry)
 	// get refTrx
 	refTrx := respInquiry["reffSwitching"].(string)
-	// convert respInquiry to json
-	respJSON, err := json.Marshal(respInquiry)
 
 	if err != nil {
-		logger.Make(c, nil).Debug(err)
 		errors.SetTitle(err.Error())
 
 		return response, errors
@@ -485,4 +486,24 @@ func (trxUS *transactionsUseCase) payTheBill(c echo.Context, bill *models.Billin
 	bill.DebtSTL = trx.CurrStl
 
 	return nil
+}
+
+func (trxUS *transactionsUseCase) mappingCoreInquiry(c echo.Context, respInquiry map[string]interface{}) ([]byte, error) {
+	// check reffSwitching variable
+	if _, ok := respInquiry["reffSwitching"].(string); !ok {
+		logger.Make(c, nil).Debug(models.ErrSetVar)
+
+		return []byte{}, models.ErrSetVar
+	}
+
+	// convert respInquiry to json
+	respJSON, err := json.Marshal(respInquiry)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return []byte{}, err
+	}
+
+	return respJSON, nil
 }

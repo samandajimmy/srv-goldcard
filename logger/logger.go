@@ -12,7 +12,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const timestampFormat = "2006-01-02 15:04:05.000"
+const (
+	timestampFormat = "2006-01-02 15:04:05.000"
+)
 
 var errEchoContextNil = errors.New("Echo context tidak boleh nil")
 
