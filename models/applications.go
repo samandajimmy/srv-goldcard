@@ -358,3 +358,8 @@ func (st *SlipTE) MappingSlipTe(params map[string]interface{}) error {
 
 	return nil
 }
+
+// SavingAccount a struct to store saving account number
+type SavingAccount struct {
+	SavingAccount string `json:"savingAccount"`
+}

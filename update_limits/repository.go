@@ -11,6 +11,7 @@ type Repository interface {
 	GetEmailByKey(c echo.Context) (string, error)
 	GetDocumentByTypeAndApplicationId(appId int64, docType string) (models.Document, error)
 	GetLastLimitUpdate(accId int64) (models.LimitUpdate, error)
+	GetSavingAccount(appNumber string) (models.Applications, error)
 }
 
 // Repository represent the update limits Rest Repository
