@@ -14,9 +14,11 @@ const (
 	MinEffBalance float64 = 0.1000
 	// ReservedLockBalance to store a value of additional lock gold balance when updating gold limit
 	ReservedLockLimitBalance float64 = 0.5000
-
+	// defMoneyTaken to store a value of convertion gram to rupiah 94%
 	defMoneyTaken float64 = 0.94
-
+	// defCeilingLimit to store a value of ceiling limit 80% of defMoneyTaken
+	defCeilingLimit float64 = 0.8
+	// cardStatusActive to store a value of card status active
 	cardStatusActive string = "active"
 	// RequestPathCardBlock to store path BRI endpoint for block card
 	RequestPathCardBlock string = "/v1/cobranding/card/block"
@@ -58,10 +60,15 @@ func (c *Card) ConvertMoneyToGold(money int64, stl int64) float64 {
 
 }
 
-// SetGoldLimit a function to set gold limit in gram
-// when updating gold limit, gold limit is added with ReservedLockLimitBalance
+// SetGoldLimit a function to set gold limit in gram when open gte and change limit process
+// by dividing nominal and gold price ceiling, gold price ceiling is 80% of appraised gold price at 94%
 func (c *Card) SetGoldLimit(money int64, stl int64) float64 {
-	return c.ConvertMoneyToGold(money, stl) + ReservedLockLimitBalance
+	moneyFloat := float64(money)
+	stlFloat := float64(stl)
+	goldPriceCeiling := defMoneyTaken * (defCeilingLimit * stlFloat)
+	gold := moneyFloat / goldPriceCeiling
+
+	return CustomRound("ceil", gold, 10000)
 }
 
 // SetCardLimit a function to set card limit in rupiah
