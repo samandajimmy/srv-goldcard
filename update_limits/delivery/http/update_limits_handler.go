@@ -180,9 +180,5 @@ func (ul *updateLimitHandler) GetSavingAccount(c echo.Context) error {
 
 	ul.response.SetResponse(responseData, &ul.respErrors)
 
-	if (responseData == models.BillingStatement{}) {
-		ul.response.SetResponse("", &ul.respErrors)
-	}
-
 	return ul.response.Body(c, nil)
 }
