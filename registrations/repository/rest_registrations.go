@@ -98,6 +98,30 @@ func (rr *restRegistrations) OpenGoldcard(c echo.Context, acc models.Account, is
 	return nil
 }
 
+func (rr *restRegistrations) CloseGoldcard(c echo.Context, acc models.Account) error {
+	const isBlokirFalse = "0"
+	r := api.SwitchingResponse{}
+	body := map[string]interface{}{
+		"isBlokir":      isBlokirFalse,
+		"noRek":         acc.Application.SavingAccount,
+		"gramTransaksi": fmt.Sprintf("%f", acc.Card.GoldLimit),
+	}
+
+	req := api.MappingRequestSwitching(body)
+	err := api.RetryableSwitchingPost(c, req, "/goldcard/close", &r)
+
+	if err != nil {
+		return err
+	}
+
+	if r.ResponseCode != api.APIRCSuccess {
+		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode,
+			r.ResponseDesc})
+	}
+
+	return nil
+}
+
 func (rr *restRegistrations) SendNotification(c echo.Context, notif models.PdsNotification, notifType string) error {
 	resp := api.PdsResponse{}
 	reqBody := notif
