@@ -82,12 +82,12 @@ func (rt *restTransactions) CorePaymentInquiry(c echo.Context, pl models.PlPayme
 func (rt *restTransactions) PostPaymentTransactionToCore(c echo.Context, bill models.Billing) error {
 	respSwitching := api.SwitchingResponse{}
 	requestDataSwitching := map[string]interface{}{
-		"cif":          bill.Account.CIF,
-		"noRek":        bill.Account.Application.SavingAccount,
-		"nominal":      strconv.FormatInt(bill.DebtAmount, 10),
-		"norekTagihan": bill.Account.AccountNumber,
-		"reffBiller":   bill.RefBilling,
-		"isUpdate":     models.BillIsUpdate,
+		"cif":            bill.Account.CIF,
+		"noRek":          bill.Account.Application.SavingAccount,
+		"nominal":        strconv.FormatInt(bill.DebtAmount, 10),
+		"norekTagihan":   bill.Account.AccountNumber,
+		"branchCode":     bill.Account.BranchCode,
+		"jenisTransaksi": "PAYMENT",
 	}
 
 	req := api.MappingRequestSwitching(requestDataSwitching)
