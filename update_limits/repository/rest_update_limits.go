@@ -28,7 +28,7 @@ func (rul *restUpdateLimits) CorePostUpdateLimit(c echo.Context, savingAccNum st
 	body := map[string]interface{}{
 		"isBlokir":         isBlokirTrue,
 		"noRek":            savingAccNum,
-		"gramTransaksi":    fmt.Sprintf("%f", card.GoldLimit),
+		"gramTransaksi":    fmt.Sprintf("%.4f", card.GoldLimit),
 		"nominalTransaksi": strconv.FormatInt(card.CardLimit, 10),
 		"isRecalculate":    isRecalculateTrue,
 	}
@@ -43,6 +43,8 @@ func (rul *restUpdateLimits) CorePostUpdateLimit(c echo.Context, savingAccNum st
 	}
 
 	if r.ResponseCode != "00" {
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode, r.ResponseDesc}))
+
 		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode,
 			r.ResponseDesc})
 	}
@@ -73,6 +75,13 @@ func (rul *restUpdateLimits) BRIPostUpdateLimit(c echo.Context, acc models.Accou
 		logger.Make(c, nil).Debug(errBRI)
 
 		return models.ErrPostUpdateLimitToBRI
+	}
+
+	if respBRI.ResponseCode != "00" {
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respBRI.ResponseCode, respBRI.ResponseMessage}))
+
+		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{respBRI.ResponseCode,
+			respBRI.ResponseMessage})
 	}
 
 	return nil
