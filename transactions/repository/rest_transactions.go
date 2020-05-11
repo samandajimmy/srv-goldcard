@@ -61,7 +61,7 @@ func (rt *restTransactions) CorePaymentInquiry(c echo.Context, pl models.PlPayme
 		"noRek":          acc.Application.SavingAccount,
 		"norekTagihan":   acc.AccountNumber,
 		"nominal":        pl.PaymentAmount,
-		"jenisTransaksi": "PB",
+		"jenisTransaksi": "CC",
 	}
 
 	req := api.MappingRequestSwitching(requestDataSwitching)
