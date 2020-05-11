@@ -379,8 +379,8 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 	return errors
 }
 
-func (upLimUC *updateLimitUseCase) GetSavingAccount(c echo.Context, plAppNumber models.PayloadAppNumber) (interface{}, error) {
-	result, err := upLimUC.upLimRepo.GetSavingAccount(plAppNumber.ApplicationNumber)
+func (upLimUC *updateLimitUseCase) GetSavingAccount(c echo.Context, plAcc models.PayloadAccNumber) (interface{}, error) {
+	result, err := upLimUC.upLimRepo.GetSavingAccount(plAcc.AccountNumber)
 
 	if err != nil {
 		return nil, err

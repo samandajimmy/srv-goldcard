@@ -12,5 +12,5 @@ type UseCase interface {
 	InquiryUpdateLimit(c echo.Context, pl models.PayloadInquiryUpdateLimit) models.ResponseErrors
 	PostUpdateLimit(c echo.Context, pcds models.PayloadUpdateLimit) models.ResponseErrors
 	CoreGtePayment(c echo.Context, pl models.PayloadCoreGtePayment) models.ResponseErrors
-	GetSavingAccount(c echo.Context, plAppNumber models.PayloadAppNumber) (interface{}, error)
+	GetSavingAccount(c echo.Context, plAcc models.PayloadAccNumber) (interface{}, error)
 }

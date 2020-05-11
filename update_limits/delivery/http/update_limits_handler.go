@@ -28,7 +28,7 @@ func NewUpdateLimitHandler(
 	// Endpoint For PDS
 	echoGroup.API.POST("/update-limit/increase/inquiry", handler.InquiryUpdateLimit)
 	echoGroup.API.POST("/update-limit/increase", handler.PostUpdateLimit)
-	echoGroup.API.GET("/update-limit/account-by-appnumber", handler.GetSavingAccount)
+	echoGroup.API.GET("/update-limit/account-by-accnumber", handler.GetSavingAccount)
 }
 
 func (ul *updateLimitHandler) DecreasedSTL(c echo.Context) error {
@@ -152,7 +152,7 @@ func (ul *updateLimitHandler) PostUpdateLimit(c echo.Context) error {
 }
 
 func (ul *updateLimitHandler) GetSavingAccount(c echo.Context) error {
-	var pan models.PayloadAppNumber
+	var pan models.PayloadAccNumber
 	ul.response, ul.respErrors = models.NewResponse()
 
 	if err := c.Bind(&pan); err != nil {
