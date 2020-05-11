@@ -380,13 +380,14 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 }
 
 func (upLimUC *updateLimitUseCase) GetSavingAccount(c echo.Context, plAcc models.PayloadAccNumber) (interface{}, error) {
-	result, err := upLimUC.upLimRepo.GetSavingAccount(plAcc.AccountNumber)
+	acc := models.Account{AccountNumber: plAcc.AccountNumber}
+	err := upLimUC.trxRepo.GetAccountByAccountNumber(c, &acc)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return models.SavingAccount{
-		SavingAccount: result.SavingAccount,
+		SavingAccount: acc.Application.SavingAccount,
 	}, err
 }

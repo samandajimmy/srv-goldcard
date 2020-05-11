@@ -68,27 +68,3 @@ func (psqlUL *psqlUpdateLimitsRepository) GetLastLimitUpdate(accId int64) (model
 
 	return limitUpdate, nil
 }
-
-func (psqlUL *psqlUpdateLimitsRepository) GetSavingAccount(accNumber string) (models.Applications, error) {
-	var acc models.Account
-	var apps models.Applications
-	err := psqlUL.DBpg.Model(&acc).
-		Where("account_number = ?", accNumber).Select()
-
-	if err != nil {
-		logger.Make(nil, nil).Debug(err)
-
-		return apps, err
-	}
-
-	err = psqlUL.DBpg.Model(&apps).
-		Where("id = ?", acc.ApplicationID).Select()
-
-	if err != nil {
-		logger.Make(nil, nil).Debug(err)
-
-		return apps, err
-	}
-
-	return apps, nil
-}
