@@ -550,7 +550,7 @@ func (reg *registrationsUseCase) ResetRegistration(c echo.Context, pl models.Pay
 	}
 
 	// send close goldcard account to core
-	err = reg.rrr.OpenGoldcard(c, acc, false)
+	err = reg.rrr.CloseGoldcard(c, acc)
 
 	if err != nil {
 		return err
