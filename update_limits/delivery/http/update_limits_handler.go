@@ -3,6 +3,7 @@ package http
 import (
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/update_limits"
+	"net/http"
 
 	"github.com/labstack/echo"
 )
@@ -27,6 +28,7 @@ func NewUpdateLimitHandler(
 	// Endpoint For PDS
 	echoGroup.API.POST("/update-limit/increase/inquiry", handler.InquiryUpdateLimit)
 	echoGroup.API.POST("/update-limit/increase", handler.PostUpdateLimit)
+	echoGroup.API.GET("/update-limit/account-by-accnumber", handler.GetSavingAccount)
 }
 
 func (ul *updateLimitHandler) DecreasedSTL(c echo.Context) error {
@@ -146,5 +148,37 @@ func (ul *updateLimitHandler) PostUpdateLimit(c echo.Context) error {
 	}
 
 	ul.response.SetResponse("", &err)
+	return ul.response.Body(c, nil)
+}
+
+func (ul *updateLimitHandler) GetSavingAccount(c echo.Context) error {
+	var pan models.PayloadAccNumber
+	ul.response, ul.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pan); err != nil {
+		ul.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		ul.response.SetResponse("", &ul.respErrors)
+
+		return ul.response.Body(c, err)
+	}
+
+	if err := c.Validate(pan); err != nil {
+		ul.respErrors.SetTitle(err.Error())
+		ul.response.SetResponse("", &ul.respErrors)
+
+		return ul.response.Body(c, err)
+	}
+
+	responseData, err := ul.updateLimitUseCase.GetSavingAccount(c, pan)
+
+	if err != nil {
+		ul.respErrors.SetTitle(err.Error())
+		ul.response.SetResponse("", &ul.respErrors)
+
+		return c.JSON(http.StatusBadRequest, ul.response)
+	}
+
+	ul.response.SetResponse(responseData, &ul.respErrors)
+
 	return ul.response.Body(c, nil)
 }
