@@ -199,7 +199,7 @@ var (
 	ErrGetAccByAccountNumber = errors.New("Nomor akun kartu emas tidak di temukan")
 
 	// ErrGetAccBySavingAcc to store saving account not found error message
-	ErrGetAccBySavingAcc = errors.New("Nomor rekenning tabungan emas tidak di temukan")
+	ErrGetAccBySavingAcc = errors.New("Nomor rekening tabungan emas tidak di temukan")
 
 	// ErrGetParameter to store error get parameter
 	ErrGetParameter = errors.New("Parameter tidak ditemukan")
