@@ -68,3 +68,23 @@ func (psqlUL *psqlUpdateLimitsRepository) GetLastLimitUpdate(accId int64) (model
 
 	return limitUpdate, nil
 }
+
+func (psqlUL *psqlUpdateLimitsRepository) GetAccountBySavingAccount(c echo.Context, savingAcc string) (models.Account, error) {
+	acc := models.Account{}
+	err := psqlUL.DBpg.Model(&acc).Relation("Application").Relation("PersonalInformation").
+		Relation("Card").Relation("Occupation").Relation("Correspondence").Relation("EmergencyContact").
+		Where("application.saving_account = ? AND account.status = ?", savingAcc, models.AccStatusActive).
+		Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return acc, err
+	}
+
+	if err == pg.ErrNoRows {
+		return acc, models.ErrSavingAccNotFound
+	}
+
+	return acc, nil
+}

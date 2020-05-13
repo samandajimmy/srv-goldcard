@@ -9,6 +9,7 @@ import (
 	"gade/srv-goldcard/transactions"
 	"gade/srv-goldcard/update_limits"
 	"os"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -257,10 +258,10 @@ func (upLimUC *updateLimitUseCase) checkGoldEffBalanceSufficient(newLimit int64,
 // check if core already pass the payload for endpoint
 func (upLimUC *updateLimitUseCase) CoreGtePayment(c echo.Context, pcgp models.PayloadCoreGtePayment) models.ResponseErrors {
 	var errors models.ResponseErrors
-	acc, err := upLimUC.trxUS.CheckAccountByAccountNumber(c, pcgp)
+	acc, err := upLimUC.CheckAccountBySavingAccount(c, pcgp)
 
 	if err != nil {
-		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
+		errors.SetTitle(err.Error())
 		return errors
 	}
 
@@ -390,4 +391,20 @@ func (upLimUC *updateLimitUseCase) GetSavingAccount(c echo.Context, plAcc models
 	return models.SavingAccount{
 		SavingAccount: acc.Application.SavingAccount,
 	}, err
+}
+
+func (upLimUC *updateLimitUseCase) CheckAccountBySavingAccount(c echo.Context, pl interface{}) (models.Account, error) {
+	r := reflect.ValueOf(pl)
+	savingAcc := r.FieldByName("SavingAccount")
+
+	// Get Account by saving account
+	acc, err := upLimUC.upLimRepo.GetAccountBySavingAccount(c, savingAcc.String())
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return models.Account{}, models.ErrGetAccBySavingAcc
+	}
+
+	return acc, nil
 }

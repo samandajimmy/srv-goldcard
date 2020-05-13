@@ -306,7 +306,7 @@ type PayloadUpdateLimit struct {
 
 // PayloadCoreGtePayment is a struct to store all payload for get
 type PayloadCoreGtePayment struct {
-	AccountNumber      string `json:"accountNumber" validate:"required"`
+	SavingAccount      string `json:"savingAccount" validate:"required"`
 	AvailableGram      string `json:"availableGram" validate:"required"`
 	NominalTransaction int64  `json:"nominalTransaction" validate:"required"`
 }

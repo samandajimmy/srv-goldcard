@@ -51,6 +51,9 @@ var (
 	// ErrAppNumberNotFound to store error find application number
 	ErrAppNumberNotFound = errors.New("Nomor pengajuan tidak ditemukan")
 
+	// ErrSavingAccNotFound to store error find saving account
+	ErrSavingAccNotFound = errors.New("Nomor tabungan emas tidak ditemukan")
+
 	// ErrAppNumberCompleted to store error application number applied
 	ErrAppNumberCompleted = errors.New("Nomor pengajuan telah diajukan")
 
@@ -194,6 +197,9 @@ var (
 
 	// ErrGetAccByAccountNumber to store account number not found error message
 	ErrGetAccByAccountNumber = errors.New("Nomor akun kartu emas tidak di temukan")
+
+	// ErrGetAccBySavingAcc to store saving account not found error message
+	ErrGetAccBySavingAcc = errors.New("Nomor rekening tabungan emas tidak di temukan")
 
 	// ErrGetParameter to store error get parameter
 	ErrGetParameter = errors.New("Parameter tidak ditemukan")
