@@ -200,9 +200,11 @@ func (app *Applications) GetCurrentDoc(currDocs []Document, docType string) Docu
 
 func (app *Applications) getStatus(msg string) string {
 	switch strings.ToLower(msg) {
-	case "application approved", "application on review", "application final approval", "rescheduling delivery":
+	case "application on review", "application final approval", "rescheduling delivery":
+		return "application_processed"
+	case "application approved", "on printing", "ready to deliver":
 		return "card_processed"
-	case "on printing", "ready to deliver", "on deliver":
+	case "on deliver":
 		return "card_send"
 	case "application rejected":
 		return "rejected"
