@@ -226,7 +226,7 @@ var (
 	ErrMinimumGoldSavingEffBal = errors.New("Sisa saldo efektif mengendap minimal 0,1 gram")
 
 	// ErrMinimumIncreaseLimit to store error minimum increase limit 1 million rupiah
-	ErrMinimumIncreaseLimit = errors.New("Pengajuan limit minimal Rp 1.000.000")
+	ErrMinimumIncreaseLimit = errors.New("Perubahan limit minimal Rp 1.000.000")
 
 	// ErrPostUpdateLimitToCore to store error when posting update limit to core endpoint
 	ErrPostUpdateLimitToCore = errors.New("Terjadi kesalahan ketika memposting data update limit ke Core")
