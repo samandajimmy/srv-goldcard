@@ -281,8 +281,6 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 	var errors models.ResponseErrors
 	var notif models.PdsNotification
 
-	notif = models.PdsNotification{}
-
 	// get acc by account number
 	acc, err := upLimUC.trxUS.CheckAccountByAccountNumber(c, pl)
 
@@ -382,6 +380,8 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 	}
 
 	// Send notification to user in pds and email
+	notif = models.PdsNotification{}
+
 	notif.GcSla2Days(acc)
 	_ = upLimUC.rrRepo.SendNotification(c, notif, "")
 
