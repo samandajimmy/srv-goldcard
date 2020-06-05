@@ -11,7 +11,6 @@ import (
 	"os"
 	"reflect"
 	"strconv"
-	"time"
 
 	"github.com/labstack/echo"
 	"gopkg.in/gomail.v2"
@@ -287,7 +286,7 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 		return errors
 	}
 
-	// check if already do update limit before within same day
+	// check if there is user limit update status still pending or applied
 	lastLimitUpdate, err := upLimUC.upLimRepo.GetLastLimitUpdate(acc.ID)
 
 	if err != nil {
@@ -295,8 +294,9 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 		return errors
 	}
 
-	if lastLimitUpdate.AppliedLimitDate.Format(models.DDMMYYYY) == time.Now().Format(models.DDMMYYYY) {
-		errors.SetTitle(models.ErrSameDayUpdateLimitAttempt.Error())
+	if lastLimitUpdate.Status == models.LimitUpdateStatusPending ||
+		lastLimitUpdate.Status == models.LimitUpdateStatusApplied {
+		errors.SetTitle(models.ErrPendingUpdateLimitAvailable.Error())
 		return errors
 	}
 
@@ -325,7 +325,6 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 	}
 
 	// set card limit along with gold limit
-	tempCard := acc.Card
 	acc.Card.CardLimit = pl.NominalLimit
 	acc.Card.GoldLimit = acc.Card.SetGoldLimit(acc.Card.CardLimit, currStl)
 	acc.Card.StlLimit = currStl
@@ -338,34 +337,10 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 		return errors
 	}
 
-	slipTE, err := upLimUC.upLimRepo.GetDocumentByTypeAndApplicationId(acc.ApplicationID, models.MapDocType["GoldSavingSlipBase64"])
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetSlipTE.Error())
-		return errors
-	}
-
 	// post update limit to core
-	err = upLimUC.rupLimRepo.CorePostUpdateLimit(c, acc.Application.SavingAccount, acc.Card)
+	err = upLimUC.rupLimRepo.CorePostUpdateLimit(c, acc.Application.SavingAccount, acc.Card, acc.CIF)
 	if err != nil {
 		errors.SetTitle(models.ErrPostUpdateLimitToCore.Error())
-		return errors
-	}
-
-	// post update limit to BRI
-	err = upLimUC.rupLimRepo.BRIPostUpdateLimit(c, acc, slipTE)
-
-	if err != nil {
-		errors.SetTitle(err.Error())
-
-		// if error happen when post update limit to BRI, then rollback to previous nominal and gold limit in Core
-		err = upLimUC.rupLimRepo.CorePostUpdateLimit(c, acc.Application.SavingAccount, tempCard)
-
-		if err != nil {
-			errors.SetTitle(models.ErrRollbackUpdateLimitToCore.Error())
-			return errors
-		}
-
 		return errors
 	}
 

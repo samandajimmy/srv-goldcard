@@ -249,6 +249,9 @@ var (
 	// ErrBRISameDayUpdateLimitAttempt to store error when try to update limit to BRI more than one times in a day
 	ErrSameDayUpdateLimitAttempt = errors.New("Pengajuan limit baru hanya dapat dilakukan maksimal satu kali per hari")
 
+	// ErrPendingUpdateLimitAvailable to store error when try to update limit but there is undergoing pending update limit process
+	ErrPendingUpdateLimitAvailable = errors.New("Pengajuan limit baru anda masih dalam proses")
+
 	// ErrGetLimitUpdate to store error when try to get last limit update
 	ErrGetLastLimitUpdate = errors.New("Gagal mendapatkan data limit update terakhir")
 
