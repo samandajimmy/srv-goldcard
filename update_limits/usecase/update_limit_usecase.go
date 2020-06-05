@@ -279,6 +279,8 @@ func (upLimUC *updateLimitUseCase) CoreGtePayment(c echo.Context, pcgp models.Pa
 // PostUpdateLimit is a func to submit update limit after inquiry update limit
 func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.PayloadUpdateLimit) models.ResponseErrors {
 	var errors models.ResponseErrors
+	var notif models.PdsNotification
+
 	// get acc by account number
 	acc, err := upLimUC.trxUS.CheckAccountByAccountNumber(c, pl)
 
@@ -376,6 +378,12 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 		errors.SetTitle(models.ErrUpdateCardLimit.Error())
 		return errors
 	}
+
+	// Send notification to user in pds and email
+	notif = models.PdsNotification{}
+
+	notif.GcSla2Days(acc)
+	_ = upLimUC.rrRepo.SendNotification(c, notif, "")
 
 	return errors
 }

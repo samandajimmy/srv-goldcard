@@ -281,3 +281,14 @@ func (pdsNotif *PdsNotification) GcDecreasedSTL(acc Account, oldCard Card, refTr
 		},
 	}
 }
+
+// GcSla2Days to send  notification about update limit's sla
+func (pdsNotif *PdsNotification) GcSla2Days(acc Account) {
+	pdsNotif.NotificationTitle = "KARTU EMAS"
+	pdsNotif.PhoneNumber = acc.PersonalInformation.HandPhoneNumber
+	pdsNotif.CIF = acc.CIF
+	pdsNotif.EmailSubject = "Pengajuan Limit Diproses"
+	pdsNotif.ContentTitle = "Pengajuan Limit Diproses"
+	pdsNotif.ContentDescription = []string{"Proses pengajuan limit dapat berlangsung hingga 2 hari kerja."}
+	pdsNotif.NotificationDescription = "Pengajuan Limit Diproses"
+}
