@@ -18,4 +18,5 @@ type Repository interface {
 type RestRepository interface {
 	CorePostUpdateLimit(c echo.Context, savingAccNum string, card models.Card) error
 	BRIPostUpdateLimit(c echo.Context, acc models.Account, doc models.Document) error
+	CorePostInquiryUpdateLimit(c echo.Context, cif string, savingAccNum string, nominalLimit int64) error
 }

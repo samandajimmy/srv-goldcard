@@ -86,3 +86,39 @@ func (rul *restUpdateLimits) BRIPostUpdateLimit(c echo.Context, acc models.Accou
 
 	return nil
 }
+
+func (rul *restUpdateLimits) CorePostInquiryUpdateLimit(c echo.Context, cif string, savingAccNum string, nominalLimit int64) error {
+	const (
+		reqStatus         = "EQ"
+		isBlokirTrue      = "1"
+		isRecalculateTrue = "1"
+	)
+
+	r := api.SwitchingResponse{}
+	body := map[string]interface{}{
+		"isBlokir":         isBlokirTrue,
+		"noRek":            savingAccNum,
+		"cif":              cif,
+		"nominalTransaksi": nominalLimit,
+		"isRecalculate":    isRecalculateTrue,
+		"reqStatus":        reqStatus,
+	}
+
+	req := api.MappingRequestSwitching(body)
+	err := api.RetryableSwitchingPost(c, req, "/goldcard/updateLimit/inquiry", &r)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	if r.ResponseCode != "00" {
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode, r.ResponseDesc}))
+
+		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode,
+			r.ResponseDesc})
+	}
+
+	return nil
+}

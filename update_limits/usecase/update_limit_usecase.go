@@ -175,43 +175,15 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 		return errors
 	}
 
-	// get current STL
-	currStl, err := upLimUC.rrRepo.GetCurrentGoldSTL(c)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetCurrSTL.Error())
-		return errors
-	}
-
 	// validate inquiries
 	// do minimum increase limit, is npwp required, effective balance, and minimum effective balance validation
-	errors = upLimUC.validateUpdateLimitInquiries(c, acc, docs, pl, currStl)
+	errors = upLimUC.validateUpdateLimitInquiries(c, acc, docs, pl)
 	return errors
 }
 
 // validateUpdateLimitInq is function to validate business requirement to update limit goldcard
-func (upLimUC *updateLimitUseCase) validateUpdateLimitInquiries(c echo.Context, acc models.Account, docs []models.Document, pl models.PayloadInquiryUpdateLimit, currStl int64) models.ResponseErrors {
+func (upLimUC *updateLimitUseCase) validateUpdateLimitInquiries(c echo.Context, acc models.Account, docs []models.Document, pl models.PayloadInquiryUpdateLimit) models.ResponseErrors {
 	var errors models.ResponseErrors
-
-	// get user gold effective balance
-	userGoldDetail, err := upLimUC.arRepo.GetDetailGoldUser(c, acc.Application.SavingAccount)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetUserDetail.Error())
-		return errors
-	}
-
-	if _, ok := userGoldDetail["saldoEfektif"].(string); !ok {
-		errors.SetTitle(models.ErrSetVar.Error())
-		return errors
-	}
-
-	goldEffBalance, err := strconv.ParseFloat(userGoldDetail["saldoEfektif"].(string), 64)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetEffBalance.Error())
-		return errors
-	}
 
 	// check minimum increase limit 1 million rupiah
 	if pl.NominalLimit-acc.Card.CardLimit < models.MinIncreaseLimit {
@@ -219,10 +191,10 @@ func (upLimUC *updateLimitUseCase) validateUpdateLimitInquiries(c echo.Context, 
 		return errors
 	}
 
-	// check if gold effective balance is sufficient
-	err = upLimUC.checkGoldEffBalanceSufficient(pl.NominalLimit, acc.Card, currStl, goldEffBalance)
+	err := upLimUC.rupLimRepo.CorePostInquiryUpdateLimit(c, acc.CIF, acc.Application.SavingAccount, pl.NominalLimit)
+
 	if err != nil {
-		errors.SetTitle(err.Error())
+		errors.SetTitle(models.ErrPostInquiryUpdateLimitToCore.Error())
 		return errors
 	}
 
@@ -320,7 +292,7 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 
 	// validate inquiries
 	// do minimum increase limit, is npwp required, effective balance, and minimum effective balance validation
-	errors = upLimUC.validateUpdateLimitInquiries(c, acc, docs, models.PayloadInquiryUpdateLimit(pl), currStl)
+	errors = upLimUC.validateUpdateLimitInquiries(c, acc, docs, models.PayloadInquiryUpdateLimit(pl))
 
 	if errors.Title != "" {
 		return errors
