@@ -324,6 +324,7 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 	var nilFilters []string
 	var upsertFilters []string
 	var upsertQuery string
+	var limitUpdateStatus interface{}
 	refId, _ := uuid.NewRandom()
 
 	// query if account has not any card data yet
@@ -344,6 +345,7 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 	if acc.CardID != 0 && isRecalculate {
 		upsertQuery = `UPDATE cards set card_limit = $1, updated_at = $2, gold_limit = $3,
 			stl_limit = $4 WHERE id = ` + strconv.Itoa(int(acc.CardID)) + ` RETURNING id;`
+		limitUpdateStatus = models.LimitUpdateStatusPending
 	}
 
 	stmts := []*gcdb.PipelineStmt{
@@ -351,9 +353,9 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 			acc.Card.GoldLimit, acc.Card.StlLimit),
 		gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1
 			WHERE id = $2`, nilFilters, time.Now(), acc.ID),
-		gcdb.NewPipelineStmt(`INSERT INTO limit_updates (ref_id, applied_limit_date, account_id, card_limit, gold_limit, stl_limit,
-			created_at) VALUES ($1, $2, $3, $4, $5, $6, $7);`, nilFilters, refId.String(), time.Now(), acc.ID, acc.Card.CardLimit,
-			acc.Card.GoldLimit, acc.Card.StlLimit, time.Now()),
+		gcdb.NewPipelineStmt(`INSERT INTO limit_updates (ref_id, applied_limit_date, account_id, card_limit, gold_limit, stl_limit, status,
+			created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`, nilFilters, refId.String(), time.Now(), acc.ID, acc.Card.CardLimit,
+			acc.Card.GoldLimit, acc.Card.StlLimit, limitUpdateStatus, time.Now()),
 	}
 
 	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {

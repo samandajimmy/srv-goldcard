@@ -1,7 +1,6 @@
 package repository
 
 import (
-	"fmt"
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -18,23 +17,25 @@ func NewRestUpdateLimits() update_limits.RestRepository {
 	return &restUpdateLimits{}
 }
 
-func (rul *restUpdateLimits) CorePostUpdateLimit(c echo.Context, savingAccNum string, card models.Card) error {
+func (rul *restUpdateLimits) CorePostUpdateLimit(c echo.Context, savingAccNum string, card models.Card, cif string) error {
 	const (
 		isBlokirTrue      = "1"
 		isRecalculateTrue = "1"
+		reqStatusRequest  = "RQ"
 	)
 
 	r := api.SwitchingResponse{}
 	body := map[string]interface{}{
 		"isBlokir":         isBlokirTrue,
 		"noRek":            savingAccNum,
-		"gramTransaksi":    fmt.Sprintf("%.4f", card.GoldLimit),
+		"cif":              cif,
 		"nominalTransaksi": strconv.FormatInt(card.CardLimit, 10),
 		"isRecalculate":    isRecalculateTrue,
+		"reqStatus":        reqStatusRequest,
 	}
 
 	req := api.MappingRequestSwitching(body)
-	err := api.RetryableSwitchingPost(c, req, "/goldcard/updateLimit", &r)
+	err := api.RetryableSwitchingPost(c, req, "/goldcard/updateLimit/register", &r)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)

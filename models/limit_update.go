@@ -13,6 +13,12 @@ var (
 
 	// DefBriProductRequestUpLimit is to store default bri update limit product request
 	DefBriProductRequestUpLimit string = "KARTUEMAS"
+
+	// LimitUpdateStatusPending to store a pending update limit status
+	LimitUpdateStatusPending = "pending"
+
+	// LimitUpdateStatusApplied to store a apllied update limit status
+	LimitUpdateStatusApplied = "applied"
 )
 
 // LimitUpdate is a struct to store historical card limit update data
@@ -24,6 +30,7 @@ type LimitUpdate struct {
 	CardLimit        int64     `json:"cardLimit"`
 	GoldLimit        float64   `json:"goldLimit"`
 	StlLimit         int64     `json:"stlLimit"`
+	Status           string    `json:"status"`
 	UpdatedAt        time.Time `json:"updatedAt"`
 	CreatedAt        time.Time `json:"createdAt"`
 	Account          Account   `json:"account"`
