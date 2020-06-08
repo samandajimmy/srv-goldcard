@@ -208,25 +208,6 @@ func (upLimUC *updateLimitUseCase) validateUpdateLimitInquiries(c echo.Context, 
 	return errors
 }
 
-// checkGoldEffBalanceSufficient is a function to check whether remaining effective gold balance is sufficient when trying to increase card limit
-func (upLimUC *updateLimitUseCase) checkGoldEffBalanceSufficient(newLimit int64, currentCard models.Card, currStl int64, goldEffBalance float64) error {
-	appliedGoldLimit := currentCard.GoldLimit
-	newGoldLimit := currentCard.SetGoldLimit(newLimit, currStl)
-	deficitGoldLimit := models.CustomRound("round", newGoldLimit-appliedGoldLimit, 10000)
-
-	// got not enough effective gold balance
-	if goldEffBalance < deficitGoldLimit {
-		return models.ErrInsufGoldSavingEffBalance
-	}
-
-	// got not enough minimum effective balance 0.1 gram
-	if goldEffBalance < deficitGoldLimit+models.MinEffBalance {
-		return models.ErrMinimumGoldSavingEffBal
-	}
-
-	return nil
-}
-
 // check if core already pass the payload for endpoint
 func (upLimUC *updateLimitUseCase) CoreGtePayment(c echo.Context, pcgp models.PayloadCoreGtePayment) models.ResponseErrors {
 	var errors models.ResponseErrors
