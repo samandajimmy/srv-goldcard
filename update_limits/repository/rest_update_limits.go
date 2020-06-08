@@ -88,6 +88,11 @@ func (rul *restUpdateLimits) BRIPostUpdateLimit(c echo.Context, acc models.Accou
 }
 
 func (rul *restUpdateLimits) CorePostInquiryUpdateLimit(c echo.Context, cif string, savingAccNum string, nominalLimit int64) error {
+	// reqStatus code
+	// EQ Inquiry
+	// RQ Request Nasabah
+	// AP Approve Dari Bank
+	// XX Pembatalan Dari Bank
 	const (
 		reqStatus         = "EQ"
 		isBlokirTrue      = "1"
