@@ -87,7 +87,7 @@ func (rul *restUpdateLimits) BRIPostUpdateLimit(c echo.Context, acc models.Accou
 	return nil
 }
 
-func (rul *restUpdateLimits) CorePostInquiryUpdateLimit(c echo.Context, cif string, savingAccNum string, nominalLimit int64) error {
+func (rul *restUpdateLimits) CorePostInquiryUpdateLimit(c echo.Context, cif string, savingAccNum string, nominalLimit int64) string {
 	// reqStatus code
 	// EQ Inquiry
 	// RQ Request Nasabah
@@ -115,15 +115,12 @@ func (rul *restUpdateLimits) CorePostInquiryUpdateLimit(c echo.Context, cif stri
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return err
+		return "99"
 	}
 
 	if r.ResponseCode != "00" {
 		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode, r.ResponseDesc}))
-
-		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode,
-			r.ResponseDesc})
 	}
 
-	return nil
+	return r.ResponseCode
 }

@@ -193,8 +193,13 @@ func (upLimUC *updateLimitUseCase) validateUpdateLimitInquiries(c echo.Context, 
 
 	err := upLimUC.rupLimRepo.CorePostInquiryUpdateLimit(c, acc.CIF, acc.Application.SavingAccount, pl.NominalLimit)
 
-	if err != nil {
+	if err == "99" {
 		errors.SetTitle(models.ErrPostInquiryUpdateLimitToCore.Error())
+		return errors
+	}
+
+	if err == "13" {
+		errors.SetTitle(models.ErrMinimumGoldSavingEffBal.Error())
 		return errors
 	}
 
