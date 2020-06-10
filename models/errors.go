@@ -257,6 +257,9 @@ var (
 
 	// ErrPostPaymentCoreNotif to store get failed when post payment data to core notif
 	ErrPostPaymentCoreNotif = errors.New("Gagal saat memposting data pembayaran ke core")
+
+	// ErrPostInquiryUpdateLimitToCore to store error when posting inquiry update limit to core endpoint
+	ErrPostInquiryUpdateLimitToCore = errors.New("Terjadi kesalahan ketika memposting data inquiry update limit ke Core")
 )
 
 // DynamicErr to return parameterize errors
