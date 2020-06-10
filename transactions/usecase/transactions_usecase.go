@@ -47,19 +47,11 @@ func (trxUS *transactionsUseCase) PostBRIPendingTransactions(c echo.Context, pl 
 		return errors
 	}
 
-	// mapping all trx data needed
+	// mapping all trx data needed for notification
 	err = trx.MappingTrx(pl, models.TypeTrxCredit, true)
 
 	if err != nil {
 		errors.SetTitle(models.ErrMappingData.Error())
-		return errors
-	}
-
-	// store trx to db
-	err = trxUS.trxRepo.PostTransactions(c, trx)
-
-	if err != nil {
-		errors.SetTitle(models.ErrInsertTransactions.Error())
 		return errors
 	}
 
