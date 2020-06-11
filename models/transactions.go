@@ -83,7 +83,6 @@ func (trx *Transaction) MappingTrx(pl interface{}, trxType string, isTrx bool) e
 	trx.RefTrx = GetInterfaceValue(r, "RefTrx").(string)
 	trx.TrxDate = GetInterfaceValue(r, "PaymentDate").(string)
 	trx.CompareID = GetInterfaceValue(r, "AuthCode").(string)
-	trx.Description = GetInterfaceValue(r, "PaymentDesc").(string)
 
 	// if no value on pl->RefTrx
 	if trx.RefTrx == "" {
@@ -115,6 +114,7 @@ func (trx *Transaction) MappingTrx(pl interface{}, trxType string, isTrx bool) e
 	if isTrx {
 		trx.Balance = trx.Account.Card.Balance - trx.Nominal
 		trx.Status = statusTrxPending
+		trx.Description = GetInterfaceValue(r, "TrxDesc").(string)
 	}
 
 	// if its payment transaction data
@@ -125,6 +125,7 @@ func (trx *Transaction) MappingTrx(pl interface{}, trxType string, isTrx bool) e
 		trx.BillingPayments = []BillingPayment{
 			BillingPayment{Source: GetInterfaceValue(r, "Source").(string)},
 		}
+		trx.Description = GetInterfaceValue(r, "PaymentDesc").(string)
 	}
 
 	trx.GoldNominal = trx.Account.Card.ConvertMoneyToGold(trx.Nominal, trx.CurrStl)

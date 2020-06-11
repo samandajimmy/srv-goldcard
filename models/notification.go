@@ -175,7 +175,7 @@ func (pdsNotif *PdsNotification) GcTransaction(trx Transaction) {
 		},
 		{
 			Key:   "Id Transaksi",
-			Value: pdsNotif.MaskChar(trx.RefTrx, 6, 12),
+			Value: pdsNotif.MaskChar(trx.TransactionID, 6, 12),
 		},
 		{
 			Key:   "Jumlah Transaksi",
