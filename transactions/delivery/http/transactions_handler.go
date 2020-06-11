@@ -24,14 +24,14 @@ func NewTransactionsHandler(
 	// Endpoint For BRI
 	echoGroup.API.POST("/transactions/bri", handler.BRIPendingTransactions)
 
-	// Endpoint For third party
-	echoGroup.API.POST("/transactions/payment/:source", handler.paymentTransaction)
+	// Endpoint For billing payments
+	echoGroup.API.POST("/hidden/transactions/payment/:source", handler.paymentTransaction)
+	echoGroup.API.POST("/hidden/transactions/payment/inquiry", handler.PaymentInquiry)
+	echoGroup.API.POST("/hidden/transactions/payment/core", handler.paymentTransactionCore)
 
 	// Endpoint For PDS
 	echoGroup.API.GET("/transactions/history", handler.HistoryTransactions)
 	echoGroup.API.GET("/transactions/balance", handler.GetCardBalance)
-	echoGroup.API.POST("/transactions/payment/inquiry", handler.PaymentInquiry)
-	echoGroup.API.POST("/transactions/payment/core", handler.paymentTransactionCore)
 }
 
 // Registrations a handler to handle goldcard registrations
