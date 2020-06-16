@@ -211,7 +211,6 @@ func (trxUS *transactionsUseCase) PostPaymentTrxCore(c echo.Context, pl models.P
 func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListTrx models.PayloadListTrx) (interface{}, models.ResponseErrors) {
 	var errors models.ResponseErrors
 	var result []models.ListTrx
-
 	now := time.Now()
 	nowDate := now.Format(models.DateFormat)
 	yesterdayDate := now.AddDate(0, 0, -1).Format(models.DateFormat)
