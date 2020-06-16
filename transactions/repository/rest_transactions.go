@@ -152,7 +152,6 @@ func (rt *restTransactions) PostPaymentBRI(c echo.Context, acc models.Account, a
 func (rt *restTransactions) GetBRIPendingTrx(acc models.Account, startDate string, endDate string) (models.RespBRIPendingTrxData, error) {
 	var respBRIPendTrxData models.RespBRIPendingTrxData
 	respBRI := api.BriResponse{}
-
 	requestDataBRI := map[string]interface{}{
 		"briXkey":   acc.BrixKey,
 		"startDate": startDate,
@@ -174,7 +173,6 @@ func (rt *restTransactions) GetBRIPendingTrx(acc models.Account, startDate strin
 	}
 
 	requestData := respBRI.DataOne["requestData"].([]interface{})
-
 	mrshlBRIPendTrxInq, err := json.Marshal(requestData[0])
 
 	if err != nil {
@@ -193,7 +191,7 @@ func (rt *restTransactions) GetBRIPendingTrx(acc models.Account, startDate strin
 }
 
 // GetBRIPosted to get posted trx for single account from BRI
-func (rt *restTransactions) GetBRIPosted(c echo.Context, briXkey string) (models.RespBRIPostedTransaction, error) {
+func (rt *restTransactions) GetBRIPostedTrx(c echo.Context, briXkey string) (models.RespBRIPostedTransaction, error) {
 	respBRIPosted := models.RespBRIPostedTransaction{}
 	respBRI := api.BriResponse{}
 	requestDataBRI := map[string]interface{}{

@@ -52,7 +52,7 @@ type Transaction struct {
 // ListTrx struct to store list history transactions
 type ListTrx struct {
 	// nolint
-	// tableName struct{} `pg:"transactions"`
+	tableName struct{} `pg:"transactions"`
 
 	RefTrx      string `json:"refTrx"`
 	Nominal     int64  `json:"nominal"`
@@ -140,11 +140,11 @@ func (trx *Transaction) MappingTrx(pl interface{}, trxType string, isTrx bool) e
 
 // RespBRIPendingTrxData to store response for pending transactions data from BRI
 type RespBRIPendingTrxData struct {
-	TransactionData []PendingTrx `json:"transactionData"`
+	TransactionData []BriPendingTrx `json:"transactionData"`
 }
 
 // PendingTrx a struct to store individual pending transaction information from BRI
-type PendingTrx struct {
+type BriPendingTrx struct {
 	TransactionId   string `json:"transactionId"`
 	CardType        string `json:"cardType"`
 	TransactionDate int64  `json:"transactionDate"`
@@ -157,11 +157,11 @@ type PendingTrx struct {
 
 // RespBRIPostedTransaction a struct to store app response for posted transactions from BRI
 type RespBRIPostedTransaction struct {
-	ListOfTransactions []ListOfTransactions `json:"listOfTransactions,omitempty"`
+	ListOfTransactions []BriListOfTransactions `json:"listOfTransactions,omitempty"`
 }
 
 // ListOfTransactions a struct to store list of transactions from BRI
-type ListOfTransactions struct {
+type BriListOfTransactions struct {
 	EffectiveDate  int64       `json:"effectiveDate,omitempty"`
 	TrxAmount      int64       `json:"trxAmount,omitempty"`
 	PostingDate    int64       `json:"postingDate,omitempty"`

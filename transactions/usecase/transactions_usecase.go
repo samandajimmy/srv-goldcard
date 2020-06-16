@@ -225,7 +225,7 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 		return models.ResponseListTrx{}, errors
 	}
 
-	BRIPosted, err := trxUS.trxrRepo.GetBRIPosted(c, acc.BrixKey)
+	BRIPosted, err := trxUS.trxrRepo.GetBRIPostedTrx(c, acc.BrixKey)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
