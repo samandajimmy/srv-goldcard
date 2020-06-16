@@ -268,8 +268,7 @@ type PaginationPayload struct {
 
 // PayloadListTrx struct to store request history transactions
 type PayloadListTrx struct {
-	AccountNumber string            `json:"accountNumber" validate:"required"`
-	Pagination    PaginationPayload `json:"pagination"`
+	AccountNumber string `json:"accountNumber" validate:"required"`
 }
 
 // PayloadAccNumber a struct to store all payload for transactions

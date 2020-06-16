@@ -11,6 +11,9 @@ import (
 
 	"github.com/labstack/echo"
 	"github.com/leekchan/accounting"
+
+	"sort"
+	"time"
 )
 
 type transactionsUseCase struct {
@@ -207,6 +210,11 @@ func (trxUS *transactionsUseCase) PostPaymentTrxCore(c echo.Context, pl models.P
 
 func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListTrx models.PayloadListTrx) (interface{}, models.ResponseErrors) {
 	var errors models.ResponseErrors
+	var result []models.ListTrx
+
+	now := time.Now()
+	nowDate := now.Format(models.DateFormat)
+	yesterdayDate := now.AddDate(0, 0, -1).Format(models.DateFormat)
 
 	// Get Account by Account Number
 	acc, err := trxUS.CheckAccountByAccountNumber(c, plListTrx)
@@ -217,13 +225,41 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 		return models.ResponseListTrx{}, errors
 	}
 
-	result, err := trxUS.trxRepo.GetPgTransactionsHistory(c, acc, plListTrx)
+	BRIPosted, err := trxUS.trxrRepo.GetBRIPosted(c, acc.BrixKey)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
 
-		return result, errors
+		return models.ResponseListTrx{}, errors
 	}
+
+	for _, singleBRIPostedTrx := range BRIPosted.ListOfTransactions {
+		result = append(result, models.ListTrx{
+			RefTrx:      singleBRIPostedTrx.TrxReff,
+			Nominal:     singleBRIPostedTrx.TrxAmount,
+			TrxDate:     time.Unix(singleBRIPostedTrx.EffectiveDate/1000, 0).Format(models.DateTimeFormatZone),
+			Description: singleBRIPostedTrx.TrxDesc})
+	}
+
+	BRIPending, err := trxUS.trxrRepo.GetBRIPendingTrx(acc, yesterdayDate, nowDate)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
+
+		return models.ResponseListTrx{}, errors
+	}
+
+	for _, singleBRIPendigTrx := range BRIPending.TransactionData {
+		result = append(result, models.ListTrx{
+			RefTrx:      "-",
+			Nominal:     singleBRIPendigTrx.BillAmount,
+			TrxDate:     time.Unix(singleBRIPendigTrx.TransactionDate/1000, 0).Format(models.DateTimeFormatZone),
+			Description: singleBRIPendigTrx.Description})
+	}
+
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].TrxDate > result[j].TrxDate
+	})
 
 	return result, errors
 }
