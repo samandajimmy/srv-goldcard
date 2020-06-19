@@ -9,7 +9,6 @@ import (
 // Repository represent the transactions Repository
 type Repository interface {
 	GetAccountByBrixKey(c echo.Context, brixkey string) (models.Account, error)
-	GetPgTransactionsHistory(c echo.Context, acc models.Account, plListTrx models.PayloadListTrx) (models.ResponseListTrx, error)
 	PostTransactions(c echo.Context, trx models.Transaction) error
 	GetAccountByAccountNumber(c echo.Context, acc *models.Account) error
 	UpdateCardBalance(c echo.Context, card models.Card) error
@@ -28,4 +27,6 @@ type RestRepository interface {
 	PostPaymentTransactionToCore(c echo.Context, bill models.Billing) error
 	PostPaymentBRI(c echo.Context, acc models.Account, amount int64) error
 	PostPaymentCoreNotif(c echo.Context, acc models.Account, pl models.PlPaymentTrxCore) error
+	GetBRIPendingTrx(acc models.Account, startDate string, endDate string) (models.RespBRIPendingTrxData, error)
+	GetBRIPostedTrx(c echo.Context, briXkey string) (models.RespBRIPostedTransaction, error)
 }

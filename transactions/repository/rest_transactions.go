@@ -147,3 +147,84 @@ func (rt *restTransactions) PostPaymentBRI(c echo.Context, acc models.Account, a
 
 	return nil
 }
+
+// GetBRIPendingTrx to get pending trx for single account from BRI
+func (rt *restTransactions) GetBRIPendingTrx(acc models.Account, startDate string, endDate string) (models.RespBRIPendingTrxData, error) {
+	var respBRIPendTrxData models.RespBRIPendingTrxData
+	respBRI := api.BriResponse{}
+	requestDataBRI := map[string]interface{}{
+		"briXkey":   acc.BrixKey,
+		"startDate": startDate,
+		"endDate":   endDate,
+	}
+	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
+	errBRI := api.RetryableBriPost(nil, "/v1/cobranding/trx/pending", reqBRIBody.RequestData, &respBRI)
+
+	if errBRI != nil {
+		logger.Make(nil, nil).Debug(errBRI)
+
+		return respBRIPendTrxData, errBRI
+	}
+
+	if respBRI.ResponseCode != "00" {
+		logger.Make(nil, nil).Debug(models.DynamicErr(models.ErrBriAPIRequest, []interface{}{respBRI.ResponseCode, respBRI.ResponseData}))
+
+		return respBRIPendTrxData, errBRI
+	}
+
+	requestData := respBRI.DataOne["requestData"].([]interface{})
+	mrshlBRIPendTrxInq, err := json.Marshal(requestData[0])
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+		return respBRIPendTrxData, err
+	}
+
+	err = json.Unmarshal(mrshlBRIPendTrxInq, &respBRIPendTrxData)
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+		return respBRIPendTrxData, err
+	}
+
+	return respBRIPendTrxData, nil
+}
+
+// GetBRIPosted to get posted trx for single account from BRI
+func (rt *restTransactions) GetBRIPostedTrx(c echo.Context, briXkey string) (models.RespBRIPostedTransaction, error) {
+	respBRIPosted := models.RespBRIPostedTransaction{}
+	respBRI := api.BriResponse{}
+	requestDataBRI := map[string]interface{}{
+		"briXkey": briXkey,
+	}
+	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
+	errBRI := api.RetryableBriPost(c, "/v1/cobranding/trx/trx_posting", reqBRIBody.RequestData, &respBRI)
+
+	if errBRI != nil {
+		logger.Make(c, nil).Debug(errBRI)
+
+		return respBRIPosted, errBRI
+	}
+
+	if respBRI.ResponseCode != "00" {
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrBriAPIRequest, []interface{}{respBRI.ResponseCode, respBRI.ResponseData}))
+
+		return respBRIPosted, errBRI
+	}
+
+	mrshlBRIBilInq, err := json.Marshal(respBRI.ResponseData)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return respBRIPosted, err
+	}
+
+	err = json.Unmarshal(mrshlBRIBilInq, &respBRIPosted)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return respBRIPosted, err
+	}
+
+	return respBRIPosted, nil
+}

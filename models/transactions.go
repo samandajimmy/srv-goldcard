@@ -17,9 +17,11 @@ const (
 	// BillTrxPaid billing status paid
 	BillTrxPaid string = "paid"
 	// SourceCore source for core
-	SourceCore       string = "core"
-	statusTrxPending string = "pending"
-	statusTrxPosted  string = "posted"
+	SourceCore string = "core"
+	// statusTrxPending status type pending
+	StatusTrxPending string = "pending"
+	// statusTrxPosted status type posted
+	StatusTrxPosted  string = "posted"
 	methodTrxPayment string = "payment"
 )
 
@@ -113,14 +115,14 @@ func (trx *Transaction) MappingTrx(pl interface{}, trxType string, isTrx bool) e
 	// if its transaction data
 	if isTrx {
 		trx.Balance = trx.Account.Card.Balance - trx.Nominal
-		trx.Status = statusTrxPending
+		trx.Status = StatusTrxPending
 		trx.Description = GetInterfaceValue(r, "TrxDesc").(string)
 	}
 
 	// if its payment transaction data
 	if !isTrx {
 		trx.Balance = trx.Account.Card.Balance + trx.Nominal
-		trx.Status = statusTrxPosted
+		trx.Status = StatusTrxPosted
 		trx.Methods = methodTrxPayment
 		trx.BillingPayments = []BillingPayment{
 			BillingPayment{Source: GetInterfaceValue(r, "Source").(string)},
@@ -134,4 +136,44 @@ func (trx *Transaction) MappingTrx(pl interface{}, trxType string, isTrx bool) e
 	trx.Type = trxType
 
 	return nil
+}
+
+// RespBRIPendingTrxData to store response for pending transactions data from BRI
+type RespBRIPendingTrxData struct {
+	TransactionData []BriPendingTrx `json:"transactionData"`
+}
+
+// PendingTrx a struct to store individual pending transaction information from BRI
+type BriPendingTrx struct {
+	TransactionId   string `json:"transactionId"`
+	CardType        string `json:"cardType"`
+	TransactionDate int64  `json:"transactionDate"`
+	AuthCode        string `json:"authCode"`
+	InstallmentData string `json:"installmentData"`
+	BillAmount      int64  `json:"billAmount"`
+	Description     string `json:"trxDesc"`
+	CurrencyCode    string `json:"currencyCode"`
+}
+
+// RespBRIPostedTransaction a struct to store app response for posted transactions from BRI
+type RespBRIPostedTransaction struct {
+	ListOfTransactions []BriListOfTransactions `json:"listOfTransactions,omitempty"`
+}
+
+// ListOfTransactions a struct to store list of transactions from BRI
+type BriListOfTransactions struct {
+	EffectiveDate  int64       `json:"effectiveDate,omitempty"`
+	TrxAmount      int64       `json:"trxAmount,omitempty"`
+	PostingDate    int64       `json:"postingDate,omitempty"`
+	TrxReff        string      `json:"trxReff,omitempty"`
+	TrxDesc        string      `json:"trxDesc,omitempty"`
+	MerchState     string      `json:"merchState,omitempty"`
+	OrigCurrCode   string      `json:"origCurrCode,omitempty"`
+	OrigCurrAmount interface{} `json:"origCurrAmount,omitempty"`
+	OnusCurrConv   string      `json:"onusCurrConv,omitempty"`
+	XborderFee     float64     `json:"xborderFee,omitempty"`
+	MarkupAmount   float64     `json:"markupAmount,omitempty"`
+	CcaAmount      float64     `json:"ccaAmount,omitempty"`
+	AuthCode       string      `json:"authCode,omitempty"`
+	TrxIndicator   string      `json:"trxIndicator,omitempty"`
 }

@@ -24,6 +24,9 @@ var (
 	// MicroTimeFormat to store a time format of micro timestamp
 	MicroTimeFormat = "20060102150405.000000"
 
+	// DateFormat to store a format of date yyyy-mm-dd
+	DateFormat = "2006-01-02"
+
 	// DateTimeFormat to store a date time format of timestamp
 	DateTimeFormat = "2006-01-02 15:04:05"
 

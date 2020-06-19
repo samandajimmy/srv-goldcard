@@ -6,7 +6,6 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/transactions"
-	"math"
 	"time"
 
 	"github.com/go-pg/pg/v9"
@@ -52,50 +51,6 @@ func (PSQLTrx *psqlTransactionsRepository) PostTransactions(c echo.Context, trx 
 	}
 
 	return nil
-}
-
-func (PSQLTrx *psqlTransactionsRepository) GetPgTransactionsHistory(c echo.Context, acc models.Account, plListTrx models.PayloadListTrx) (models.ResponseListTrx, error) {
-	trx := models.ResponseListTrx{}
-	pagination := plListTrx.Pagination
-	offset := (pagination.Page - 1) * pagination.Limit
-
-	// count all data
-	totalCount, err := PSQLTrx.DBpg.Model(&trx.ListTrx).
-		Where("account_id = ?", acc.ID).
-		Count()
-
-	if err != nil && err != pg.ErrNoRows {
-		logger.Make(c, nil).Debug(err)
-
-		return trx, err
-	}
-
-	if pagination.Limit == 0 {
-		pagination.Limit = int64(totalCount)
-		trx.IsLastPage = true
-	}
-
-	// get the transactions
-	err = PSQLTrx.DBpg.Model(&trx.ListTrx).
-		Where("account_id = ?", acc.ID).
-		Limit(int(pagination.Limit)).Offset(int(offset)).
-		Order("trx_date desc", "id asc").
-		Select()
-
-	if err != nil && err != pg.ErrNoRows {
-		logger.Make(c, nil).Debug(err)
-
-		return trx, err
-	}
-
-	// flag isLastPage
-	totalPage := float64(totalCount) / float64(pagination.Limit)
-
-	if float64(pagination.Page) == math.Ceil(totalPage) {
-		trx.IsLastPage = true
-	}
-
-	return trx, nil
 }
 
 func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Context, acc *models.Account) error {
