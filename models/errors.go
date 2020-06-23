@@ -250,7 +250,7 @@ var (
 	ErrSameDayUpdateLimitAttempt = errors.New("Pengajuan limit baru hanya dapat dilakukan maksimal satu kali per hari")
 
 	// ErrPendingUpdateLimitAvailable to store error when try to update limit but there is undergoing pending update limit process
-	ErrPendingUpdateLimitAvailable = errors.New("Pengajuan limit baru anda masih dalam proses")
+	ErrPendingUpdateLimitAvailable = errors.New("Mohon maaf pengajuan belum bisa dilakukan karena sedang diproses pengajuan sebelumnya, nasabah bisa mengajukan kembali setelah 2 hari kerja pengajuan sebelumnya")
 
 	// ErrGetLimitUpdate to store error when try to get last limit update
 	ErrGetLastLimitUpdate = errors.New("Gagal mendapatkan data limit update terakhir")
