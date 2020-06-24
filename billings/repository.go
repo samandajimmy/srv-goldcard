@@ -13,3 +13,8 @@ type Repository interface {
 	GetDueDateParam(c echo.Context) (int, error)
 	PostPegadaianBillings(c echo.Context, pgdBil models.PegadaianBilling) error
 }
+
+// RestRepository represent the rest transactions repository contract
+type RestRepository interface {
+	GetBillingsStatement(c echo.Context, acc models.Account) (map[string]interface{}, string)
+}
