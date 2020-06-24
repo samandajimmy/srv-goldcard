@@ -190,6 +190,13 @@ func (upLimUC *updateLimitUseCase) validateUpdateLimitInquiries(c echo.Context, 
 		return errors
 	}
 
+	// check if new inquired card limit is above 50 millions rupiah, then npwp is required
+	npwp := acc.Application.GetCurrentDoc(docs, models.MapDocType["NpwpImageBase64"])
+	if npwp.ID == 0 && pl.NominalLimit > models.LimitFiftyMillions {
+		errors.SetTitleCode("11", models.ErrNPWPRequired.Error(), "")
+		return errors
+	}
+
 	err := upLimUC.rupLimRepo.CorePostInquiryUpdateLimit(c, acc.CIF, acc.Application.SavingAccount, pl.NominalLimit)
 
 	if err == "99" {
@@ -199,13 +206,6 @@ func (upLimUC *updateLimitUseCase) validateUpdateLimitInquiries(c echo.Context, 
 
 	if err == "13" {
 		errors.SetTitle(models.ErrMinimumGoldSavingEffBal.Error())
-		return errors
-	}
-
-	// check if new inquired card limit is above 50 millions rupiah, then npwp is required
-	npwp := acc.Application.GetCurrentDoc(docs, models.MapDocType["NpwpImageBase64"])
-	if npwp.ID == 0 && pl.NominalLimit > models.LimitFiftyMillions {
-		errors.SetTitleCode("11", models.ErrNPWPRequired.Error(), "")
 		return errors
 	}
 
