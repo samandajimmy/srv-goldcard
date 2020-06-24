@@ -167,6 +167,20 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 		return errors
 	}
 
+	// check if there is user limit update status still pending or applied
+	lastLimitUpdate, err := upLimUC.upLimRepo.GetLastLimitUpdate(acc.ID)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetLastLimitUpdate.Error())
+		return errors
+	}
+
+	if lastLimitUpdate.Status == models.LimitUpdateStatusPending ||
+		lastLimitUpdate.Status == models.LimitUpdateStatusApplied {
+		errors.SetTitle(models.ErrPendingUpdateLimitAvailable.Error())
+		return errors
+	}
+
 	// get all account documents
 	docs, err := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID)
 	if err != nil {
