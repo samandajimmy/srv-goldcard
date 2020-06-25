@@ -12,13 +12,14 @@ import (
 
 type billingsUseCase struct {
 	bRepo    billings.Repository
+	brRepo   billings.RestRepository
 	rrRepo   registrations.RestRepository
 	tUseCase transactions.UseCase
 }
 
 // billingsUseCase represent billings Use Case
-func BillingsUseCase(bRepo billings.Repository, rrRepo registrations.RestRepository, tUseCase transactions.UseCase) billings.UseCase {
-	return &billingsUseCase{bRepo, rrRepo, tUseCase}
+func BillingsUseCase(bRepo billings.Repository, brRepo billings.RestRepository, rrRepo registrations.RestRepository, tUseCase transactions.UseCase) billings.UseCase {
+	return &billingsUseCase{bRepo, brRepo, rrRepo, tUseCase}
 }
 
 func (billUS *billingsUseCase) GetBillingStatement(c echo.Context, pl models.PayloadAccNumber) (models.BillingStatement, error) {
@@ -30,23 +31,14 @@ func (billUS *billingsUseCase) GetBillingStatement(c echo.Context, pl models.Pay
 	}
 
 	// Get goldcard account billing
-	bill := models.Billing{Account: acc}
-	err = billUS.bRepo.GetBillingInquiry(c, &bill)
+	bill, err := billUS.brRepo.GetBillingsStatement(c, acc)
 
-	if err == models.ErrNoBilling {
-		return models.BillingStatement{}, nil
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return models.BillingStatement{}, err
 	}
 
-	if err != nil && err != models.ErrNoBilling {
-		return models.BillingStatement{}, models.ErrGetBilling
-	}
-
-	return models.BillingStatement{
-		BillingAmount:     bill.Amount,
-		BillingPrintDate:  bill.BillingDate.Format("2006-01-02"),
-		BillingDueDate:    bill.BillingDueDate.Format("2006-01-02"),
-		BillingMinPayment: int64(bill.MinimumPayment),
-	}, nil
+	return bill, nil
 }
 
 func (billUS *billingsUseCase) PostBRIPegadaianBillings(c echo.Context, pbpb models.PayloadBRIPegadaianBillings) models.ResponseErrors {

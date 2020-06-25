@@ -94,6 +94,7 @@ func main() {
 	apiRequestsRepository := _apiRequestsRepository.NewPsqlAPIRequestsRepository(dbConn, dbpg)
 	transactionsRepository := _transactionsRepository.NewPsqlTransactionsRepository(dbConn, dbpg)
 	billingsRepository := _billingsRepository.NewPsqlBillingsRepository(dbConn, dbpg)
+	billingsRestRepository := _billingsRepository.NewRestBillings()
 	restTransactionsRepo := _transactionsRepository.NewRestTransactions()
 	processHandlerRepo := _processHandlerRepository.NewPsqlProcHandlerRepository(dbConn, dbpg)
 	updateLimitRepo := _updateLimitRepository.NewPsqlUpdateLimitsRepository(dbConn, dbpg)
@@ -109,7 +110,7 @@ func main() {
 	registrationsUseCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository, restRegistrationsRepo, processHandlerUseCase, transactionsUseCase, restActivationRepository)
 	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo, registrationsUseCase, restTransactionsRepo)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
-	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, restRegistrationsRepo, transactionsUseCase)
+	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, billingsRestRepository, restRegistrationsRepo, transactionsUseCase)
 	updateLimitUseCase := _updateLimitUseCase.UpdateLimitUseCase(restActivationRepository, transactionsRepository, restTransactionsRepo, transactionsUseCase, registrationsRepository, restRegistrationsRepo, registrationsUseCase, updateLimitRepo, restUpdateLimitRepo)
 	cardsUseCase := _cardsUseCase.CardsUseCase(cardsRepository, restCardsRepo, transactionsUseCase)
 
