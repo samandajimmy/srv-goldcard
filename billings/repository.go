@@ -16,5 +16,5 @@ type Repository interface {
 
 // RestRepository represent the rest transactions repository contract
 type RestRepository interface {
-	GetBillingsStatement(c echo.Context, acc models.Account) (map[string]interface{}, string)
+	GetBillingsStatement(c echo.Context, acc models.Account) (models.BillingStatement, error)
 }

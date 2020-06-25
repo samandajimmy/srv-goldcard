@@ -31,22 +31,14 @@ func (billUS *billingsUseCase) GetBillingStatement(c echo.Context, pl models.Pay
 	}
 
 	// Get goldcard account billing
-	bill, respCode := billUS.brRepo.GetBillingsStatement(c, acc)
+	bill, err := billUS.brRepo.GetBillingsStatement(c, acc)
 
-	logger.Make(c, nil).Debug(bill)
-
-	if respCode == "5X" {
-		return models.BillingStatement{}, models.ErrNoBilling
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		return models.BillingStatement{}, err
 	}
 
-	response := bill["listOfStatements"].(map[string]interface{})["statementHeader"].(map[string]interface{})
-
-	return models.BillingStatement{
-		BillingAmount:     int64(response["totalPayment"].(float64)),
-		BillingPrintDate:  response["statementDate"].(string),
-		BillingDueDate:    response["paymentDueDate"].(string),
-		BillingMinPayment: int64(response["totalPayment"].(float64)) * 10 / 100,
-	}, nil
+	return bill, nil
 }
 
 func (billUS *billingsUseCase) PostBRIPegadaianBillings(c echo.Context, pbpb models.PayloadBRIPegadaianBillings) models.ResponseErrors {

@@ -19,7 +19,7 @@ func NewRestBillings() billings.RestRepository {
 	return &restBillings{}
 }
 
-func (ra *restBillings) GetBillingsStatement(c echo.Context, acc models.Account) (map[string]interface{}, string) {
+func (ra *restBillings) GetBillingsStatement(c echo.Context, acc models.Account) (models.BillingStatement, error) {
 	dateNow := time.Now()
 	respBRI := api.BriResponse{}
 	requestDataBRI := map[string]interface{}{
@@ -31,11 +31,22 @@ func (ra *restBillings) GetBillingsStatement(c echo.Context, acc models.Account)
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
 	errBRI := api.RetryableBriPost(c, "/v1/cobranding/trx/inquiry", reqBRIBody.RequestData, &respBRI)
 
-	if errBRI != nil {
-		logger.Make(c, nil).Debug(errBRI)
-
-		return respBRI.DataOne, respBRI.ResponseCode
+	if respBRI.ResponseCode == "5X" {
+		errBRI = models.ErrNoBilling
 	}
 
-	return respBRI.DataOne, ""
+	if errBRI != nil {
+		logger.Make(c, nil).Debug(respBRI)
+
+		return models.BillingStatement{}, errBRI
+	}
+
+	response := respBRI.DataOne["listOfStatements"].(map[string]interface{})["statementHeader"].(map[string]interface{})
+
+	return models.BillingStatement{
+		BillingAmount:     int64(response["totalPayment"].(float64)),
+		BillingPrintDate:  response["statementDate"].(string),
+		BillingDueDate:    response["paymentDueDate"].(string),
+		BillingMinPayment: int64(response["totalPayment"].(float64)) * 10 / 100,
+	}, nil
 }
