@@ -240,7 +240,7 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 			Description: singleBRIPostedTrx.TrxDesc})
 	}
 
-	BRIPending, err := trxUS.trxrRepo.GetBRIPendingTrx(acc, yesterdayDate, nowDate)
+	BRIPending, err := trxUS.trxrRepo.GetBRIPendingTrx(c, acc, yesterdayDate, nowDate)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetHistoryTransactions.Error())

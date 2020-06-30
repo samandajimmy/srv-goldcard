@@ -27,6 +27,6 @@ type RestRepository interface {
 	PostPaymentTransactionToCore(c echo.Context, bill models.Billing) error
 	PostPaymentBRI(c echo.Context, acc models.Account, amount int64) error
 	PostPaymentCoreNotif(c echo.Context, acc models.Account, pl models.PlPaymentTrxCore) error
-	GetBRIPendingTrx(acc models.Account, startDate string, endDate string) (models.RespBRIPendingTrxData, error)
+	GetBRIPendingTrx(c echo.Context, acc models.Account, startDate string, endDate string) (models.RespBRIPendingTrxData, error)
 	GetBRIPostedTrx(c echo.Context, briXkey string) (models.RespBRIPostedTransaction, error)
 }
