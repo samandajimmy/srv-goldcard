@@ -149,8 +149,8 @@ func (rt *restTransactions) PostPaymentBRI(c echo.Context, acc models.Account, a
 }
 
 // GetBRIPendingTrx to get pending trx for single account from BRI
-func (rt *restTransactions) GetBRIPendingTrx(acc models.Account, startDate string, endDate string) (models.RespBRIPendingTrxData, error) {
-	var respBRIPendTrxData models.RespBRIPendingTrxData
+func (rt *restTransactions) GetBRIPendingTrx(c echo.Context, acc models.Account, startDate string, endDate string) (models.RespBRIPendingTrxData, error) {
+	respBRIPendTrxData := models.RespBRIPendingTrxData{}
 	respBRI := api.BriResponse{}
 	requestDataBRI := map[string]interface{}{
 		"briXkey":   acc.BrixKey,
@@ -158,16 +158,16 @@ func (rt *restTransactions) GetBRIPendingTrx(acc models.Account, startDate strin
 		"endDate":   endDate,
 	}
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
-	errBRI := api.RetryableBriPost(nil, "/v1/cobranding/trx/pending", reqBRIBody.RequestData, &respBRI)
+	errBRI := api.RetryableBriPost(c, "/v1/cobranding/trx/pending", reqBRIBody.RequestData, &respBRI)
 
 	if errBRI != nil {
-		logger.Make(nil, nil).Debug(errBRI)
+		logger.Make(c, nil).Debug(errBRI)
 
 		return respBRIPendTrxData, errBRI
 	}
 
 	if respBRI.ResponseCode != "00" {
-		logger.Make(nil, nil).Debug(models.DynamicErr(models.ErrBriAPIRequest, []interface{}{respBRI.ResponseCode, respBRI.ResponseData}))
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrBriAPIRequest, []interface{}{respBRI.ResponseCode, respBRI.ResponseData}))
 
 		return respBRIPendTrxData, errBRI
 	}
@@ -176,14 +176,14 @@ func (rt *restTransactions) GetBRIPendingTrx(acc models.Account, startDate strin
 	mrshlBRIPendTrxInq, err := json.Marshal(requestData[0])
 
 	if err != nil {
-		logger.Make(nil, nil).Debug(err)
+		logger.Make(c, nil).Debug(err)
 		return respBRIPendTrxData, err
 	}
 
 	err = json.Unmarshal(mrshlBRIPendTrxInq, &respBRIPendTrxData)
 
 	if err != nil {
-		logger.Make(nil, nil).Debug(err)
+		logger.Make(c, nil).Debug(err)
 		return respBRIPendTrxData, err
 	}
 
