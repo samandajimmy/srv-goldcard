@@ -2,14 +2,15 @@ package repository
 
 import (
 	"gade/srv-goldcard/api"
+	"gade/srv-goldcard/billings"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
-	"gade/srv-goldcard/billings"
+
+	"fmt"
+	"strconv"
+	"time"
 
 	"github.com/labstack/echo"
-	"time"
-	"strconv"
-	"fmt"
 )
 
 type restBillings struct{}
@@ -24,15 +25,15 @@ func (ra *restBillings) GetBillingsStatement(c echo.Context, acc models.Account)
 	respBRI := api.BriResponse{}
 	requestDataBRI := map[string]interface{}{
 		"briXkey": acc.BrixKey,
-		"year" : strconv.Itoa(dateNow.Year()),
-		"month" : fmt.Sprintf("%02d", dateNow.Month()),
+		"year":    strconv.Itoa(dateNow.Year()),
+		"month":   fmt.Sprintf("%02d", dateNow.Month()),
 	}
 
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
 	errBRI := api.RetryableBriPost(c, "/v1/cobranding/trx/inquiry", reqBRIBody.RequestData, &respBRI)
 
 	if respBRI.ResponseCode == "5X" {
-		errBRI = models.ErrNoBilling
+		return models.BillingStatement{}, nil
 	}
 
 	if errBRI != nil {
