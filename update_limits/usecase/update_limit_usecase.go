@@ -177,7 +177,7 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 
 	if lastLimitUpdate.Status == models.LimitUpdateStatusPending ||
 		lastLimitUpdate.Status == models.LimitUpdateStatusApplied {
-		errors.SetTitle(models.ErrPendingUpdateLimitAvailable.Error())
+		errors.SetTitleCode("12", models.ErrPendingUpdateLimitAvailable.Error(), "")
 		return errors
 	}
 
@@ -213,13 +213,13 @@ func (upLimUC *updateLimitUseCase) validateUpdateLimitInquiries(c echo.Context, 
 
 	err := upLimUC.rupLimRepo.CorePostInquiryUpdateLimit(c, acc.CIF, acc.Application.SavingAccount, pl.NominalLimit)
 
-	if err == "99" {
-		errors.SetTitle(models.ErrPostInquiryUpdateLimitToCore.Error())
+	if err == "13" {
+		errors.SetTitle(models.ErrMinimumGoldSavingEffBal.Error())
 		return errors
 	}
 
-	if err == "13" {
-		errors.SetTitle(models.ErrMinimumGoldSavingEffBal.Error())
+	if err != "00" {
+		errors.SetTitleCode("14", models.ErrPostInquiryUpdateLimitToCore.Error(), "")
 		return errors
 	}
 
