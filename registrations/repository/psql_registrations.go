@@ -335,27 +335,31 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 	}
 
 	// query if account has any card data then update
-	if acc.CardID != 0 && !isRecalculate {
+	if acc.CardID != 0 {
 		upsertQuery = `UPDATE cards set card_limit = $1, updated_at = $2, gold_limit = $3,
 			stl_limit = $4, balance = $1, gold_balance = $3, stl_balance = $4 WHERE id = ` +
 			strconv.Itoa(int(acc.CardID)) + ` RETURNING id;`
 	}
 
-	// query if its recalculating new limit for next card cycle
-	if acc.CardID != 0 && isRecalculate {
-		upsertQuery = `UPDATE cards set card_limit = $1, updated_at = $2, gold_limit = $3,
-			stl_limit = $4 WHERE id = ` + strconv.Itoa(int(acc.CardID)) + ` RETURNING id;`
-		limitUpdateStatus = models.LimitUpdateStatusPending
+	var stmts []*gcdb.PipelineStmt
+	if !isRecalculate {
+		stmts = []*gcdb.PipelineStmt{
+			gcdb.NewPipelineStmt(upsertQuery, upsertFilters, acc.Card.CardLimit, time.Now(),
+				acc.Card.GoldLimit, acc.Card.StlLimit),
+			gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1
+				WHERE id = $2`, nilFilters, time.Now(), acc.ID),
+		}
 	}
 
-	stmts := []*gcdb.PipelineStmt{
-		gcdb.NewPipelineStmt(upsertQuery, upsertFilters, acc.Card.CardLimit, time.Now(),
-			acc.Card.GoldLimit, acc.Card.StlLimit),
-		gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1
-			WHERE id = $2`, nilFilters, time.Now(), acc.ID),
-		gcdb.NewPipelineStmt(`INSERT INTO limit_updates (ref_id, applied_limit_date, account_id, card_limit, gold_limit, stl_limit, status,
-			created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`, nilFilters, refId.String(), time.Now(), acc.ID, acc.Card.CardLimit,
-			acc.Card.GoldLimit, acc.Card.StlLimit, limitUpdateStatus, time.Now()),
+	// query if its recalculating new limit for next card cycle, this process has dependency with CoBrand to approve new card limit
+	// the process save the new card limit in limit_updates table before it consumed by scheduler to post to CoBrand
+	if isRecalculate {
+		limitUpdateStatus = models.LimitUpdateStatusPending
+		stmts = []*gcdb.PipelineStmt{
+			gcdb.NewPipelineStmt(`INSERT INTO limit_updates (ref_id, applied_limit_date, account_id, card_limit, gold_limit, stl_limit, status,
+				created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`, nilFilters, refId.String(), time.Now(), acc.ID, acc.Card.CardLimit,
+				acc.Card.GoldLimit, acc.Card.StlLimit, limitUpdateStatus, time.Now()),
+		}
 	}
 
 	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
