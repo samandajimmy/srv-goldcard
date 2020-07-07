@@ -227,7 +227,8 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 	BRIPosted, err := trxUS.trxrRepo.GetBRIPostedTrx(c, acc.BrixKey)
 
 	if err != nil {
-		BRIPosted = models.RespBRIPostedTransaction{}
+		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
+		return models.ResponseListTrx{}, errors
 	}
 
 	for _, singleBRIPostedTrx := range BRIPosted.ListOfTransactions {
@@ -241,7 +242,8 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 	BRIPending, err := trxUS.trxrRepo.GetBRIPendingTrx(c, acc, yesterdayDate, nowDate)
 
 	if err != nil {
-		BRIPending = models.RespBRIPendingTrxData{}
+		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
+		return models.ResponseListTrx{}, errors
 	}
 
 	for _, singleBRIPendigTrx := range BRIPending.TransactionData {

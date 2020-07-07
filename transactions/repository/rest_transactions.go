@@ -160,14 +160,12 @@ func (rt *restTransactions) GetBRIPendingTrx(c echo.Context, acc models.Account,
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
 	errBRI := api.RetryableBriPost(c, "/v1/cobranding/trx/pending", reqBRIBody.RequestData, &respBRI)
 
-	if errBRI != nil {
-		logger.Make(c, nil).Debug(errBRI)
-
-		return respBRIPendTrxData, errBRI
+	if respBRI.ResponseCode == "NF" {
+		return respBRIPendTrxData, nil
 	}
 
-	if respBRI.ResponseCode != "00" {
-		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrBriAPIRequest, []interface{}{respBRI.ResponseCode, respBRI.ResponseData}))
+	if errBRI != nil {
+		logger.Make(c, nil).Debug(errBRI)
 
 		return respBRIPendTrxData, errBRI
 	}
@@ -200,16 +198,24 @@ func (rt *restTransactions) GetBRIPostedTrx(c echo.Context, briXkey string) (mod
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
 	errBRI := api.RetryableBriPost(c, "/v1/cobranding/trx/trx_posting", reqBRIBody.RequestData, &respBRI)
 
+	if respBRI.ResponseCode == "5X" {
+		return respBRIPosted, nil
+	}
+
 	if errBRI != nil {
 		logger.Make(c, nil).Debug(errBRI)
 
 		return respBRIPosted, errBRI
 	}
 
-	if respBRI.ResponseCode != "00" {
+	if respBRI.ResponseCode != "00" && respBRI.ResponseCode != "5X" {
 		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrBriAPIRequest, []interface{}{respBRI.ResponseCode, respBRI.ResponseData}))
 
 		return respBRIPosted, errBRI
+	}
+
+	if respBRI.ResponseCode == "5X" {
+		respBRI.ResponseData = nil
 	}
 
 	mrshlBRIBilInq, err := json.Marshal(respBRI.ResponseData)
