@@ -170,6 +170,12 @@ func (rt *restTransactions) GetBRIPendingTrx(c echo.Context, acc models.Account,
 		return respBRIPendTrxData, errBRI
 	}
 
+	if respBRI.ResponseCode != "00" {
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrBriAPIRequest, []interface{}{respBRI.ResponseCode, respBRI.ResponseData}))
+
+		return respBRIPendTrxData, errBRI
+	}
+
 	requestData := respBRI.DataOne["requestData"].([]interface{})
 	mrshlBRIPendTrxInq, err := json.Marshal(requestData[0])
 
@@ -204,6 +210,12 @@ func (rt *restTransactions) GetBRIPostedTrx(c echo.Context, briXkey string) (mod
 
 	if errBRI != nil {
 		logger.Make(c, nil).Debug(errBRI)
+
+		return respBRIPosted, errBRI
+	}
+
+	if respBRI.ResponseCode != "00" {
+		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrBriAPIRequest, []interface{}{respBRI.ResponseCode, respBRI.ResponseData}))
 
 		return respBRIPosted, errBRI
 	}
