@@ -208,16 +208,6 @@ func (rt *restTransactions) GetBRIPostedTrx(c echo.Context, briXkey string) (mod
 		return respBRIPosted, errBRI
 	}
 
-	if respBRI.ResponseCode != "00" && respBRI.ResponseCode != "5X" {
-		logger.Make(c, nil).Debug(models.DynamicErr(models.ErrBriAPIRequest, []interface{}{respBRI.ResponseCode, respBRI.ResponseData}))
-
-		return respBRIPosted, errBRI
-	}
-
-	if respBRI.ResponseCode == "5X" {
-		respBRI.ResponseData = nil
-	}
-
 	mrshlBRIBilInq, err := json.Marshal(respBRI.ResponseData)
 
 	if err != nil {
