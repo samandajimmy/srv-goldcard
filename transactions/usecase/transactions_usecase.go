@@ -228,7 +228,6 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
-
 		return models.ResponseListTrx{}, errors
 	}
 
@@ -244,7 +243,6 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
-
 		return models.ResponseListTrx{}, errors
 	}
 

@@ -160,6 +160,10 @@ func (rt *restTransactions) GetBRIPendingTrx(c echo.Context, acc models.Account,
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
 	errBRI := api.RetryableBriPost(c, "/v1/cobranding/trx/pending", reqBRIBody.RequestData, &respBRI)
 
+	if respBRI.ResponseCode == "NF" {
+		return respBRIPendTrxData, nil
+	}
+
 	if errBRI != nil {
 		logger.Make(c, nil).Debug(errBRI)
 
@@ -199,6 +203,10 @@ func (rt *restTransactions) GetBRIPostedTrx(c echo.Context, briXkey string) (mod
 	}
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
 	errBRI := api.RetryableBriPost(c, "/v1/cobranding/trx/trx_posting", reqBRIBody.RequestData, &respBRI)
+
+	if respBRI.ResponseCode == "5X" {
+		return respBRIPosted, nil
+	}
 
 	if errBRI != nil {
 		logger.Make(c, nil).Debug(errBRI)
