@@ -28,43 +28,41 @@ func ActivationUseCase(aRepo activations.Repository, arRepo activations.RestRepo
 	return &activationsUseCase{aRepo, arRepo, rRepo, rrRepo, rUsecase, trRepo}
 }
 
-func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.PayloadAppNumber) models.ResponseErrors {
+func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.PayloadAppNumber) (models.CardBalance, models.ResponseErrors) {
 	var errors models.ResponseErrors
+	var cardBal models.CardBalance
 	// get account and check app number
 	acc, err := aUsecase.rUsecase.CheckApplication(c, pl)
 
 	if err != nil {
 		errors.SetTitle(err.Error())
-		return errors
+		return cardBal, errors
 	}
 
 	// validation on inquiry
 	// validate application expiry from application_processed_date < 12 months
 	// add a year for expiry date
 	expDate := acc.Application.ApplicationProcessedDate.AddDate(1, 0, 0)
+	now := models.NowUTC()
 
-	if acc.Application.ApplicationProcessedDate.After(expDate) {
+	if now.After(expDate) {
 		errors.SetTitleCode("22", models.ErrAppExpired.Error(), models.ErrAppExpiredDesc.Error())
-		return errors
+		return cardBal, errors
 	}
 
 	// validate stl price changes
 	// compare stl price at applied date and current date
-	currStl, err := aUsecase.rrRepo.GetCurrentGoldSTL(c)
+	currStl, deficitStl, isDecreased, err := aUsecase.isStlDecreased(c, acc)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetCurrSTL.Error())
-		return errors
+		return cardBal, errors
 	}
 
-	appliedStl := acc.Card.StlLimit
-	deficitStl := appliedStl - currStl
-
-	if deficitStl <= 0 {
-		return errors
+	if !isDecreased {
+		return cardBal, errors
 	}
 
-	// if it decreased
 	// get decreasing percentage
 	_ = models.CustomRound("round", float64(deficitStl)/float64(currStl), 10000)
 	// get user effective balance
@@ -72,19 +70,19 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetUserDetail.Error())
-		return errors
+		return cardBal, errors
 	}
 
 	if _, ok := userDetail["saldoEfektif"].(string); !ok {
 		errors.SetTitle(models.ErrSetVar.Error())
-		return errors
+		return cardBal, errors
 	}
 
 	goldEffBalance, err := strconv.ParseFloat(userDetail["saldoEfektif"].(string), 64)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetEffBalance.Error())
-		return errors
+		return cardBal, errors
 	}
 
 	appliedGoldLimit := acc.Card.GoldLimit
@@ -95,40 +93,26 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	// got not enough effective gold balance
 	if goldEffBalance < deficitGoldLimit {
 		errors.SetTitleCode("55", models.ErrDecreasedSTL.Error(), models.ErrDecreasedSTLDesc.Error())
-		return errors
+		return cardBal, errors
 	}
 
-	acc.Card.GoldLimit = currGoldLimit
-	acc.Card.GoldBalance = currGoldLimit
-	acc.Card.StlLimit = currStl
-	acc.Card.StlBalance = currStl
-	// recalculate open goldcard registrations
-	err = aUsecase.rrRepo.OpenGoldcard(c, acc, true)
+	errors.SetTitleCode(
+		"44",
+		models.ErrDecreasedSTL.Error(),
+		models.DynamicErr(models.ErrDecreasedSTLOpenDesc, []interface{}{deficitGoldLimit}).Error(),
+	)
 
-	if err != nil {
-		errors.SetTitle(err.Error())
-		return errors
-	}
-
-	// update card gold limit and current stl
-	err = aUsecase.aRepo.UpdateGoldLimit(c, acc.Card)
-
-	if err != nil {
-		errors.SetTitle(models.ErrUpdateCardLimit.Error())
-		return errors
-	}
-
-	return errors
+	return models.CardBalance{}, errors
 }
 
 func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.PayloadActivations) (models.RespActivations, error) {
 	var respActNil models.RespActivations
+	var errs models.ResponseErrors
 	acc, err := aUsecase.rUsecase.CheckApplication(c, pa)
 
 	if err != nil {
 		return respActNil, err
 	}
-
 	err = acc.MappingCardActivationsData(c, pa)
 
 	if err != nil {
@@ -136,15 +120,22 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 	}
 
 	// Inquiry activation
-	if models.DateIsNotEqual(acc.Card.UpdatedAt, time.Now()) {
-		appNumber := models.PayloadAppNumber{
-			ApplicationNumber: acc.Application.ApplicationNumber,
-		}
+	appNumber := models.PayloadAppNumber{
+		ApplicationNumber: acc.Application.ApplicationNumber,
+	}
 
-		err := aUsecase.InquiryActivation(c, appNumber)
+	cardBal, errs := aUsecase.InquiryActivation(c, appNumber)
 
-		if err.Title != "" {
-			return respActNil, errors.New(err.Title)
+	if errs.Title != "" && errs.Code != "44" {
+		return respActNil, errors.New(errs.Title)
+	}
+
+	// do re registration of the inquiry code 44
+	if errs.Code != "44" {
+		err = aUsecase.reRegistration(c, acc, cardBal)
+
+		if err != nil {
+			return respActNil, models.ErrPostActivationsFailed
 		}
 	}
 
@@ -303,6 +294,46 @@ func (aUsecase *activationsUseCase) validateBirthDate(acc models.Account, pa mod
 
 	if acc.PersonalInformation.BirthDate != birthDate {
 		return models.ErrBirthDateNotMatch
+	}
+
+	return nil
+}
+
+func (aUsecase *activationsUseCase) isStlDecreased(c echo.Context, acc models.Account) (int64, int64, bool, error) {
+	currStl, err := aUsecase.rrRepo.GetCurrentGoldSTL(c)
+
+	if err != nil {
+		return 0, 0, false, err
+	}
+
+	appliedStl := acc.Card.StlLimit
+	deficitStl := appliedStl - currStl
+
+	if deficitStl <= 0 {
+		return 0, 0, false, nil
+	}
+
+	return currStl, deficitStl, true, nil
+}
+
+func (aUsecase *activationsUseCase) reRegistration(c echo.Context, acc models.Account, cardBal models.CardBalance) error {
+	acc.Card.GoldLimit = cardBal.CurrGoldLimit
+	acc.Card.GoldBalance = cardBal.CurrGoldLimit
+	acc.Card.StlLimit = cardBal.CurrStl
+	acc.Card.StlBalance = cardBal.CurrStl
+
+	// recalculate open goldcard registrations
+	err := aUsecase.rrRepo.OpenGoldcard(c, acc, true)
+
+	if err != nil {
+		return err
+	}
+
+	// update card gold limit and current stl
+	err = aUsecase.aRepo.UpdateGoldLimit(c, acc.Card)
+
+	if err != nil {
+		return err
 	}
 
 	return nil

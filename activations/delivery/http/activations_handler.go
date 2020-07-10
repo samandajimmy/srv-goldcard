@@ -42,7 +42,7 @@ func (ah *ActivationsHandler) ActivationsInquiry(c echo.Context) error {
 		return ah.response.Body(c, err)
 	}
 
-	err := ah.aUsecase.InquiryActivation(c, pl)
+	_, err := ah.aUsecase.InquiryActivation(c, pl)
 
 	if err.Title != "" {
 		ah.response.SetResponse("", &err)

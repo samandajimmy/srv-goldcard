@@ -90,7 +90,7 @@ func (tkn *tokenUseCase) RefreshToken(c echo.Context, username string, password 
 }
 
 func verifyToken(accToken *models.AccountToken, password string, isUpdate bool) error {
-	now := time.Now()
+	now := models.NowUTC()
 	// validate account
 	// check password
 	err := bcrypt.CompareHashAndPassword([]byte(accToken.Password), []byte(password))
