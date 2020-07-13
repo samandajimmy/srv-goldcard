@@ -139,7 +139,7 @@ var (
 	ErrStatusActivations = errors.New("Status pengajuan tidak sesuai")
 
 	// ErrAppExpired to store application expired error message
-	ErrAppExpired = errors.New("PENGAJUAN KADALUARSA")
+	ErrAppExpired = errors.New("Pengajuan Kadarluarsa")
 
 	// ErrAppExpiredDesc to store the description of application expired error message
 	ErrAppExpiredDesc = errors.New("Pengajuan harus dibatalkan karena tidak ada aktivitas selama 12 bulan. Saldo emas akan dikembalikan ke saldo efektif.")
@@ -154,10 +154,13 @@ var (
 	ErrGetEffBalance = errors.New("Terjadi kesalahan ketika mendapatkan data saldo efektif nasabah")
 
 	// ErrDecreasedSTL to store get decreasing STL error message
-	ErrDecreasedSTL = errors.New("HARGA EMAS TURUN")
+	ErrDecreasedSTL = errors.New("Harga Emas Turun")
 
 	// ErrDecreasedSTLDesc to store the description of get decreasing STL error message
 	ErrDecreasedSTLDesc = errors.New("Harga emas turun cukup tinggi sejak kamu mengajukan kartu emas. Top Up Tabungan Emas kamu untuk melanjutkan proses aktivasi.")
+
+	// ErrDecreasedSTLDesc to store the description of get decreasing STL then open error message
+	ErrDecreasedSTLOpenDesc = "Harga emas turun cukup tinggi sejak kamu mengajukan kartu emas. Saldo tabungan emas kamu akan diambil %f gram untuk melanjutkan proses aktivasi."
 
 	// ErrInsertTransactions to store get failed when insert data to table transactions
 	ErrInsertTransactions = errors.New("Gagal saat memasukan data transaksi")

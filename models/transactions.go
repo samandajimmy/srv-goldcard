@@ -121,12 +121,11 @@ func (trx *Transaction) MappingTrx(pl interface{}, trxType string, isTrx bool) e
 
 	// if its payment transaction data
 	if !isTrx {
+		billPay := BillingPayment{Source: GetInterfaceValue(r, "Source").(string)}
 		trx.Balance = trx.Account.Card.Balance + trx.Nominal
 		trx.Status = StatusTrxPosted
 		trx.Methods = methodTrxPayment
-		trx.BillingPayments = []BillingPayment{
-			BillingPayment{Source: GetInterfaceValue(r, "Source").(string)},
-		}
+		trx.BillingPayments = []BillingPayment{billPay}
 		trx.Description = GetInterfaceValue(r, "PaymentDesc").(string)
 	}
 

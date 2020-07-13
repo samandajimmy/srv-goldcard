@@ -79,6 +79,11 @@ func NowDbpg() time.Time {
 	return time.Now().Add(7 * time.Hour)
 }
 
+// NowUTC to get real current datetime but UTC format
+func NowUTC() time.Time {
+	return time.Now().UTC().Add(7 * time.Hour)
+}
+
 // CustomRound is a function to round the number based on the type
 func CustomRound(roundType string, num float64, decimal float64) float64 {
 	switch roundType {
