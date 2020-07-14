@@ -112,6 +112,15 @@ var (
 		"jpg": "data:image/jpeg;base64,",
 		"pdf": "data:application/pdf;base64,",
 	}
+
+	DocTypes = []string{
+		"ktp",
+		"npwp",
+		"selfie",
+		"slip_te",
+		"app_form",
+		"undefined",
+	}
 )
 
 // Applications is a struct to store application data
@@ -160,19 +169,22 @@ func (app *Applications) GetStatusDateKey() string {
 // SetDocument to set application document array
 func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 	var emptyDocs []Document
+	var doc Document
+	var base64 reflect.Value
+	var base64Str string
 	docNames := []string{"KtpImageBase64", "NpwpImageBase64", "SelfieImageBase64", "GoldSavingSlipBase64", "AppFormBase64"}
 	r := reflect.ValueOf(pl)
 	currDoc := app.Documents
 	app.Documents = emptyDocs
 
 	for _, docName := range docNames {
-		base64 := reflect.Indirect(r).FieldByName(docName)
+		base64 = reflect.Indirect(r).FieldByName(docName)
+		base64Str = base64.String()
+		doc = app.GetCurrentDoc(currDoc, MapDocType[docName])
 
 		if base64.IsZero() {
-			continue
+			base64Str = doc.FileBase64
 		}
-
-		doc := app.GetCurrentDoc(currDoc, MapDocType[docName])
 
 		if doc.ID == 0 {
 			doc = Document{
@@ -183,7 +195,7 @@ func (app *Applications) SetDocument(pl PayloadPersonalInformation) {
 			}
 		}
 
-		doc.FileBase64 = base64.String()
+		doc.FileBase64 = base64Str
 		app.Documents = append(app.Documents, doc)
 	}
 }

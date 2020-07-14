@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/go-pg/pg/v9"
-	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -320,19 +319,16 @@ func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, acc
 	return city, zipcode, nil
 }
 
-func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account, isRecalculate bool) (string, error) {
+func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account, fnAfter func() error) error {
 	var nilFilters []string
 	var upsertFilters []string
 	var upsertQuery string
-	var limitUpdateStatus interface{}
-	refId, _ := uuid.NewRandom()
+	var stmts []*gcdb.PipelineStmt
 
 	// query if account has not any card data yet
 	upsertFilters = []string{"cardID"}
-	if acc.CardID == 0 {
-		upsertQuery = `INSERT INTO cards (card_limit, created_at, gold_limit, stl_limit, balance,
-			gold_balance, stl_balance) VALUES ($1, $2, $3, $4, $1, $3, $4) RETURNING id;`
-	}
+	upsertQuery = `INSERT INTO cards (card_limit, created_at, gold_limit, stl_limit, balance,
+		gold_balance, stl_balance) VALUES ($1, $2, $3, $4, $1, $3, $4) RETURNING id;`
 
 	// query if account has any card data then update
 	if acc.CardID != 0 {
@@ -341,25 +337,11 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 			strconv.Itoa(int(acc.CardID)) + ` RETURNING id;`
 	}
 
-	var stmts []*gcdb.PipelineStmt
-	if !isRecalculate {
-		stmts = []*gcdb.PipelineStmt{
-			gcdb.NewPipelineStmt(upsertQuery, upsertFilters, acc.Card.CardLimit, time.Now(),
-				acc.Card.GoldLimit, acc.Card.StlLimit),
-			gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1
-				WHERE id = $2`, nilFilters, time.Now(), acc.ID),
-		}
-	}
-
-	// query if its recalculating new limit for next card cycle, this process has dependency with CoBrand to approve new card limit
-	// the process save the new card limit in limit_updates table before it consumed by scheduler to post to CoBrand
-	if isRecalculate {
-		limitUpdateStatus = models.LimitUpdateStatusPending
-		stmts = []*gcdb.PipelineStmt{
-			gcdb.NewPipelineStmt(`INSERT INTO limit_updates (ref_id, applied_limit_date, account_id, card_limit, gold_limit, stl_limit, status,
-				created_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`, nilFilters, refId.String(), time.Now(), acc.ID, acc.Card.CardLimit,
-				acc.Card.GoldLimit, acc.Card.StlLimit, limitUpdateStatus, time.Now()),
-		}
+	stmts = []*gcdb.PipelineStmt{
+		gcdb.NewPipelineStmt(upsertQuery, upsertFilters, acc.Card.CardLimit, time.Now(),
+			acc.Card.GoldLimit, acc.Card.StlLimit),
+		gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1 WHERE id = $2`,
+			nilFilters, time.Now(), acc.ID),
 	}
 
 	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
@@ -369,10 +351,18 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return "", err
+		return err
 	}
 
-	return refId.String(), nil
+	if fnAfter != nil {
+		err = fnAfter()
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (regis *psqlRegistrationsRepository) UpdateBrixkeyID(c echo.Context, acc models.Account) error {
@@ -519,10 +509,16 @@ func (regis *psqlRegistrationsRepository) insertAppDocument(c echo.Context, doc 
 	return nil
 }
 
-func (regis *psqlRegistrationsRepository) GetDocumentByApplicationId(appId int64) ([]models.Document, error) {
+func (regis *psqlRegistrationsRepository) GetDocumentByApplicationId(appId int64, docType string) ([]models.Document, error) {
 	var listDocument []models.Document
+	docTypes := models.DocTypes
+
+	if docType != "" {
+		docTypes = []string{docType}
+	}
+
 	err := regis.DBpg.Model(&listDocument).
-		Where("application_id = ?", appId).Select()
+		Where("application_id = ? AND type in (?)", appId, pg.In(docTypes)).Select()
 
 	if err != nil || (listDocument == nil) {
 		logger.Make(nil, nil).Debug(err)

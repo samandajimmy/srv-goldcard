@@ -77,7 +77,7 @@ func (reg *registrationsUseCase) uploadAppDocs(c echo.Context, acc *models.Accou
 	var errors []error
 
 	for _, doc := range acc.Application.Documents {
-		err := reg.uploadAppDoc(c, acc.BrixKey, doc)
+		err := reg.UploadAppDoc(c, acc.BrixKey, doc)
 
 		if err != nil {
 			errors = append(errors, err)
@@ -87,7 +87,7 @@ func (reg *registrationsUseCase) uploadAppDocs(c echo.Context, acc *models.Accou
 	return errors
 }
 
-func (reg *registrationsUseCase) uploadAppDoc(c echo.Context, brixkey string, doc models.Document) error {
+func (reg *registrationsUseCase) UploadAppDoc(c echo.Context, brixkey string, doc models.Document) error {
 	if doc.DocID != "" {
 		return nil
 	}

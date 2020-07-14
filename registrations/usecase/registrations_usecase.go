@@ -215,7 +215,7 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 
 	acc.Card.CardLimit = pl.CardLimit
 	acc.Card.GoldLimit = acc.Card.SetGoldLimit(pl.CardLimit, currStl)
-	_, err = reg.regRepo.UpdateCardLimit(c, acc, false)
+	err = reg.regRepo.UpdateCardLimit(c, acc, nil)
 
 	if err != nil {
 		return models.ErrUpdateCardLimit
@@ -452,7 +452,7 @@ func (reg *registrationsUseCase) coreOpenStatus(c echo.Context, acc models.Accou
 // Function to Generate Application Form
 func (reg *registrationsUseCase) GenerateApplicationFormDocument(c echo.Context, acc models.Account) error {
 	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
-	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID)
+	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID, "")
 
 	if err != nil {
 		return models.ErrGetDocument

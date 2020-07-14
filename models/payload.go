@@ -231,6 +231,11 @@ type RespPaymentInquiry struct {
 	RefTrx        string `json:"refTrx"`
 }
 
+// RespLimitUpdateInquiry a struct to store all response for update limit inquiry
+type RespUpdateLimitInquiry struct {
+	RefId string `json:"refId"`
+}
+
 // PlPaymentTrxCore a struct to store all payload for payment transactions for core
 type PlPaymentTrxCore struct {
 	Source        string `json:"source"`
@@ -299,8 +304,8 @@ type PayloadInquiryUpdateLimit struct {
 
 // PayloadUpdateLimit a struct to store all payload for submit update limit
 type PayloadUpdateLimit struct {
-	AccountNumber string `json:"accountNumber" validate:"required"`
-	NominalLimit  int64  `json:"nominalLimit" validate:"required"`
+	RefId           string `json:"refId" validate:"required"`
+	NpwpImageBase64 string `json:"npwpImageBase64"`
 }
 
 // PayloadCoreGtePayment is a struct to store all payload for get

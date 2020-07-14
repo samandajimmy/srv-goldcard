@@ -9,8 +9,11 @@ import (
 // Repository represent the transactions Repository
 type Repository interface {
 	GetEmailByKey(c echo.Context) (string, error)
-	GetLastLimitUpdate(accId int64) (models.LimitUpdate, error)
+	GetLastLimitUpdate(c echo.Context, accId int64) (models.LimitUpdate, error)
 	GetAccountBySavingAccount(c echo.Context, savingAcc string) (models.Account, error)
+	InsertUpdateCardLimit(c echo.Context, limitUpdt models.LimitUpdate) (string, error)
+	GetLimitUpdate(c echo.Context, refId string) (models.LimitUpdate, error)
+	UpdateCardLimitData(c echo.Context, limitUpdt models.LimitUpdate) error
 }
 
 // Repository represent the update limits Rest Repository
