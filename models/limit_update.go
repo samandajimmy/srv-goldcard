@@ -14,6 +14,9 @@ var (
 	// DefBriProductRequestUpLimit is to store default bri update limit product request
 	DefBriProductRequestUpLimit string = "KARTUEMAS"
 
+	// LimitUpdateStatusInquired to store a inquired update limit status
+	LimitUpdateStatusInquired = "inquired"
+
 	// LimitUpdateStatusPending to store a pending update limit status
 	LimitUpdateStatusPending = "pending"
 

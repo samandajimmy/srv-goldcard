@@ -75,6 +75,9 @@ var (
 	// ErrUpdateCardLimit to store updating card limit data error message
 	ErrUpdateCardLimit = errors.New("Terjadi kesalahan saat update card limit")
 
+	// ErrUpdateLimitNF to store data limit update not found error message
+	ErrUpdateLimitNF = errors.New("Data update limit tidak ditemukan")
+
 	// ErrUpdateCardBalance to store updating card balance data error message
 	ErrUpdateCardBalance = errors.New("Terjadi kesalahan saat update saldo kartu emas")
 

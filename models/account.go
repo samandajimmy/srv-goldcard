@@ -94,7 +94,7 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 
 	// set default base64 to NPWP image if empty
 	if pl.NpwpImageBase64 == "" {
-		pl.NpwpImageBase64 = defDocBase64
+		pl.NpwpImageBase64 = DefDocBase64
 	}
 
 	// application documents

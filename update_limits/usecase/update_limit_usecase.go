@@ -71,14 +71,16 @@ func (upLimUC *updateLimitUseCase) DecreasedSTL(c echo.Context, pcds models.Payl
 		}
 
 		// update card limit in db
-		refId, err := upLimUC.rRepo.UpdateCardLimit(c, acc, true)
+		// TODO: this function need to be changed later on phase 2
+		err := upLimUC.rRepo.UpdateCardLimit(c, acc, nil)
 
 		if err != nil {
 			continue
 		}
 
 		// Send notification to user in pds
-		notif.GcDecreasedSTL(acc, oldCard, refId)
+		// TODO: this function need to be changed later on phase 2
+		notif.GcDecreasedSTL(acc, oldCard, "")
 		_ = upLimUC.rrRepo.SendNotification(c, notif, "mobile")
 
 		// Insert all STL data that changes to cul struct
@@ -114,7 +116,6 @@ func (upLimUC *updateLimitUseCase) SendNotificationEmail(c echo.Context, cul []m
 	}
 
 	writer := csv.NewWriter(file)
-
 	err = writer.WriteAll(data)
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
@@ -156,72 +157,156 @@ func (upLimUC *updateLimitUseCase) SendNotificationEmail(c echo.Context, cul []m
 	os.Remove("./data-stl.csv")
 }
 
-func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.PayloadInquiryUpdateLimit) models.ResponseErrors {
+func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.PayloadInquiryUpdateLimit) (models.RespUpdateLimitInquiry, models.ResponseErrors) {
 	var errors models.ResponseErrors
+	var response models.RespUpdateLimitInquiry
+	var lastLimitUpdate models.LimitUpdate
 
 	// get acc by account number
 	acc, err := upLimUC.trxUS.CheckAccountByAccountNumber(c, pl)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
-		return errors
+		return response, errors
 	}
 
 	// check if there is user limit update status still pending or applied
-	lastLimitUpdate, err := upLimUC.upLimRepo.GetLastLimitUpdate(acc.ID)
+	lastLimitUpdate, err = upLimUC.upLimRepo.GetLastLimitUpdate(c, acc.ID)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGetLastLimitUpdate.Error())
-		return errors
+		return response, errors
 	}
 
-	if lastLimitUpdate.Status == models.LimitUpdateStatusPending ||
-		lastLimitUpdate.Status == models.LimitUpdateStatusApplied {
+	if lastLimitUpdate.ID != 0 {
 		errors.SetTitleCode("12", models.ErrPendingUpdateLimitAvailable.Error(), "")
-		return errors
-	}
-
-	// get all account documents
-	docs, err := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID)
-	if err != nil {
-		errors.SetTitle(models.ErrGetDocument.Error())
-		return errors
+		return response, errors
 	}
 
 	// validate inquiries
 	// do minimum increase limit, is npwp required, effective balance, and minimum effective balance validation
-	errors = upLimUC.validateUpdateLimitInquiries(c, acc, docs, pl)
-	return errors
-}
+	// get npwp document
+	npwp, err := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID, "npwp")
 
-// validateUpdateLimitInq is function to validate business requirement to update limit goldcard
-func (upLimUC *updateLimitUseCase) validateUpdateLimitInquiries(c echo.Context, acc models.Account, docs []models.Document, pl models.PayloadInquiryUpdateLimit) models.ResponseErrors {
-	var errors models.ResponseErrors
+	if err != nil {
+		errors.SetTitle(models.ErrGetDocument.Error())
+		return response, errors
+	}
 
 	// check minimum increase limit 1 million rupiah
-	if pl.NominalLimit-acc.Card.CardLimit < models.MinIncreaseLimit {
+	if (pl.NominalLimit - acc.Card.CardLimit) < models.MinIncreaseLimit {
 		errors.SetTitle(models.ErrMinimumIncreaseLimit.Error())
-		return errors
+		return response, errors
 	}
 
-	// check if new inquired card limit is above 50 millions rupiah, then npwp is required
-	npwp := acc.Application.GetCurrentDoc(docs, models.MapDocType["NpwpImageBase64"])
-	if npwp.ID == 0 && pl.NominalLimit > models.LimitFiftyMillions {
-		errors.SetTitleCode("11", models.ErrNPWPRequired.Error(), "")
-		return errors
-	}
+	errStr := upLimUC.rupLimRepo.CorePostInquiryUpdateLimit(c, acc.CIF, acc.Application.SavingAccount, pl.NominalLimit)
 
-	err := upLimUC.rupLimRepo.CorePostInquiryUpdateLimit(c, acc.CIF, acc.Application.SavingAccount, pl.NominalLimit)
-
-	if err == "13" {
+	if errStr == "13" {
 		errors.SetTitle(models.ErrMinimumGoldSavingEffBal.Error())
+		return response, errors
+	}
+
+	if errStr != "00" {
+		errors.SetTitleCode("14", models.ErrPostInquiryUpdateLimitToCore.Error(), "")
+		return response, errors
+	}
+
+	// insert new limit update
+	// get current STL
+	currStl, err := upLimUC.rrRepo.GetCurrentGoldSTL(c)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetCurrSTL.Error())
+		return response, errors
+	}
+
+	limitUpdt := models.LimitUpdate{
+		AccountID: acc.ID,
+		CardLimit: pl.NominalLimit,
+		GoldLimit: acc.Card.SetGoldLimit(acc.Card.CardLimit, currStl),
+		StlLimit:  currStl,
+		Status:    models.LimitUpdateStatusInquired,
+	}
+
+	refId, err := upLimUC.upLimRepo.InsertUpdateCardLimit(c, limitUpdt)
+
+	if err != nil {
+		errors.SetTitle(models.ErrUpdateCardLimit.Error())
+		return response, errors
+	}
+
+	response.RefId = refId
+	// check if new inquired card limit is above 50 millions rupiah, then npwp is required
+	if npwp[0].FileBase64 == models.DefDocBase64 && pl.NominalLimit > models.LimitFiftyMillions {
+		errors.SetTitleCode("11", models.ErrNPWPRequired.Error(), "")
+		return response, errors
+	}
+
+	return response, errors
+}
+
+// PostUpdateLimit is a func to submit update limit after inquiry update limit
+func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.PayloadUpdateLimit) models.ResponseErrors {
+	var errors models.ResponseErrors
+	var notif models.PdsNotification
+
+	// get limit update with account
+	limitUpdt, err := upLimUC.upLimRepo.GetLimitUpdate(c, pl.RefId)
+
+	if err != nil {
+		errors.SetTitle(models.ErrUpdateLimitNF.Error())
 		return errors
 	}
 
-	if err != "00" {
-		errors.SetTitleCode("14", models.ErrPostInquiryUpdateLimitToCore.Error(), "")
+	// set card limit along with gold limit
+	acc := limitUpdt.Account
+	acc.Card.CardLimit = limitUpdt.CardLimit
+	acc.Card.GoldLimit = acc.Card.SetGoldLimit(acc.Card.CardLimit, limitUpdt.StlLimit)
+	acc.Card.StlLimit = limitUpdt.StlLimit
+	limitUpdt.Account = acc
+
+	// insert npwp document if any
+	if pl.NpwpImageBase64 != "" {
+		acc.Application.SetDocument(models.PayloadPersonalInformation{NpwpImageBase64: pl.NpwpImageBase64})
+		npwp, _ := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID, "npwp")
+
+		// upload updated npwp document to BRI
+		go func() {
+			npwp[0].DocID = ""
+			_ = upLimUC.rUS.UploadAppDoc(c, acc.BrixKey, npwp[0])
+		}()
+	}
+
+	// insert updated/latest slip TE and npwp
+	err = upLimUC.rUS.GenerateSlipTEDocument(c, acc)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGenerateSlipTE.Error())
 		return errors
 	}
+
+	// post update limit to core
+	err = upLimUC.rupLimRepo.CorePostUpdateLimit(c, acc.Application.SavingAccount, acc.Card, acc.CIF)
+
+	if err != nil {
+		errors.SetTitle(models.ErrPostUpdateLimitToCore.Error())
+		return errors
+	}
+
+	// save updated limit updates data table
+	limitUpdt.Status = models.LimitUpdateStatusPending
+	err = upLimUC.upLimRepo.UpdateCardLimitData(c, limitUpdt)
+
+	if err != nil {
+		errors.SetTitle(models.ErrUpdateCardLimit.Error())
+		return errors
+	}
+
+	// Send notification to user in pds and email
+	notif = models.PdsNotification{}
+
+	notif.GcSla2Days(acc)
+	_ = upLimUC.rrRepo.SendNotification(c, notif, "")
 
 	return errors
 }
@@ -243,94 +328,6 @@ func (upLimUC *updateLimitUseCase) CoreGtePayment(c echo.Context, pcgp models.Pa
 		errors.SetTitle(models.ErrPostPaymentBRI.Error())
 		return errors
 	}
-
-	return errors
-}
-
-// PostUpdateLimit is a func to submit update limit after inquiry update limit
-func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.PayloadUpdateLimit) models.ResponseErrors {
-	var errors models.ResponseErrors
-	var notif models.PdsNotification
-
-	// get acc by account number
-	acc, err := upLimUC.trxUS.CheckAccountByAccountNumber(c, pl)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetAccByAccountNumber.Error())
-		return errors
-	}
-
-	// check if there is user limit update status still pending or applied
-	lastLimitUpdate, err := upLimUC.upLimRepo.GetLastLimitUpdate(acc.ID)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetLastLimitUpdate.Error())
-		return errors
-	}
-
-	if lastLimitUpdate.Status == models.LimitUpdateStatusPending ||
-		lastLimitUpdate.Status == models.LimitUpdateStatusApplied {
-		errors.SetTitle(models.ErrPendingUpdateLimitAvailable.Error())
-		return errors
-	}
-
-	// get all account documents
-	docs, err := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetDocument.Error())
-		return errors
-	}
-
-	// get current STL
-	currStl, err := upLimUC.rrRepo.GetCurrentGoldSTL(c)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetCurrSTL.Error())
-		return errors
-	}
-
-	// validate inquiries
-	// do minimum increase limit, is npwp required, effective balance, and minimum effective balance validation
-	errors = upLimUC.validateUpdateLimitInquiries(c, acc, docs, models.PayloadInquiryUpdateLimit(pl))
-
-	if errors.Title != "" {
-		return errors
-	}
-
-	// set card limit along with gold limit
-	acc.Card.CardLimit = pl.NominalLimit
-	acc.Card.GoldLimit = acc.Card.SetGoldLimit(acc.Card.CardLimit, currStl)
-	acc.Card.StlLimit = currStl
-
-	// try get latest slip TE
-	err = upLimUC.rUS.GenerateSlipTEDocument(c, acc)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGenerateSlipTE.Error())
-		return errors
-	}
-
-	// post update limit to core
-	err = upLimUC.rupLimRepo.CorePostUpdateLimit(c, acc.Application.SavingAccount, acc.Card, acc.CIF)
-	if err != nil {
-		errors.SetTitle(models.ErrPostUpdateLimitToCore.Error())
-		return errors
-	}
-
-	// save updated card into db, and insert into limit updates table
-	_, err = upLimUC.rRepo.UpdateCardLimit(c, acc, true)
-
-	if err != nil {
-		errors.SetTitle(models.ErrUpdateCardLimit.Error())
-		return errors
-	}
-
-	// Send notification to user in pds and email
-	notif = models.PdsNotification{}
-
-	notif.GcSla2Days(acc)
-	_ = upLimUC.rrRepo.SendNotification(c, notif, "")
 
 	return errors
 }
@@ -362,4 +359,16 @@ func (upLimUC *updateLimitUseCase) CheckAccountBySavingAccount(c echo.Context, p
 	}
 
 	return acc, nil
+}
+
+func (upLimUC *updateLimitUseCase) updateLimitData(c echo.Context, lmtUpdt models.LimitUpdate) func() error {
+	return func() error {
+		err := upLimUC.upLimRepo.UpdateCardLimitData(c, lmtUpdt)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
 }

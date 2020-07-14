@@ -7,6 +7,7 @@ import (
 	"gade/srv-goldcard/update_limits"
 
 	"github.com/go-pg/pg/v9"
+	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -41,13 +42,15 @@ func (psqlUL *psqlUpdateLimitsRepository) GetEmailByKey(c echo.Context) (string,
 	return param.Value, nil
 }
 
-func (psqlUL *psqlUpdateLimitsRepository) GetLastLimitUpdate(accId int64) (models.LimitUpdate, error) {
+func (psqlUL *psqlUpdateLimitsRepository) GetLastLimitUpdate(c echo.Context, accId int64) (models.LimitUpdate, error) {
 	var limitUpdate models.LimitUpdate
+	statuses := []string{"pending", "applied"}
 	err := psqlUL.DBpg.Model(&limitUpdate).
-		Where("account_id = ?", accId).Order("created_at DESC").Limit(1).Select()
+		Where("account_id = ? AND status in (?)", accId, pg.In(statuses)).Order("created_at DESC").
+		Limit(1).Select()
 
-	if err != nil {
-		logger.Make(nil, nil).Debug(err)
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
 
 		return limitUpdate, err
 	}
@@ -73,4 +76,68 @@ func (psqlUL *psqlUpdateLimitsRepository) GetAccountBySavingAccount(c echo.Conte
 	}
 
 	return acc, nil
+}
+
+func (psqlUL *psqlUpdateLimitsRepository) InsertUpdateCardLimit(c echo.Context, limitUpdt models.LimitUpdate) (string, error) {
+	refId, _ := uuid.NewRandom()
+	now := models.NowDbpg()
+	limitUpdt.CreatedAt = now
+	limitUpdt.AppliedLimitDate = now
+	limitUpdt.RefId = refId.String()
+	err := psqlUL.DBpg.Insert(&limitUpdt)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return "", err
+	}
+
+	return limitUpdt.RefId, nil
+}
+
+func (psqlUL *psqlUpdateLimitsRepository) UpdateCardLimitData(c echo.Context, limitUpdt models.LimitUpdate) error {
+	limitUpdt.UpdatedAt = models.NowDbpg()
+	col := []string{"status", "updated_at"}
+	_, err := psqlUL.DBpg.Model(&limitUpdt).Column(col...).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (psqlUL *psqlUpdateLimitsRepository) GetLimitUpdate(c echo.Context, refId string) (models.LimitUpdate, error) {
+	var limitUpdt models.LimitUpdate
+
+	err := psqlUL.DBpg.Model(&limitUpdt).
+		Where("ref_id = ? AND limit_update.status = ?", refId, models.LimitUpdateStatusInquired).
+		Limit(1).Select()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return limitUpdt, err
+	}
+
+	err = psqlUL.DBpg.Model(&limitUpdt.Account).Relation("Application").Relation("PersonalInformation").
+		Where("account.id = ?", &limitUpdt.AccountID).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return limitUpdt, err
+	}
+
+	err = psqlUL.DBpg.Model(&limitUpdt.Account.Application.Documents).Where("application_id = ?", &limitUpdt.Account.ApplicationID).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return limitUpdt, err
+	}
+
+	return limitUpdt, nil
 }

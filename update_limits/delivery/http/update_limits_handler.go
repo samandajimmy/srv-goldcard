@@ -79,15 +79,16 @@ func (ul *updateLimitHandler) InquiryUpdateLimit(c echo.Context) error {
 		return ul.response.Body(c, err)
 	}
 
-	err := ul.updateLimitUseCase.InquiryUpdateLimit(c, piul)
+	resp, err := ul.updateLimitUseCase.InquiryUpdateLimit(c, piul)
 
 	if err.Title != "" {
-		ul.response.SetResponse("", &err)
+		ul.response.SetResponse(resp, &err)
 
 		return ul.response.Body(c, nil)
 	}
 
-	ul.response.SetResponse("", &err)
+	ul.response.SetResponse(resp, &err)
+
 	return ul.response.Body(c, nil)
 }
 
