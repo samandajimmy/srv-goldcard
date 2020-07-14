@@ -1,7 +1,6 @@
 package usecase
 
 import (
-	"fmt"
 	"gade/srv-goldcard/activations"
 	"gade/srv-goldcard/api"
 	"gade/srv-goldcard/logger"
@@ -530,10 +529,6 @@ func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc mode
 		logger.Make(nil, nil).Debug(err)
 		return models.ErrMappingData
 	}
-
-	fmt.Println("cacing1")
-	fmt.Println(slipTeData.Account.Application.Documents)
-	fmt.Println("cacing1")
 
 	//  insert or update all possible documents
 	err = reg.upsertDocument(c, slipTeData.Account.Application)
