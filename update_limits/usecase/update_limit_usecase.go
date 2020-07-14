@@ -360,15 +360,3 @@ func (upLimUC *updateLimitUseCase) CheckAccountBySavingAccount(c echo.Context, p
 
 	return acc, nil
 }
-
-func (upLimUC *updateLimitUseCase) updateLimitData(c echo.Context, lmtUpdt models.LimitUpdate) func() error {
-	return func() error {
-		err := upLimUC.upLimRepo.UpdateCardLimitData(c, lmtUpdt)
-
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-}
