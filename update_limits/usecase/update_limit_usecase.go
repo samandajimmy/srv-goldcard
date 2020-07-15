@@ -260,6 +260,10 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 
 	// set card limit along with gold limit
 	acc := limitUpdt.Account
+	acc.Card.CardLimit = limitUpdt.CardLimit
+	acc.Card.GoldLimit = acc.Card.SetGoldLimit(acc.Card.CardLimit, limitUpdt.StlLimit)
+	acc.Card.StlLimit = limitUpdt.StlLimit
+	limitUpdt.Account = acc
 
 	// insert npwp document if any
 	if pl.NpwpImageBase64 != "" {
