@@ -142,7 +142,7 @@ var (
 	ErrStatusActivations = errors.New("Status pengajuan tidak sesuai")
 
 	// ErrAppExpired to store application expired error message
-	ErrAppExpired = errors.New("Pengajuan Kadarluarsa")
+	ErrAppExpired = errors.New("Pengajuan Kedaluwarsa")
 
 	// ErrAppExpiredDesc to store the description of application expired error message
 	ErrAppExpiredDesc = errors.New("Pengajuan harus dibatalkan karena tidak ada aktivitas selama 12 bulan. Saldo emas akan dikembalikan ke saldo efektif.")
