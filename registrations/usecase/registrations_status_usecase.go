@@ -77,23 +77,6 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 	return appStatus, nil
 }
 
-func (reg *registrationsUseCase) updateSTLPrice(c echo.Context, acc models.Account) {
-	hargeEmas, err := reg.rrr.GetCurrentGoldSTL(c)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
-
-	acc.Card.StlLimit = hargeEmas
-	err = reg.regRepo.UpdateCardLimit(c, acc, nil)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
-}
-
 func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.Account,
 	briPl models.PayloadBriRegister, accChan chan models.Account, errAppBri, errAppCore chan error) error {
 	var notif models.PdsNotification
