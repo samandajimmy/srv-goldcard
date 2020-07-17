@@ -472,16 +472,25 @@ func (reg *registrationsUseCase) GenerateApplicationFormDocument(c echo.Context,
 		return models.ErrMappingData
 	}
 
-	// concurrently insert or update all possible documents
-	go retry.DoConcurrent(c, "upsertDocument", func() error {
-		return reg.upsertDocument(c, appFormData.Account.Application)
-	})
+	err = reg.upsertDocument(c, appFormData.Account.Application)
+
+	if err != nil {
+		return models.ErrMappingData
+	}
 
 	return nil
 }
 
 // Function to Generate Slip TE
 func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc models.Account) error {
+	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
+	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID, "")
+
+	if err != nil {
+		return err
+	}
+
+	acc.Application.Documents = docs
 	// get user effective balance
 	userDetail, err := reg.arRepo.GetDetailGoldUser(c, acc.Application.SavingAccount)
 
