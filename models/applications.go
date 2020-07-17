@@ -12,7 +12,7 @@ import (
 
 const (
 	// DefBriProductRequest is to store default bri application product request
-	DefBriProductRequest = "PAYLATER"
+	DefBriProductRequest = "KARTUEMAS"
 
 	// DefBriBillingCycle is to store default bri application billing cycle
 	DefBriBillingCycle = 3

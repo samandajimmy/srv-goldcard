@@ -58,7 +58,7 @@ func (rul *restUpdateLimits) BRIPostUpdateLimit(c echo.Context, acc models.Accou
 	requestDataBRI := map[string]interface{}{
 		"briXkey":         acc.BrixKey,
 		"limit":           acc.Card.CardLimit,
-		"productRequest":  models.DefBriProductRequestUpLimit,
+		"productRequest":  models.DefBriProductRequest,
 		"handPhoneNumber": acc.PersonalInformation.HandPhoneNumber,
 		"email":           acc.PersonalInformation.Email,
 		"file":            map[string]string{"OTHR": models.MapBRIExtBase64File[doc.FileExtension] + doc.FileBase64},

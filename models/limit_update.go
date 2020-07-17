@@ -11,9 +11,6 @@ var (
 	// MinIncreaseLimit is a param to store value of minimum increase limit goldcard
 	MinIncreaseLimit int64 = 1000000
 
-	// DefBriProductRequestUpLimit is to store default bri update limit product request
-	DefBriProductRequestUpLimit string = "KARTUEMAS"
-
 	// LimitUpdateStatusInquired to store a inquired update limit status
 	LimitUpdateStatusInquired = "inquired"
 
