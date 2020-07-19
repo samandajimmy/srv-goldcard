@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"encoding/csv"
-	"fmt"
 	"gade/srv-goldcard/activations"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
@@ -235,7 +234,6 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 
 	// check if new inquired card limit is above 50 millions rupiah, then npwp is required
 	if npwp[0].FileBase64 == models.DefDocBase64 && pl.NominalLimit > models.LimitFiftyMillions {
-		fmt.Println("cacing1")
 		errors.SetTitleCode("11", models.ErrNPWPRequired.Error(), "")
 		limitUpdt.WithNpwp = true
 	}
