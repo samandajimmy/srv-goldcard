@@ -299,29 +299,26 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 
 func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber, fn models.FuncAfterGC) error {
 	acc, err := reg.CheckApplication(c, pl)
+
 	if err != nil {
 		return err
 	}
+
 	// get account by appNumber
 	briPl, err := reg.regRepo.GetAllRegData(c, pl.ApplicationNumber)
+
 	if err != nil {
 		return models.ErrAppData
 	}
+
 	// validasi bri register payload
 	if err := c.Validate(briPl); err != nil {
 		logger.Make(c, nil).Debug(err)
 		return err
 	}
 
-	// Generate Application Form BRI Document
-	err = reg.GenerateApplicationFormDocument(c, acc)
-
-	if err != nil {
-		return err
-	}
-
-	// Generate Slip TE Document
-	err = reg.GenerateSlipTEDocument(c, acc)
+	// generate application document and slip te
+	err = reg.generateOtherDocs(c, acc)
 
 	if err != nil {
 		return err
@@ -450,23 +447,15 @@ func (reg *registrationsUseCase) coreOpenStatus(c echo.Context, acc models.Accou
 }
 
 // Function to Generate Application Form
-func (reg *registrationsUseCase) GenerateApplicationFormDocument(c echo.Context, acc models.Account) error {
-	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
-	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID, "")
-
-	if err != nil {
-		return models.ErrGetDocument
+func (reg *registrationsUseCase) GenerateApplicationFormDocument(c echo.Context, acc *models.Account) error {
+	if len(acc.Application.Documents) == 0 {
+		return models.ErrMappingData
 	}
 
 	// Mapping Application Form Data and Generate PDF
 	appFormData := models.ApplicationForm{}
-
-	paramsAppForm := map[string]interface{}{
-		"docs": docs,
-		"acc":  acc,
-	}
-
-	err = appFormData.MappingApplicationForm(paramsAppForm)
+	appFormData.Account = *acc
+	err := appFormData.MappingApplicationForm()
 
 	if err != nil {
 		return models.ErrMappingData
@@ -478,19 +467,17 @@ func (reg *registrationsUseCase) GenerateApplicationFormDocument(c echo.Context,
 		return models.ErrMappingData
 	}
 
+	*acc = appFormData.Account
+
 	return nil
 }
 
 // Function to Generate Slip TE
 func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc models.Account) error {
-	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
-	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID, "")
-
-	if err != nil {
-		return err
+	if len(acc.Application.Documents) == 0 {
+		return models.ErrMappingData
 	}
 
-	acc.Application.Documents = docs
 	// get user effective balance
 	userDetail, err := reg.arRepo.GetDetailGoldUser(c, acc.Application.SavingAccount)
 
@@ -524,9 +511,9 @@ func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc mode
 
 	// Mapping Application Form Data and Generate PDF
 	slipTeData := models.SlipTE{}
+	slipTeData.Account = acc
 
 	paramsSlipTe := map[string]interface{}{
-		"acc":            acc,
 		"signatoryName":  signatoryName,
 		"signatoryNip":   signatoryNip,
 		"goldEffBalance": goldEffBalance,

@@ -11,7 +11,7 @@ type Repository interface {
 	GetEmailByKey(c echo.Context) (string, error)
 	GetLastLimitUpdate(c echo.Context, accId int64) (models.LimitUpdate, error)
 	GetAccountBySavingAccount(c echo.Context, savingAcc string) (models.Account, error)
-	InsertUpdateCardLimit(c echo.Context, limitUpdt models.LimitUpdate) (string, error)
+	InsertUpdateCardLimit(c echo.Context, limitUpdt models.LimitUpdate) error
 	GetLimitUpdate(c echo.Context, refId string) (models.LimitUpdate, error)
 	UpdateCardLimitData(c echo.Context, limitUpdt models.LimitUpdate) error
 }

@@ -136,3 +136,28 @@ func (reg *registrationsUseCase) upsertDocument(c echo.Context, app models.Appli
 
 	return nil
 }
+
+func (reg *registrationsUseCase) generateOtherDocs(c echo.Context, acc models.Account) error {
+	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
+	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID, "")
+
+	if err != nil {
+		return models.ErrGetDocument
+	}
+
+	acc.Application.Documents = docs
+	// Generate Application Form BRI Document
+	err = reg.GenerateApplicationFormDocument(c, &acc)
+
+	if err != nil {
+		return err
+	}
+
+	// Generate Slip TE Document
+	err = reg.GenerateSlipTEDocument(c, acc)
+
+	if err != nil {
+		return err
+	}
+	return nil
+}

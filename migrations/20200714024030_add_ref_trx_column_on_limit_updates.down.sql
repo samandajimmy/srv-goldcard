@@ -1,5 +1,5 @@
 ALTER TABLE limit_updates
-DROP ref_trx status;
+DROP ref_trx;
 
 DO $$
 BEGIN

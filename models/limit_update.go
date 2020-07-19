@@ -31,6 +31,7 @@ type LimitUpdate struct {
 	GoldLimit        float64   `json:"goldLimit"`
 	StlLimit         int64     `json:"stlLimit"`
 	Status           string    `json:"status"`
+	WithNpwp         bool      `json:"withNpwp"`
 	UpdatedAt        time.Time `json:"updatedAt"`
 	CreatedAt        time.Time `json:"createdAt"`
 	Account          Account   `json:"account"`
