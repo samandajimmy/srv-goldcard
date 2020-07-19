@@ -291,12 +291,11 @@ type SlipTE struct {
 }
 
 // MappingApplicationForm a function to mapping application form BRI and slip te data
-func (af *ApplicationForm) MappingApplicationForm(params map[string]interface{}) error {
+func (af *ApplicationForm) MappingApplicationForm() error {
 	time := time.Now().UTC()
-	acc := params["acc"].(Account)
-	docs := params["docs"].([]Document)
+	acc := af.Account
+	docs := af.Account.Application.Documents
 
-	af.Account = acc
 	af.TimeStamp = time.Format(DateTimeFormat)
 	af.Date = time.Format(DDMMYYYY)
 	af.TextHomeStatus = HomeStatusStr[acc.PersonalInformation.HomeStatus]
@@ -344,7 +343,7 @@ func (af *ApplicationForm) MappingApplicationForm(params map[string]interface{})
 // MappingSlipTe a function to mapping slip te data
 func (st *SlipTE) MappingSlipTe(params map[string]interface{}) error {
 	time := time.Now().UTC()
-	acc := params["acc"].(Account)
+	acc := st.Account
 	ac := accounting.Accounting{Symbol: "Rp ", Thousand: "."}
 
 	st.Account = acc

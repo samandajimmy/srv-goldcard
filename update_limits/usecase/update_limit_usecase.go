@@ -12,6 +12,7 @@ import (
 	"reflect"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"gopkg.in/gomail.v2"
 )
@@ -220,7 +221,10 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 		return response, errors
 	}
 
+	uuid, _ := uuid.NewRandom()
+	refId := uuid.String()
 	limitUpdt := models.LimitUpdate{
+		RefId:     refId,
 		AccountID: acc.ID,
 		CardLimit: pl.NominalLimit,
 		GoldLimit: acc.Card.SetGoldLimit(acc.Card.CardLimit, currStl),
@@ -228,7 +232,13 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 		Status:    models.LimitUpdateStatusInquired,
 	}
 
-	refId, err := upLimUC.upLimRepo.InsertUpdateCardLimit(c, limitUpdt)
+	// check if new inquired card limit is above 50 millions rupiah, then npwp is required
+	if npwp[0].FileBase64 == models.DefDocBase64 && pl.NominalLimit > models.LimitFiftyMillions {
+		errors.SetTitleCode("11", models.ErrNPWPRequired.Error(), "")
+		limitUpdt.WithNpwp = true
+	}
+
+	err = upLimUC.upLimRepo.InsertUpdateCardLimit(c, limitUpdt)
 
 	if err != nil {
 		errors.SetTitle(models.ErrUpdateCardLimit.Error())
@@ -236,12 +246,6 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 	}
 
 	response.RefId = refId
-	// check if new inquired card limit is above 50 millions rupiah, then npwp is required
-	if npwp[0].FileBase64 == models.DefDocBase64 && pl.NominalLimit > models.LimitFiftyMillions {
-		errors.SetTitleCode("11", models.ErrNPWPRequired.Error(), "")
-		return response, errors
-	}
-
 	return response, errors
 }
 
@@ -263,18 +267,20 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 	acc.Card.CardLimit = limitUpdt.CardLimit
 	acc.Card.GoldLimit = acc.Card.SetGoldLimit(acc.Card.CardLimit, limitUpdt.StlLimit)
 	acc.Card.StlLimit = limitUpdt.StlLimit
+	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
+	docs, err := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID, "")
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetDocument.Error())
+		return errors
+	}
+
+	acc.Application.Documents = docs
 	limitUpdt.Account = acc
 
 	// insert npwp document if any
 	if pl.NpwpImageBase64 != "" {
 		acc.Application.SetDocument(models.PayloadPersonalInformation{NpwpImageBase64: pl.NpwpImageBase64})
-		npwp, _ := upLimUC.rRepo.GetDocumentByApplicationId(acc.ApplicationID, "npwp")
-
-		// upload updated npwp document to BRI
-		go func() {
-			npwp[0].DocID = ""
-			_ = upLimUC.rUS.UploadAppDoc(c, acc.BrixKey, npwp[0])
-		}()
 	}
 
 	// insert updated/latest slip TE and npwp

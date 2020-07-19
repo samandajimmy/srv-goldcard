@@ -7,7 +7,6 @@ import (
 	"gade/srv-goldcard/update_limits"
 
 	"github.com/go-pg/pg/v9"
-	"github.com/google/uuid"
 	"github.com/labstack/echo"
 )
 
@@ -78,21 +77,19 @@ func (psqlUL *psqlUpdateLimitsRepository) GetAccountBySavingAccount(c echo.Conte
 	return acc, nil
 }
 
-func (psqlUL *psqlUpdateLimitsRepository) InsertUpdateCardLimit(c echo.Context, limitUpdt models.LimitUpdate) (string, error) {
-	refId, _ := uuid.NewRandom()
+func (psqlUL *psqlUpdateLimitsRepository) InsertUpdateCardLimit(c echo.Context, limitUpdt models.LimitUpdate) error {
 	now := models.NowDbpg()
 	limitUpdt.CreatedAt = now
 	limitUpdt.AppliedLimitDate = now
-	limitUpdt.RefId = refId.String()
 	err := psqlUL.DBpg.Insert(&limitUpdt)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return "", err
+		return err
 	}
 
-	return limitUpdt.RefId, nil
+	return nil
 }
 
 func (psqlUL *psqlUpdateLimitsRepository) UpdateCardLimitData(c echo.Context, limitUpdt models.LimitUpdate) error {
