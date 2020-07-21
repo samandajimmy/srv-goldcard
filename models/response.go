@@ -2,7 +2,6 @@ package models
 
 import (
 	"net/http"
-	"reflect"
 	"strings"
 
 	"github.com/labstack/echo"
@@ -59,10 +58,6 @@ func (re *ResponseErrors) AddError(errString string) {
 
 // SetResponse is a function to set response
 func (resp *Response) SetResponse(respData interface{}, respErrors *ResponseErrors) {
-	if respData != reflect.Zero(reflect.TypeOf(respData)).Interface() {
-		resp.Data = respData
-	}
-
 	if respErrors.Title == "" {
 		resp.Status = responseSuccess
 		resp.Code = responseCode[responseSuccess]
