@@ -45,9 +45,9 @@ func (ra *restBillings) GetBillingsStatement(c echo.Context, acc models.Account)
 	response := respBRI.DataOne["listOfStatements"].(map[string]interface{})["statementHeader"].(map[string]interface{})
 
 	return models.BillingStatement{
-		BillingAmount:     int64(response["totalPayment"].(float64)),
+		BillingAmount:     int64(response["currentBalance"].(float64)),
 		BillingPrintDate:  response["statementDate"].(string),
 		BillingDueDate:    response["paymentDueDate"].(string),
-		BillingMinPayment: int64(response["totalPayment"].(float64)) * 10 / 100,
+		BillingMinPayment: int64(response["monthlyPayment"].(float64)),
 	}, nil
 }
