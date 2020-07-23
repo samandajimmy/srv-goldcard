@@ -374,6 +374,9 @@ func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc mo
 		return models.Card{}, models.ErrUpdateCardBalance
 	}
 
+	// set card limit value from response to BRI
+	acc.Card.CardLimit = int64(cardBal.CreditLimit)
+
 	return acc.Card, nil
 }
 
