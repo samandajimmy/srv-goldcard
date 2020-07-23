@@ -12,7 +12,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/leekchan/accounting"
 
-	"sort"
 	"time"
 )
 
@@ -239,9 +238,15 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 			Description: singleBRIPendigTrx.Description})
 	}
 
-	sort.SliceStable(pendingArr, func(i, j int) bool {
-		return pendingArr[i].TrxDate > pendingArr[j].TrxDate
-	})
+	pendingLength := len(BRIPending.TransactionData) - 1
+	reversePendingLength := pendingLength / 2
+
+	for i := 0; i < reversePendingLength; i++ {
+		temp := pendingArr[pendingLength]
+		pendingArr[pendingLength] = pendingArr[i]
+		pendingArr[i] = temp
+		pendingLength--
+	}
 
 	BRIPosted, err := trxUS.trxrRepo.GetBRIPostedTrx(c, acc.BrixKey)
 
@@ -258,9 +263,15 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 			Description: singleBRIPostedTrx.TrxDesc})
 	}
 
-	sort.SliceStable(postedArr, func(i, j int) bool {
-		return postedArr[i].TrxDate > postedArr[j].TrxDate
-	})
+	postedLength := len(BRIPosted.ListOfTransactions) - 1
+	reversePostedLength := pendingLength / 2
+
+	for i := 0; i < reversePostedLength; i++ {
+		temp := postedArr[postedLength]
+		postedArr[postedLength] = postedArr[i]
+		postedArr[i] = temp
+		postedLength--
+	}
 
 	result = append(result, pendingArr...)
 	result = append(result, postedArr...)
