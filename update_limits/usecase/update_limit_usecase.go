@@ -335,6 +335,21 @@ func (upLimUC *updateLimitUseCase) CoreGtePayment(c echo.Context, pcgp models.Pa
 		return errors
 	}
 
+	go func() {
+		// update and get card balance by account
+		acc.Card, err = upLimUC.trxUS.UpdateAndGetCardBalance(c, acc)
+
+		if err != nil {
+			logger.Make(c, nil).Debug(err)
+			return
+		}
+
+		// Send notification to user in pds and email
+		notif := models.PdsNotification{}
+		notif.GtePayment(acc, pcgp)
+		_ = upLimUC.rrRepo.SendNotification(c, notif, "")
+	}()
+
 	return errors
 }
 

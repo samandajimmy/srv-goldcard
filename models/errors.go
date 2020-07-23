@@ -266,6 +266,9 @@ var (
 
 	// ErrPostInquiryUpdateLimitToCore to store error when posting inquiry update limit to core endpoint
 	ErrPostInquiryUpdateLimitToCore = errors.New("Terjadi kesalahan ketika memposting data inquiry update limit ke Core")
+
+	// ErrSendNotification to store error message sending notifaction
+	ErrSendNotification = errors.New("Gagal mengirim notifikasi ke PDS")
 )
 
 // DynamicErr to return parameterize errors

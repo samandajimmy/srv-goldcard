@@ -154,7 +154,7 @@ func RetryableBriPost(c echo.Context, endpoint string, reqBody interface{}, resp
 func (bri *APIbri) Request(endpoint string, method string, body interface{}) (*http.Request, error) {
 	// show request log
 	debugStart := fmt.Sprintf("Start to request BRI API: %s %s", method, endpoint)
-	logger.MakeWithoutReportCaller(bri.ctx, body).Info(debugStart)
+	logger.MakeWithoutReportCaller(bri.ctx, nil).Info(debugStart)
 	bri.Method = method
 	bri.Endpoint = endpoint
 	req, err := bri.API.Request(endpoint, method, body)
@@ -190,7 +190,7 @@ func (bri *APIbri) Do(req *http.Request, v interface{}) (*http.Response, error) 
 
 	// show response log
 	debugEnd := fmt.Sprintf("End of request BRI API: %s %s", bri.Method, bri.Endpoint)
-	logger.MakeWithoutReportCaller(bri.ctx, v).Info(debugEnd)
+	logger.MakeWithoutReportCaller(bri.ctx, nil).Info(debugEnd)
 
 	return resp, err
 }
