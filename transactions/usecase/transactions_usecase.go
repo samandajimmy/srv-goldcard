@@ -238,15 +238,7 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 			Description: singleBRIPendigTrx.Description})
 	}
 
-	pendingLength := len(BRIPending.TransactionData) - 1
-	reversePendingLength := pendingLength / 2
-
-	for i := 0; i < reversePendingLength; i++ {
-		temp := pendingArr[pendingLength]
-		pendingArr[pendingLength] = pendingArr[i]
-		pendingArr[i] = temp
-		pendingLength--
-	}
+	pendingArr = models.ReverseArray(pendingArr)
 
 	BRIPosted, err := trxUS.trxrRepo.GetBRIPostedTrx(c, acc.BrixKey)
 
@@ -263,15 +255,7 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 			Description: singleBRIPostedTrx.TrxDesc})
 	}
 
-	postedLength := len(BRIPosted.ListOfTransactions) - 1
-	reversePostedLength := pendingLength / 2
-
-	for i := 0; i < reversePostedLength; i++ {
-		temp := postedArr[postedLength]
-		postedArr[postedLength] = postedArr[i]
-		postedArr[i] = temp
-		postedLength--
-	}
+	postedArr = models.ReverseArray(postedArr)
 
 	result = append(result, pendingArr...)
 	result = append(result, postedArr...)
