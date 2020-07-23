@@ -12,7 +12,6 @@ import (
 	"github.com/labstack/echo"
 	"github.com/leekchan/accounting"
 
-	"sort"
 	"time"
 )
 
@@ -210,7 +209,7 @@ func (trxUS *transactionsUseCase) PostPaymentTrxCore(c echo.Context, pl models.P
 
 func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListTrx models.PayloadListTrx) (interface{}, models.ResponseErrors) {
 	var errors models.ResponseErrors
-	var result []models.ListTrx
+	var result, pendingArr, postedArr []models.ListTrx
 	now := time.Now()
 	nowDate := now.Format(models.DateFormat)
 	yesterdayDate := now.AddDate(0, 0, -1).Format(models.DateFormat)
@@ -224,21 +223,6 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 		return models.ResponseListTrx{}, errors
 	}
 
-	BRIPosted, err := trxUS.trxrRepo.GetBRIPostedTrx(c, acc.BrixKey)
-
-	if err != nil {
-		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
-		return models.ResponseListTrx{}, errors
-	}
-
-	for _, singleBRIPostedTrx := range BRIPosted.ListOfTransactions {
-		result = append(result, models.ListTrx{
-			RefTrx:      singleBRIPostedTrx.TrxReff,
-			Nominal:     singleBRIPostedTrx.TrxAmount,
-			TrxDate:     time.Unix(singleBRIPostedTrx.EffectiveDate/1000, 0).Format(models.DateTimeFormatZone),
-			Description: singleBRIPostedTrx.TrxDesc})
-	}
-
 	BRIPending, err := trxUS.trxrRepo.GetBRIPendingTrx(c, acc, yesterdayDate, nowDate)
 
 	if err != nil {
@@ -247,16 +231,34 @@ func (trxUS *transactionsUseCase) GetTransactionsHistory(c echo.Context, plListT
 	}
 
 	for _, singleBRIPendigTrx := range BRIPending.TransactionData {
-		result = append(result, models.ListTrx{
+		pendingArr = append(pendingArr, models.ListTrx{
 			RefTrx:      "-",
 			Nominal:     singleBRIPendigTrx.BillAmount,
 			TrxDate:     time.Unix(singleBRIPendigTrx.TransactionDate/1000, 0).Format(models.DateTimeFormatZone),
 			Description: singleBRIPendigTrx.Description})
 	}
 
-	sort.SliceStable(result, func(i, j int) bool {
-		return result[i].TrxDate > result[j].TrxDate
-	})
+	pendingArr = models.ReverseArray(pendingArr)
+
+	BRIPosted, err := trxUS.trxrRepo.GetBRIPostedTrx(c, acc.BrixKey)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetHistoryTransactions.Error())
+		return models.ResponseListTrx{}, errors
+	}
+
+	for _, singleBRIPostedTrx := range BRIPosted.ListOfTransactions {
+		postedArr = append(postedArr, models.ListTrx{
+			RefTrx:      singleBRIPostedTrx.TrxReff,
+			Nominal:     singleBRIPostedTrx.TrxAmount,
+			TrxDate:     time.Unix(singleBRIPostedTrx.EffectiveDate/1000, 0).Format(models.DateTimeFormatZone),
+			Description: singleBRIPostedTrx.TrxDesc})
+	}
+
+	postedArr = models.ReverseArray(postedArr)
+
+	result = append(result, pendingArr...)
+	result = append(result, postedArr...)
 
 	return result, errors
 }
