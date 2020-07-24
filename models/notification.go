@@ -292,3 +292,34 @@ func (pdsNotif *PdsNotification) GcSla2Days(acc Account) {
 	pdsNotif.ContentDescription = []string{"Proses pengajuan limit dapat berlangsung hingga 2 hari kerja."}
 	pdsNotif.NotificationDescription = "Pengajuan Limit Diproses"
 }
+
+func (pdsNotif *PdsNotification) GtePayment(acc Account, pcgp PayloadCoreGtePayment) {
+	trxDate, trxTime := pdsNotif.TimeParser(time.Now().Format(DateTimeFormat))
+	ac := accounting.Accounting{Symbol: "Rp. "}
+	pdsNotif.PhoneNumber = acc.PersonalInformation.HandPhoneNumber
+	pdsNotif.CIF = acc.CIF
+	pdsNotif.EmailSubject = "Pembayaran GTE Kartu Emas Diterima"
+	pdsNotif.ContentTitle = pdsNotif.EmailSubject
+	pdsNotif.ContentDescription = []string{"Selamat Pembayaran telah berhasil, limit baru Kartu Emas kamu diterima"}
+	pdsNotif.NotificationTitle = "Kartu Emas"
+	pdsNotif.NotificationDescription = "Pembayaran GTE Diterima"
+	pdsNotif.NotificationTitle = "Kartu Emas"
+	pdsNotif.ContentList = []ContentList{
+		{
+			Key:   "Tanggal",
+			Value: trxDate,
+		},
+		{
+			Key:   "Waktu",
+			Value: trxTime,
+		},
+		{
+			Key:   "Pembayaran",
+			Value: ac.FormatMoney(pcgp.NominalTransaction),
+		},
+		{
+			Key:   "Limit Tersedia",
+			Value: ac.FormatMoney(acc.Card.Balance),
+		},
+	}
+}

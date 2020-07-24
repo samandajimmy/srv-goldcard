@@ -368,6 +368,8 @@ func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc mo
 	acc.Card.Balance = cardBal.AvailableCredit
 	acc.Card.GoldBalance = goldBalance
 	acc.Card.StlBalance = stl
+	// set card limit value from response to BRI
+	acc.Card.CardLimit = int64(cardBal.CreditLimit)
 
 	// update card balances
 	err = trxUS.trxRepo.UpdateCardBalance(c, acc.Card)
@@ -375,9 +377,6 @@ func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc mo
 	if err != nil {
 		return models.Card{}, models.ErrUpdateCardBalance
 	}
-
-	// set card limit value from response to BRI
-	acc.Card.CardLimit = int64(cardBal.CreditLimit)
 
 	return acc.Card, nil
 }
