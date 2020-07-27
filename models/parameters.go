@@ -242,3 +242,17 @@ func GetInterfaceValue(r reflect.Value, key string) interface{} {
 		return val.Interface().(string)
 	}
 }
+
+func ReverseArray(data []ListTrx) []ListTrx {
+	dataLength := len(data) - 1
+	reverseDataLength := dataLength / 2
+
+	for i := 0; i < reverseDataLength; i++ {
+		temp := data[dataLength]
+		data[dataLength] = data[i]
+		data[i] = temp
+		dataLength--
+	}
+
+	return data
+}
