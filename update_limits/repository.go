@@ -14,6 +14,8 @@ type Repository interface {
 	InsertUpdateCardLimit(c echo.Context, limitUpdt models.LimitUpdate) error
 	GetLimitUpdate(c echo.Context, refId string) (models.LimitUpdate, error)
 	UpdateCardLimitData(c echo.Context, limitUpdt models.LimitUpdate) error
+	GetsertGtePayment(c echo.Context, pl models.PayloadCoreGtePayment) (models.GtePayment, error)
+	UpdateGtePayment(c echo.Context, gtePayment models.GtePayment, cols []string) error
 }
 
 // Repository represent the update limits Rest Repository

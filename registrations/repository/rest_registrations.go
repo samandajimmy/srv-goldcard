@@ -141,7 +141,7 @@ func (rr *restRegistrations) SendNotification(c echo.Context, notif models.PdsNo
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return nil
+		return err
 	}
 
 	return nil
