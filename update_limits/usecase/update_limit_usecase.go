@@ -320,35 +320,58 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 // check if core already pass the payload for endpoint
 func (upLimUC *updateLimitUseCase) CoreGtePayment(c echo.Context, pcgp models.PayloadCoreGtePayment) models.ResponseErrors {
 	var errors models.ResponseErrors
-	acc, err := upLimUC.CheckAccountBySavingAccount(c, pcgp)
+	gtePayment, err := upLimUC.upLimRepo.GetsertGtePayment(c, pcgp)
 
 	if err != nil {
 		errors.SetTitle(err.Error())
 		return errors
 	}
 
-	// send information to BRI after GTE already paid from core
-	err = upLimUC.trResRepo.PostPaymentBRI(c, acc, pcgp.NominalTransaction)
+	acc := gtePayment.Account
+	err = func() error {
+		if gtePayment.BriUpdated {
+			return nil
+		}
+
+		// send information to BRI after GTE already paid from core
+		return upLimUC.trResRepo.PostPaymentBRI(c, acc, pcgp.NominalTransaction)
+	}()
 
 	if err != nil {
 		errors.SetTitle(models.ErrPostPaymentBRI.Error())
 		return errors
 	}
 
-	go func() {
+	// update gte payment bri updated status
+	gtePayment.BriUpdated = true
+	_ = upLimUC.upLimRepo.UpdateGtePayment(c, gtePayment, []string{"bri_updated"})
+	err = func() error {
+		if gtePayment.PdsNotified {
+			return nil
+		}
+
 		// update and get card balance by account
 		acc.Card, err = upLimUC.trxUS.UpdateAndGetCardBalance(c, acc)
 
 		if err != nil {
 			logger.Make(c, nil).Debug(err)
-			return
+			return err
 		}
 
 		// Send notification to user in pds and email
 		notif := models.PdsNotification{}
 		notif.GtePayment(acc, pcgp)
-		_ = upLimUC.rrRepo.SendNotification(c, notif, "")
+		return upLimUC.rrRepo.SendNotification(c, notif, "")
 	}()
+
+	if err != nil {
+		errors.SetTitle(models.ErrSendNotification.Error())
+		return errors
+	}
+
+	// update gte payment pds notified status
+	gtePayment.PdsNotified = true
+	_ = upLimUC.upLimRepo.UpdateGtePayment(c, gtePayment, []string{"pds_notified"})
 
 	return errors
 }

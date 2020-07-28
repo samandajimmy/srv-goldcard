@@ -269,6 +269,9 @@ var (
 
 	// ErrSendNotification to store error message sending notifaction
 	ErrSendNotification = errors.New("Gagal mengirim notifikasi ke PDS")
+
+	// ErrGtePaymenTrxIdExist to store gte payment trx id already existed error message
+	ErrGtePaymenTrxIdExist = errors.New("Transaksi ID pembayaran GTE sudah diproses sebelumnya")
 )
 
 // DynamicErr to return parameterize errors

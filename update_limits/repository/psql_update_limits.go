@@ -5,6 +5,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/update_limits"
+	"strconv"
 
 	"github.com/go-pg/pg/v9"
 	"github.com/labstack/echo"
@@ -137,4 +138,67 @@ func (psqlUL *psqlUpdateLimitsRepository) GetLimitUpdate(c echo.Context, refId s
 	}
 
 	return limitUpdt, nil
+}
+
+func (psqlUL *psqlUpdateLimitsRepository) GetsertGtePayment(c echo.Context, pl models.PayloadCoreGtePayment) (models.GtePayment, error) {
+	gtePayment := models.GtePayment{}
+	acc, err := psqlUL.GetAccountBySavingAccount(c, pl.SavingAccount)
+
+	if err != nil {
+		return gtePayment, err
+	}
+
+	err = psqlUL.DBpg.Model(&gtePayment).
+		Where("trx_id = ?", pl.TrxId).
+		Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return gtePayment, err
+	}
+
+	gtePayment.Account = acc
+	// if the trx id existed with no errors
+	if gtePayment.ID != 0 && (!gtePayment.BriUpdated || !gtePayment.PdsNotified) {
+		return gtePayment, nil
+	}
+
+	// if the trx id existed but there are still errors
+	if gtePayment.ID != 0 {
+		return gtePayment, models.ErrGtePaymenTrxIdExist
+	}
+
+	goldAmt, _ := strconv.ParseFloat(pl.AvailableGram, 64)
+	gtePayment = models.GtePayment{
+		AccountId:  acc.ID,
+		TrxId:      pl.TrxId,
+		GoldAmount: goldAmt,
+		TrxAmount:  pl.NominalTransaction,
+		CreatedAt:  models.NowDbpg(),
+	}
+
+	err = psqlUL.DBpg.Insert(&gtePayment)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return gtePayment, err
+	}
+
+	return gtePayment, nil
+}
+
+func (psqlUL *psqlUpdateLimitsRepository) UpdateGtePayment(c echo.Context, gtePayment models.GtePayment, cols []string) error {
+	gtePayment.UpdatedAt = models.NowDbpg()
+	cols = append(cols, "updated_at")
+	_, err := psqlUL.DBpg.Model(&gtePayment).Column(cols...).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
 }

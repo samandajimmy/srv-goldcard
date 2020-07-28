@@ -314,6 +314,10 @@ func (pdsNotif *PdsNotification) GtePayment(acc Account, pcgp PayloadCoreGtePaym
 			Value: trxTime,
 		},
 		{
+			Key:   "Referensi",
+			Value: pcgp.TrxId,
+		},
+		{
 			Key:   "Pembayaran",
 			Value: ac.FormatMoney(pcgp.NominalTransaction),
 		},

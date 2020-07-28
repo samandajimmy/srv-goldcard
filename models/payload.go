@@ -313,6 +313,7 @@ type PayloadCoreGtePayment struct {
 	SavingAccount      string `json:"savingAccount" validate:"required"`
 	AvailableGram      string `json:"availableGram" validate:"required"`
 	NominalTransaction int64  `json:"nominalTransaction" validate:"required"`
+	TrxId              string `json:"trxId" validate:"required"`
 }
 
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI
