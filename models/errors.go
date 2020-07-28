@@ -163,7 +163,7 @@ var (
 	ErrDecreasedSTLDesc = errors.New("Harga emas turun cukup tinggi sejak kamu mengajukan kartu emas. Top Up Tabungan Emas kamu untuk melanjutkan proses aktivasi.")
 
 	// ErrDecreasedSTLDesc to store the description of get decreasing STL then open error message
-	ErrDecreasedSTLOpenDesc = "Harga emas turun cukup tinggi sejak kamu mengajukan kartu emas. Saldo tabungan emas kamu akan diambil %f gram untuk melanjutkan proses aktivasi."
+	ErrDecreasedSTLOpenDesc = "Harga emas turun cukup tinggi sejak kamu mengajukan kartu emas. Saldo tabungan emas kamu akan diambil %.4f gram untuk melanjutkan proses aktivasi."
 
 	// ErrInsertTransactions to store get failed when insert data to table transactions
 	ErrInsertTransactions = errors.New("Gagal saat memasukan data transaksi")
