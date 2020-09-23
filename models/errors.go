@@ -94,7 +94,7 @@ var (
 	ErrUpdateBrixkey = errors.New("Terjadi kesalahan saat update brixkey")
 
 	// ErrUpdateBrixkey to store update brixkey error message
-	ErrGetAccByBrixkey = errors.New("Brixkey tidak di temukan")
+	ErrGetAccByBrixkey = errors.New("Brixkey tidak di temukan atau akun kartu emas tidak aktif")
 
 	// ErrUpdateAppDocID to store update application document ID error message
 	ErrUpdateAppDocID = errors.New("Terjadi kesalahan saat update document id")

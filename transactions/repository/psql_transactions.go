@@ -25,7 +25,7 @@ func NewPsqlTransactionsRepository(Conn *sql.DB, DBpg *pg.DB) transactions.Repos
 func (PSQLTrx *psqlTransactionsRepository) GetAccountByBrixKey(c echo.Context, brixkey string) (models.Account, error) {
 	acc := models.Account{}
 	err := PSQLTrx.DBpg.Model(&acc).Relation("Application").Relation("PersonalInformation").
-		Relation("Card").Where("brixkey = ?", brixkey).Limit(1).Select()
+		Relation("Card").Where("Account.brixkey = ?", brixkey).Where("Account.status = ?", models.AccStatusActive).Limit(1).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
