@@ -1,0 +1,2 @@
+ALTER TABLE applications
+DROP COLUMN saving_account_opening_date;

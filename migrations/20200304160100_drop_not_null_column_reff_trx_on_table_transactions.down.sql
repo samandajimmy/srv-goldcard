@@ -1,0 +1,2 @@
+ALTER TABLE transactions
+ALTER COLUMN ref_trx SET NOT NULL;

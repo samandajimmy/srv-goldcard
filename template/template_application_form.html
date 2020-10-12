@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Form Aplikasi Kartu Kredit BRI</title>
+    <style>
+        .text-white {
+            color: white;
+            font-size: 16px;
+        }
+
+        .text-red {
+            color: red;
+        }
+
+        p {
+            margin-top: 5px;
+            margin-bottom: 5px;
+            padding: 2px;
+            padding-left: 10px;
+            font-size: 12px;
+        }
+
+        td:first-child {
+            padding-left: 10px;
+            width: 400px;
+
+        }
+
+        td {
+            vertical-align: top;
+        }
+
+        table,
+        li {
+            font-size: 12px;
+        }
+
+        ol {
+            margin: 0px;
+        }
+
+        body {
+            margin: 10px;
+            padding: 0;
+            font-family: sans-serif;
+            font-size: 160%;
+        }
+
+        img {
+            zoom: 0.5;
+        }
+
+        .bri-background {
+            background-color: #34ADFF;
+            background-image: -webkit-linear-gradient(150deg, #F25C19 15%, #1D4E9E 10%);
+        }
+    </style>
+</head>
+
+
+<body>
+    <div align="right">
+        <img src="data:image/png;base64,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">
+    </div>
+
+    <!-- <h1 class="two">This is a Heading</h1> -->
+    <p class="bri-background text-white">FORM APLIKASI</p>
+    <p>Mohon diisi dengan tinta hitam dan huruf kapital</p>
+
+    <p class="bri-background text-white">JENIS KARTU KREDIT</p>
+    <p>Kartu Emas</p>
+
+    <p class="bri-background text-white">JENIS NASABAH</p>
+    <p>Kartu Emas</p>
+
+    <p class="bri-background text-white">DATA PRIBADI</p>
+    <table>
+        <tbody>
+            <tr>
+                <td>Nama lengkap (sesuai KTP/Passport)</td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.FirstName}} {{.Account.PersonalInformation.LastName}}</td>
+            </tr>
+            <tr>
+                <td>Nama yang dikehendaki pada kartu</td>
+                <td>:</td>
+                <td>{{.Account.Card.CardName}}</td>
+            </tr>
+            <tr>
+                <td>Tempat, Tanggal Lahir (tgl / bln / thn)</td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.BirthPlace}}, {{.Account.PersonalInformation.BirthDate}}</td>
+            </tr>
+            <tr>
+                <td>Nomor KTP / Passport</td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.Nik}}</td>
+            </tr>
+            <tr>
+                <td>NPWP <span class="text-red">(Wajib Diisi)</span></td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.Npwp}}</td>
+            </tr>
+            <tr>
+                <td>Email <span class="text-red">(Wajib Diisi)</span></td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.Email}}</td>
+            </tr>
+            <tr>
+                <td>Jenis Kelamin</td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.Sex}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Tempat Tinggal Baris 1</td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.AddressLine1}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Tempat Tinggal Baris 2</td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.AddressLine2}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Tempat Tinggal Baris 3</td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.AddressLine3}}</td>
+            </tr>
+            <tr>
+                <td>Kota Tempat Tinggal</td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.AddressCity}}</td>
+            </tr>
+            <tr>
+                <td>Kode Pos</td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.Zipcode}}</td>
+            </tr>
+            <tr>
+                <td>Status Tempat Tinggal</td>
+                <td>:</td>
+                <td>{{.TextHomeStatus}}</td>
+            </tr>
+            <tr>
+                <td>Lama Menempati</td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.StayedSince}}</td>
+            </tr>
+            <tr>
+                <td>Pendidikan Terakhir</td>
+                <td>:</td>
+                <td>{{.TextEducation}}</td>
+            </tr>
+            <tr>
+                <td>Status Pernikahan</td>
+                <td>:</td>
+                <td>{{.TextMaritalStatus}}</td>
+            </tr>
+            <tr>
+                <td>Jumlah Tanggungan</td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.Child}}</td>
+            </tr>
+            <tr>
+                <td>Nomor Telepon Rumah <span class="text-red">(Wajib Diisi)</span></td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.HomePhoneArea}} {{.Account.PersonalInformation.HomePhoneNumber}}</td>
+            </tr>
+            <tr>
+                <td>Nomor Handphone <span class="text-red">(Wajib Diisi)</span></td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.HandPhoneNumber}}</td>
+            </tr>
+            <tr>
+                <td>Nama Gadis Ibu Kandung <span class="text-red">(Wajib Diisi)</span></td>
+                <td>:</td>
+                <td>{{.Account.PersonalInformation.MotherName}}</td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <p class="bri-background text-white">DATA PEKERJAAN</p>
+    <table>
+        <tbody>
+            <tr>
+                <td>Kategori Pekerjaan</td>
+                <td>:</td>
+                <td>{{.TextJobCategory}}</td>
+            </tr>
+            <tr>
+                <td>Industri</td>
+                <td>:</td>
+                <td>{{.TextJobBidangUsaha}}</td>
+            </tr>
+            <tr>
+                <td>Nama Perusahaan/Tempat Bekerja <span class="text-red">(Wajib Diisi)</span></td>
+                <td>:</td>
+                <td>{{.Account.Occupation.Company}}</td>
+            </tr>
+            <tr>
+                <td>Jumlah Karyawan</td>
+                <td>:</td>
+                <td>{{.Account.Occupation.TotalEmployee}}</td>
+            </tr>
+            <tr>
+                <td>Jabatan</td>
+                <td>:</td>
+                <td>{{.Account.Occupation.JobTitle}}</td>
+            </tr>
+            <tr>
+                <td>Lama Bekerja</td>
+                <td>:</td>
+                <td>{{.Account.Occupation.WorkSince}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Kantor Baris 1</td>
+                <td>:</td>
+                <td>{{.Account.Occupation.OfficeAddress1}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Kantor Baris 2</td>
+                <td>:</td>
+                <td>{{.Account.Occupation.OfficeAddress2}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Kantor Baris 3</td>
+                <td>:</td>
+                <td>{{.Account.Occupation.OfficeAddress3}}</td>
+            </tr>
+            <tr>
+                <td>Kota Alamat Kantor</td>
+                <td>:</td>
+                <td>{{.Account.Occupation.OfficeCity}}</td>
+            </tr>
+            <tr>
+                <td>Kode Pos Alamat Kantor</td>
+                <td>:</td>
+                <td>{{.Account.Occupation.OfficeZipcode}}</td>
+            </tr>
+            <tr>
+                <td>Nomor Telepon Kantor</td>
+                <td>:</td>
+                <td>{{.Account.Occupation.OfficePhone}}</td>
+            </tr>
+            <tr>
+                <td>Penghasilan / Bulan</td>
+                <td>:</td>
+                <td>{{.Account.Occupation.Income}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Pengiriman dan Penagihan Kartu Baris 1</td>
+                <td>:</td>
+                <td>{{.Account.Correspondence.AddressLine1}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Pengiriman dan Penagihan Kartu Baris 2</td>
+                <td>:</td>
+                <td>{{.Account.Correspondence.AddressLine2}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Pengiriman dan Penagihan Kartu Baris 3</td>
+                <td>:</td>
+                <td>{{.Account.Correspondence.AddressLine3}}</td>
+            </tr>
+
+        </tbody>
+    </table>
+
+    <p class="bri-background text-white">KELUARGA TERDEKAT YANG DAPAT DIHUBUNGI</p>
+    <table>
+        <tbody>
+            <tr>
+                <td>Nama Emergency Contact <span class="text-red">(Wajib Diisi)</span></td>
+                <td>:</td>
+                <td>{{.Account.EmergencyContact.Name}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Emergency Contact Baris 1</td>
+                <td>:</td>
+                <td>{{.Account.EmergencyContact.AddressLine1}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Emergency Contact Baris 2</td>
+                <td>:</td>
+                <td>{{.Account.EmergencyContact.AddressLine2}}</td>
+            </tr>
+            <tr>
+                <td>Alamat Emergency Contact Baris 3</td>
+                <td>:</td>
+                <td>{{.Account.EmergencyContact.AddressLine3}}</td>
+            </tr>
+            <tr>
+                <td>Kota Alamat Emergency Contact</td>
+                <td>:</td>
+                <td>{{.Account.EmergencyContact.AddressCity}}</td>
+            </tr>
+            <tr>
+                <td>Kode Pos Alamat Emergency Contact</td>
+                <td>:</td>
+                <td>{{.Account.EmergencyContact.Zipcode}}</td>
+            </tr>
+            <tr>
+                <td>Hubungan dengan Emergency Contact</td>
+                <td>:</td>
+                <td>{{.TextRelation}}</td>
+            </tr>
+            <tr>
+                <td>No. Telepon / Handphone Emergency Contact</td>
+                <td>:</td>
+                <td>{{.Account.EmergencyContact.PhoneNumber}}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p class="bri-background text-white">DOKUMEN YANG TELAH DIUPLOAD</p>
+    <table>
+        <tbody>
+            <tr>
+                <td>KTP</td>
+                <td>:</td>
+                <td>{{.FileKtp}}</td>
+            </tr>
+            <tr>
+                <td>Foto Diri</td>
+                <td>:</td>
+                <td>{{.FileSelfie}}</td>
+            </tr>
+            <tr>
+                <td>NPWP</td>
+                <td>:</td>
+                <td>{{.FileNpwp}}</td>
+            </tr>
+            <tr>
+                <td>Bukti Pendapatan</td>
+                <td>:</td>
+                <td>{{.FileSlipTe}}</td>
+            </tr>
+            <tr>
+                <td>Form Aplikasi</td>
+                <td>:</td>
+                <td>{{.FileAppForm}}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <br>
+    <br>
+    <p class="bri-background text-white">FORM APLIKASI</p>
+    <p>Pengajuan dan Penerbitan Kartu Kredit "Kartu Emas" ini terafiliasi dengan PT Bank Rakyat Indonesia (Persero) Tbk
+    </p>
+    <p>Dengan ini, saya menyatakan tunduk pada syarat-syarat dan ketentuan dalam Buku Panduan Kartu Kredit BRI dan
+        ketentuan lainnya yang berlaku di
+        BRI Card Center bila permohonan ini disetujui. Seluruh data, informasi dan dokumen yang disampaikan adalah benar
+        adanya. Untuk kepentingan
+        penerbitan Kartu Kredit "Kartu Emas" ini saya memberi kuasa dan/persetujuan kepada BRI Card Center untuk:
+        <ol>
+            <li>Memproses aplikasi serta dokumen yang telah saya kirimkan berkaitan dengan pengajuan Kartu Kredit
+                "Kartu Emas" ini, selanjutnya
+                aplikasi akan menjadi hak milik BRI Card Center dan tidak dapat diminta kembali.
+            </li>
+            <li>Memperoleh dan memeriksa kebenaran data, dokumen dan/atau informasi yang saya berikan dari pihak
+                manapun termasuk dari Regulator
+                berkaitan dengan pengajuan dan penerbitan Kartu Kredit BRI "Kartu Emas"
+            </li>
+            <li>Melakukan pemblokiran sementara terhadap Kartu Kredit BRI "Kartu Emas" dalam kaitannya dengan
+                pemenuhan kewajiban Saya sebagai
+                pemegang kartu dan/atau kepentingan investigasi sehubungan dengan terjadinya penyalahgunaan terhadap
+                kartu ini.
+            </li>
+            <li>Memblokir/mendebet/mencairkan Kartu, Giro, Deposito ataupun Tabungan Saya yang ada di BRI guna
+                menyelesaikan kewajiban Saya yang
+                timbul dari pengguna kartu (kartu utama maupun kartu tambahan), dengan mengesampingkan berlakunya
+                ketentuan pasal 1832 KUHPerdata.
+            </li>
+            <li>Menggunakan, memanfaatkan, dan menginformasikan data pribadi/informasi pemegang kartu kepada pihak
+                lain yang bekerjasama dengan BRI
+                Card Center dalam kaitannya dengan penyelenggaraan program-program komersial atau nonkomersial untuk
+                meningkatkan fitur, fasilitas, dan
+                /atau layanan kepada pemegang kartu, termasuk namun tidak terbatas pada data transaksi Kartu Kredit
+                saya di Pegadaian dan merchant
+                lain dengan Kartu Kredit BRI "Kartu Emas" kepada Pegadaian dan/atau afiliasinya.
+            </li>
+            <li>Menginformasikan kepada pemegang kartu mengenai produk, program dan kegiatan lainnya sehubungan
+                dengan peningkatan fitur, fasilitas dan
+                /atau layanan BRI Card Center kepada pemegang kartu melalui media tulisan (elektronik maupun
+                nonelektronik).
+            </li>
+            <li>Apabila saya dinyatakan lalai dalam melaksanakan kewajiban yang timbul dari penggunaan kartu, saya
+                bersedia secara sukarela untuk
+                menyerahkan harta kekayaan milik saya kepada BRI Card Center untuk mengkompensasikan, menjual, atau
+                mencairkan harta kekayaan
+                tersebut guna menyelesaikan seluruh kewajiban saya.
+            </li>
+            <li>Saya berhak mengajukan sanggahan terhadap transaksi yang ditagihkan kepada Saya, untuk mendapatkan
+                pembuktian kebenaran terhadap
+                transaksi tersebut. Apabila di kemudian hari transaksi yang saya sanggah dinyatakan terbukti sah
+                oleh BRI, BRI Card Center berhak untuk
+                mendebet rekening kartu kredit saya sejumlah tagihan transaksi yang saya sanggah.
+            </li>
+            <li>Bila kartu hilang/dicuri, saya sebagai pemegang kartu wajib segera menghubungi BRI Card Center untuk
+                mencegah penyalahgunaan kartu oleh
+                orang yang tidak berhak. Semua transaksi yang terjadi sebelum pelaporan tersebut menjadi tanggung
+                jawab saya sepenuhnya.
+            </li>
+            <li>Menginformasikan data - data transaksi atas penggunaan Kartu Kredit BRI "Kartu Emas" kepada
+                Pegadaian dan/ atau afiliasinya dalam
+                kaitannya dengan penyelenggaraan program-program komersial atau nonkomersial untuk meningkatkan
+                fitur, fasilitas, dan/atau layanan
+                kepada pemegang kartu.
+            </li>
+            <li>Bila aplikasi kartu kredit saya disetujui, saya bersedia menandatangani formulir persetujuan
+                pengajuan Kartu Kredit BRI "Kartu Emas" yang
+                dikirimkan bersamaan dengan fisik kartu kredit, yang merupakan satu-kesatuan dari form aplikasi
+                kartu kredit yang saya isi secara online
+                melalui aplikasi Pegadaian.
+            </li>
+        </ol>
+    </p>
+    <p class="bri-background text-white">RECORD</p>
+    <p>This document is submitted by nasabah atas nama {{.Account.PersonalInformation.FirstName}} {{.Account.PersonalInformation.LastName}} on {{.TimeStamp}}</p>
+</body>
+
+</html>
