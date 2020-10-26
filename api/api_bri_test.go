@@ -73,7 +73,7 @@ func TestNewBriAPI(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	bri, _ := api.NewBriAPI(c)
-	reqBody, _ := bri.Request("/v1/cobranding/register", echo.POST, body)
+	reqBody, _ := bri.Request("/register", echo.POST, body)
 	resp, _ := bri.Do(reqBody, &response)
 
 	fmt.Println(reqBody)
