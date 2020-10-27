@@ -288,16 +288,17 @@ type SlipTE struct {
 	SignatoryName   string  `json:"signatoryName"`
 	SignatoryNip    string  `json:"signatoryNip"`
 	GoldEffBalance  float64 `json:"goldEffBalance"`
+	OpeningDate     string  `json:"openingDate"`
 }
 
 // MappingApplicationForm a function to mapping application form BRI and slip te data
 func (af *ApplicationForm) MappingApplicationForm() error {
-	time := time.Now().UTC()
+	now := time.Now()
 	acc := af.Account
 	docs := af.Account.Application.Documents
 
-	af.TimeStamp = time.Format(DateTimeFormat)
-	af.Date = time.Format(DDMMYYYY)
+	af.TimeStamp = now.Format(DateTimeFormat)
+	af.Date = now.Format(DDMMYYYY)
 	af.TextHomeStatus = HomeStatusStr[acc.PersonalInformation.HomeStatus]
 	af.TextEducation = EducationStr[acc.PersonalInformation.Education]
 	af.TextMaritalStatus = MaritalStatusStr[acc.PersonalInformation.MaritalStatus]
@@ -342,17 +343,19 @@ func (af *ApplicationForm) MappingApplicationForm() error {
 
 // MappingSlipTe a function to mapping slip te data
 func (st *SlipTE) MappingSlipTe(params map[string]interface{}) error {
-	time := time.Now().UTC()
+	now := time.Now()
 	acc := st.Account
 	ac := accounting.Accounting{Symbol: "Rp ", Thousand: "."}
+	opDate, _ := time.Parse(DateTimeFormat, acc.Application.SavingAccountOpeningDate)
 
 	st.Account = acc
-	st.TimeStamp = time.Format(DateTimeFormat)
-	st.Date = time.Format(DDMMYYYY)
+	st.TimeStamp = now.Format(DateTimeFormat)
+	st.Date = now.Format(DMYSLASH)
 	st.SignatoryName = params["signatoryName"].(string)
 	st.SignatoryNip = params["signatoryNip"].(string)
 	st.CardLimitFormat = ac.FormatMoney(acc.Card.CardLimit)
 	st.GoldEffBalance = params["goldEffBalance"].(float64)
+	st.OpeningDate = opDate.Format(DMYSLASH)
 
 	// Set gold saving slip Base64
 	slipBase64, err := GenerateSlipTePDF(*st, SlipTeTemplatePath)
