@@ -123,7 +123,7 @@ func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc 
 		return err
 	}
 
-	_, err = stmt.Exec(acc.Application.SavingAccount, time.Now(), time.Now(), acc.ApplicationID)
+	_, err = stmt.Exec(acc.Application.SavingAccount, time.Now().Format(models.DateTimeFormatZone), time.Now(), acc.ApplicationID)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
