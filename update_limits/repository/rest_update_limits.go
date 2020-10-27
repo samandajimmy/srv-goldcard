@@ -65,7 +65,7 @@ func (rul *restUpdateLimits) BRIPostUpdateLimit(c echo.Context, acc models.Accou
 	}
 
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
-	errBRI := api.RetryableBriPost(c, "/v1/cobranding/limit/update", reqBRIBody.RequestData, &respBRI)
+	errBRI := api.RetryableBriPost(c, "/limit/update", reqBRIBody.RequestData, &respBRI)
 
 	// response code SD when try to attempt update limit to BRI more than one times in a day
 	if respBRI.ResponseCode == "SD" {

@@ -96,6 +96,8 @@ func NewBriAPI(c echo.Context) (APIbri, error) {
 // BriPost function to request BRI API with post method
 func BriPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
 	bri, err := NewBriAPI(c)
+	oldEndpoint := endpoint
+	endpoint = os.Getenv(`BRI_BASE_PATH`) + oldEndpoint
 
 	if err != nil {
 		return err
@@ -127,7 +129,7 @@ func BriPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
 			res.ResponseMessage})
 	}
 
-	if res.ResponseCode != "00" && !isWhitelisted(endpoint) {
+	if res.ResponseCode != "00" && !isWhitelisted(oldEndpoint) {
 		return models.DynamicErr(models.ErrBriAPIRequest, []interface{}{res.ResponseCode,
 			res.ResponseMessage})
 	}

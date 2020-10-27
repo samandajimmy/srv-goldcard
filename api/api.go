@@ -30,7 +30,7 @@ var (
 	// APIRCSuccess represents response code success
 	APIRCSuccess = "00"
 
-	whitelistedEndpoints = []string{"/v1/cobranding/deduplication", "/goldcard/inquiry"}
+	whitelistedEndpoints = []string{"/deduplication", "/goldcard/inquiry"}
 )
 
 // NewAPI for create new client request

@@ -50,7 +50,7 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 
 	resp := api.BriResponse{}
 	reqBody := api.BriRequest{RequestData: pl}
-	err = api.RetryableBriPost(c, "/v1/cobranding/register", reqBody, &resp)
+	err = api.RetryableBriPost(c, "/register", reqBody, &resp)
 
 	if err != nil {
 		return err
@@ -102,7 +102,7 @@ func (reg *registrationsUseCase) UploadAppDoc(c echo.Context, brixkey string, do
 
 	resp := api.BriResponse{}
 	reqBody := api.BriRequest{RequestData: briReq}
-	err := api.RetryableBriPost(c, "/v1/cobranding/document", reqBody, &resp)
+	err := api.RetryableBriPost(c, "/document", reqBody, &resp)
 
 	if err != nil {
 		return err
