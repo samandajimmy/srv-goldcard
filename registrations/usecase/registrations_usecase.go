@@ -129,7 +129,7 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 		"birthDate": pl.BirthDate,
 	}
 	reqBody := api.BriRequest{RequestData: requestData}
-	err := api.RetryableBriPost(c, "/v1/cobranding/deduplication", reqBody, &resp)
+	err := api.RetryableBriPost(c, "/deduplication", reqBody, &resp)
 
 	if err != nil {
 		return err

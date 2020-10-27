@@ -113,7 +113,7 @@ func (regis *psqlRegistrationsRepository) PostAddress(c echo.Context, acc models
 }
 
 func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc models.Account) error {
-	query := `UPDATE applications set saving_account = $1,saving_account_opening_date = $2, updated_at = $3
+	query := `UPDATE applications set saving_account = $1, saving_account_opening_date = $2, updated_at = $3
 		WHERE id = $4;`
 	stmt, err := regis.Conn.Prepare(query)
 
@@ -123,7 +123,7 @@ func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc 
 		return err
 	}
 
-	_, err = stmt.Exec(acc.Application.SavingAccount, time.Now(), time.Now(), acc.ApplicationID)
+	_, err = stmt.Exec(acc.Application.SavingAccount, time.Now().Format(models.DateTimeFormatZone), time.Now(), acc.ApplicationID)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)

@@ -22,9 +22,9 @@ const (
 	// cardStatusActive to store a value of card status active
 	cardStatusActive string = "active"
 	// RequestPathCardBlock to store path BRI endpoint for block card
-	RequestPathCardBlock string = "/v1/cobranding/card/block"
+	RequestPathCardBlock string = "/card/block"
 	// RequestPathCardStolen to store path BRI endpoint for stolen card
-	RequestPathCardStolen string = "/v1/cobranding/card/stolen"
+	RequestPathCardStolen string = "/card/stolen"
 	// ReasonCodeStolen reason code stolen
 	ReasonCodeStolen string = "stolen"
 	// CardStatusInactive card status inactive
