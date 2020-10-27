@@ -42,6 +42,9 @@ var (
 	// DDMMYYYY to strore a date format for DDMMYYYY
 	DDMMYYYY = "02-01-2006"
 
+	// DMYSLASH to strore a date format for DMYSLASH
+	DMYSLASH = "02/01/2006"
+
 	// DateFormatRegex to store a regex of dd/mm/yyyy date format
 	DateFormatRegex = "(^\\d{4}\\-(0[1-9]|1[012])\\-(0[1-9]|[12][0-9]|3[01])$)"
 
