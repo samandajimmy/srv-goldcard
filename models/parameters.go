@@ -33,9 +33,6 @@ var (
 	// DateTimeFormatZone to store a date time with zone format of timestamp
 	DateTimeFormatZone = "2006-01-02T15:04:05.000Z07:00"
 
-	// DateTimeZoneSpaceFormat to store a date time space with zone format of timestamp
-	DateTimeZoneSpaceFormat = "2006-01-02 15:04:05.000000-07:00"
-
 	// DateTimeFormatMillisecond to store a date time format of timestamp to millisecond
 	DateTimeFormatMillisecond = "2006-01-02 15:04:05.000"
 
