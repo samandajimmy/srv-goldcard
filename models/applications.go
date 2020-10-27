@@ -346,7 +346,7 @@ func (st *SlipTE) MappingSlipTe(params map[string]interface{}) error {
 	now := time.Now()
 	acc := st.Account
 	ac := accounting.Accounting{Symbol: "Rp ", Thousand: "."}
-	opDate, _ := time.Parse(DateTimeFormat, acc.Application.SavingAccountOpeningDate)
+	opDate, _ := time.Parse(DateTimeZoneSpaceFormat, acc.Application.SavingAccountOpeningDate)
 
 	st.Account = acc
 	st.TimeStamp = now.Format(DateTimeFormat)
