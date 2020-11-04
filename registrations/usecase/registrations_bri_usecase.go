@@ -137,7 +137,10 @@ func (reg *registrationsUseCase) upsertDocument(c echo.Context, app models.Appli
 	return nil
 }
 
-func (reg *registrationsUseCase) generateOtherDocs(c echo.Context, acc models.Account) error {
+func (reg *registrationsUseCase) generateOtherDocs(c echo.Context, acc *models.Account) error {
+	// Create local memory acc field
+	localAcc := *acc
+
 	// Get Document (ktp, npwp, selfie, slip_te, and app_form)
 	docs, err := reg.regRepo.GetDocumentByApplicationId(acc.ApplicationID, "")
 
@@ -147,17 +150,19 @@ func (reg *registrationsUseCase) generateOtherDocs(c echo.Context, acc models.Ac
 
 	acc.Application.Documents = docs
 	// Generate Application Form BRI Document
-	err = reg.GenerateApplicationFormDocument(c, &acc)
+	err = reg.GenerateApplicationFormDocument(c, &localAcc)
 
 	if err != nil {
 		return err
 	}
 
 	// Generate Slip TE Document
-	err = reg.GenerateSlipTEDocument(c, acc)
+	err = reg.GenerateSlipTEDocument(c, &localAcc)
 
 	if err != nil {
 		return err
 	}
+
+	*acc = localAcc
 	return nil
 }

@@ -284,7 +284,7 @@ func (upLimUC *updateLimitUseCase) PostUpdateLimit(c echo.Context, pl models.Pay
 	}
 
 	// insert updated/latest slip TE and npwp
-	err = upLimUC.rUS.GenerateSlipTEDocument(c, acc)
+	err = upLimUC.rUS.GenerateSlipTEDocument(c, &acc)
 
 	if err != nil {
 		errors.SetTitle(models.ErrGenerateSlipTE.Error())

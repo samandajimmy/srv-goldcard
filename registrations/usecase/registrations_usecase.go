@@ -317,7 +317,7 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	}
 
 	// generate application document and slip te
-	err = reg.generateOtherDocs(c, acc)
+	err = reg.generateOtherDocs(c, &acc)
 
 	if err != nil {
 		return err
@@ -472,7 +472,7 @@ func (reg *registrationsUseCase) GenerateApplicationFormDocument(c echo.Context,
 }
 
 // Function to Generate Slip TE
-func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc models.Account) error {
+func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc *models.Account) error {
 	if len(acc.Application.Documents) == 0 {
 		return models.ErrMappingData
 	}
@@ -510,7 +510,7 @@ func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc mode
 
 	// Mapping Application Form Data and Generate PDF
 	slipTeData := models.SlipTE{}
-	slipTeData.Account = acc
+	slipTeData.Account = *acc
 
 	paramsSlipTe := map[string]interface{}{
 		"signatoryName":  signatoryName,
@@ -532,6 +532,8 @@ func (reg *registrationsUseCase) GenerateSlipTEDocument(c echo.Context, acc mode
 		logger.Make(c, nil).Debug(err)
 		return err
 	}
+
+	*acc = slipTeData.Account
 
 	return nil
 }
