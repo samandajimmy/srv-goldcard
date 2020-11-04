@@ -146,6 +146,14 @@ type Correspondence struct {
 	UpdatedAt    time.Time `json:"updatedAt"`
 }
 
+// CorrespondenceAddress is a struct to store correspondence adress data
+type CorrespondenceAddress struct {
+	AddressLine1 string `json:"addressLine1" pg:"address_line_1"`
+	AddressLine2 string `json:"addressLine2" pg:"address_line_2"`
+	AddressLine3 string `json:"addressLine3" pg:"address_line_3"`
+	AddressCity  string `json:"addressCity"`
+}
+
 // EmergencyContact is a struct to store emergencyContact data
 type EmergencyContact struct {
 	ID           int64     `json:"id"`

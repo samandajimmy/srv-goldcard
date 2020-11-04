@@ -75,6 +75,16 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAd
 	return nil
 }
 
+func (reg *registrationsUseCase) GetAddress(c echo.Context, pl models.PayloadAppNumber) (models.CorrespondenceAddress, error) {
+	corr, err := reg.regRepo.GetCorrespondenceAddress(c, pl.ApplicationNumber)
+
+	if err != nil {
+		return corr, err
+	}
+
+	return corr, nil
+}
+
 func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models.PayloadRegistration) (models.RespRegistration, error) {
 	var respRegNil models.RespRegistration
 	acc, err := reg.CheckApplication(c, payload)

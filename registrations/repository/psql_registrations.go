@@ -205,6 +205,29 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 	return plRegister, nil
 }
 
+func (regis *psqlRegistrationsRepository) GetCorrespondenceAddress(c echo.Context, appNumber string) (models.CorrespondenceAddress, error) {
+	var corrAddress models.CorrespondenceAddress
+
+	query := `select
+		COALESCE(corr.address_line_1, pi.address_line_1) address_line_1,
+		COALESCE(corr.address_line_2, pi.address_line_2) address_line_2,
+		COALESCE(corr.address_line_3, pi.address_line_3) address_line_3,
+		COALESCE(corr.address_city, pi.address_city) address_city
+		from accounts acc
+		left join applications app on acc.application_id = app.id
+		left join correspondences corr on acc.correspondence_id = corr.id
+		left join personal_informations pi on acc.personal_information_id = pi.id
+		where app.application_number = ?;`
+
+	_, err := regis.DBpg.QueryOne(&corrAddress, query, appNumber)
+
+	if err != nil {
+		return corrAddress, err
+	}
+
+	return corrAddress, nil
+}
+
 func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Context, acc models.Account) error {
 	var nilFilters []string
 	pi := acc.PersonalInformation

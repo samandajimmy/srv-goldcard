@@ -25,6 +25,7 @@ func NewRegistrationsHandler(
 	// End Point For External
 	echoGroup.API.POST("/registrations", handler.Registrations)
 	echoGroup.API.POST("/registrations/address", handler.PostAddress)
+	echoGroup.API.GET("/registrations/address", handler.GetAddress)
 	echoGroup.API.POST("/registrations/saving-account", handler.PostSavingAccount)
 	echoGroup.API.POST("/registrations/personal-informations", handler.personalInfomations)
 	echoGroup.API.POST("/registrations/card-limit", handler.cardLimit)
@@ -98,6 +99,39 @@ func (reg *RegistrationsHandler) PostAddress(c echo.Context) error {
 	}
 
 	reg.response.SetResponse("", &reg.respErrors)
+
+	return reg.response.Body(c, err)
+}
+
+// GetAddress a handler to get Address in table personal_informations
+func (reg *RegistrationsHandler) GetAddress(c echo.Context) error {
+	var plApp models.PayloadAppNumber
+	reg.response, reg.respErrors = models.NewResponse()
+
+	if err := c.Bind(&plApp); err != nil {
+		reg.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	if err := c.Validate(plApp); err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	responseData, err := reg.registrationsUseCase.GetAddress(c, plApp)
+
+	if err != nil {
+		reg.respErrors.SetTitle(err.Error())
+		reg.response.SetResponse("", &reg.respErrors)
+
+		return reg.response.Body(c, err)
+	}
+
+	reg.response.SetResponse(responseData, &reg.respErrors)
 
 	return reg.response.Body(c, err)
 }
