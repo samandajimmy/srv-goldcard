@@ -91,7 +91,7 @@ func (ph *processHandUseCase) UpdateErrorStatus(c echo.Context, acc models.Accou
 
 	col := []string{"updated_at", "error"}
 
-	ps.Error = false
+	ps.Error = "false"
 	err = ph.phRepo.UpdateProcessHandler(ps, col)
 
 	if err != nil {
