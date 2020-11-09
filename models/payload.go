@@ -318,9 +318,9 @@ type PayloadCoreGtePayment struct {
 
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI
 func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
-	plBRIReg.FirstName = StringNameFormatter(plBRIReg.FirstName, 15)
-	plBRIReg.LastName = StringNameFormatter(plBRIReg.LastName, 14)
-	plBRIReg.CardName = StringNameFormatter(plBRIReg.CardName, 19)
+	plBRIReg.FirstName = StringNameFormatter(plBRIReg.FirstName, 15, false)
+	plBRIReg.LastName = StringNameFormatter(plBRIReg.LastName, 14, false)
+	plBRIReg.CardName = StringNameFormatter(plBRIReg.CardName, 19, true)
 	plBRIReg.Nik = StringCutter(plBRIReg.Nik, 30)
 	plBRIReg.Npwp = StringCutter(plBRIReg.Npwp, 15)
 	plBRIReg.BirthPlace = StringCutter(plBRIReg.BirthPlace, 20)
@@ -330,7 +330,7 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.AddressLine3 = StringCutter(plBRIReg.AddressLine3, 30)
 	plBRIReg.AddressCity = StringCutter(plBRIReg.AddressCity, 28)
 	plBRIReg.Nationality = StringCutter(plBRIReg.Nationality, 3)
-	plBRIReg.MotherName = StringNameFormatter(plBRIReg.MotherName, 30)
+	plBRIReg.MotherName = StringNameFormatter(plBRIReg.MotherName, 30, true)
 	plBRIReg.HandPhoneNumber = StringCutter(plBRIReg.HandPhoneNumber, 13)
 	plBRIReg.HomePhoneArea = StringCutter(plBRIReg.HomePhoneArea, 5)
 	plBRIReg.HomePhoneNumber = StringCutter(plBRIReg.HomePhoneNumber, 10)
@@ -342,7 +342,7 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.OfficeAddress3 = StringCutter(plBRIReg.OfficeAddress3, 30)
 	plBRIReg.OfficeCity = StringCutter(plBRIReg.OfficeCity, 30)
 	plBRIReg.OfficePhone = StringCutter(plBRIReg.OfficePhone, 13)
-	plBRIReg.EmergencyName = StringNameFormatter(plBRIReg.EmergencyName, 30)
+	plBRIReg.EmergencyName = StringNameFormatter(plBRIReg.EmergencyName, 30, true)
 	plBRIReg.EmergencyAddress1 = StringCutter(plBRIReg.EmergencyAddress1, 100)
 	plBRIReg.EmergencyAddress2 = StringCutter(plBRIReg.EmergencyAddress2, 100)
 	plBRIReg.EmergencyAddress3 = StringCutter(plBRIReg.EmergencyAddress3, 100)

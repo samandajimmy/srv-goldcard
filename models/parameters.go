@@ -160,7 +160,7 @@ func StringCutter(sentence string, length int) string {
 
 // StringNameFormatter is a function to limit the size of string according to given length
 // by shorten the given string
-func StringNameFormatter(name string, length int) string {
+func StringNameFormatter(name string, length int, withSpace bool) string {
 	var result string
 	arrStr := strings.Split(name, " ")
 	arrLen := len(arrStr)
@@ -183,8 +183,7 @@ func StringNameFormatter(name string, length int) string {
 
 	// init string result
 	result = name
-
-	for _, word := range arrStr {
+	for i := arrLen - 1; i >= 0; i-- {
 		// break if length of result is enough
 		// why using "<", because we will add a space after the loop
 		if len(result) < length {
@@ -192,28 +191,28 @@ func StringNameFormatter(name string, length int) string {
 		}
 
 		// take first char of word and replace itself
-		result = strings.ReplaceAll(result, word+" ", strings.ToUpper(word[:1])+".")
+		if withSpace {
+			result = strings.ReplaceAll(result, arrStr[i], strings.ToUpper(arrStr[i][:1])+".")
+			continue
+		}
+
+		result = strings.ReplaceAll(result, " "+arrStr[i], "."+strings.ToUpper(arrStr[i][:1]))
 	}
 
 	for i := arrLen - 1; i > 0; i-- {
 		// put the prev word back if its still too long
 		// why using ">=", because we will add a space after the loop
-		if len(result) >= length {
-			result = strings.ReplaceAll(result, arrStr[i-1][:1]+"."+arrStr[i], arrStr[i-1])
+		if len(result) > length {
+			result = strings.ReplaceAll(result, "."+arrStr[i][:1], "")
 		}
 	}
-
-	// get last dot "." index
-	lastDotAfterIdx := strings.LastIndex(result, ".") + 1
-	// add space
-	result = result[:lastDotAfterIdx] + " " + result[lastDotAfterIdx:]
 
 	// the last attempt if its still not enough hard cut it out
 	if len(result) > length {
 		result = result[:length]
 	}
 
-	return result
+	return strings.TrimSpace(result)
 }
 
 // GetInterfaceValue to get interface value dynamicly
