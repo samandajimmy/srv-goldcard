@@ -20,7 +20,7 @@ type ProcessStatus struct {
 	TblName     string    `json:"tblName"`
 	Reason      string    `json:"reason"`
 	ErrorCount  int64     `json:"errorCount"`
-	Error       bool      `json:"error"`
+	Error       string    `json:"error"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 }
@@ -32,7 +32,7 @@ func (ps *ProcessStatus) MapInsertProcessStatus(processType, tableName string, p
 	ps.ProcessID = processID
 	ps.ProcessType = processType
 	ps.TblName = tableName
-	ps.Error = true
+	ps.Error = "true"
 
 	return nil
 }
