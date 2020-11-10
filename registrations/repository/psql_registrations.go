@@ -84,24 +84,51 @@ func (regis *psqlRegistrationsRepository) GetBankIDByCode(c echo.Context, bankCo
 	return bankID, nil
 }
 
-func (regis *psqlRegistrationsRepository) PostAddress(c echo.Context, acc models.Account) error {
-	var nilFilters []string
-	corr := acc.Correspondence
+func (regis *psqlRegistrationsRepository) PostAddress(c echo.Context, acc models.Account, addrData models.AddressData) error {
+	pi := acc.PersonalInformation
+	occ := acc.Occupation
 
-	stmts := []*gcdb.PipelineStmt{
-		gcdb.NewPipelineStmt(`INSERT INTO correspondences (address_line_1, address_line_2,
-			address_line_3, address_city, zipcode, created_at)
-			VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`,
-			[]string{"corrID"}, corr.AddressLine1, corr.AddressLine2, corr.AddressLine3,
-			corr.AddressCity, corr.Zipcode, time.Now()),
-		gcdb.NewPipelineStmt(`UPDATE accounts set correspondence_id = {corrID}, updated_at = $1
-			WHERE id = $2`,
-			nilFilters, time.Now(), acc.ID),
+	// update card deliver
+	_, err := regis.DBpg.Model(&acc).Column([]string{"card_deliver"}...).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
 	}
 
-	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
-		return gcdb.RunPipelineQueryRow(tx, stmts...)
-	})
+	// updata data address based on card deliver status
+	if acc.CardDeliver == models.BriCardDeliverHome {
+		pi.AddressCity = addrData.City
+		pi.AddressLine1 = addrData.AddressLine1
+		pi.AddressLine2 = addrData.AddressLine2
+		pi.AddressLine3 = addrData.AddressLine3
+		pi.Zipcode = addrData.Zipcode
+		pi.UpdatedAt = models.NowDbpg()
+		_, err := regis.DBpg.Model(&pi).
+			Column([]string{"address_city", "address_line_1", "address_line_2", "address_line_3",
+				"zipcode", "updated_at"}...).
+			WherePK().Update()
+
+		if err != nil {
+			logger.Make(c, nil).Debug(err)
+
+			return err
+		}
+
+		return nil
+	}
+
+	occ.OfficeCity = addrData.City
+	occ.OfficeAddress1 = addrData.AddressLine1
+	occ.OfficeAddress2 = addrData.AddressLine2
+	occ.OfficeAddress3 = addrData.AddressLine3
+	occ.OfficeZipcode = addrData.Zipcode
+	occ.UpdatedAt = models.NowDbpg()
+	_, err = regis.DBpg.Model(&occ).
+		Column([]string{"office_city", "office_address_1", "office_address_2", "office_address_3",
+			"office_zipcode", "updated_at"}...).
+		WherePK().Update()
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
@@ -138,7 +165,7 @@ func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, 
 	newAcc := models.Account{}
 	docs := []models.Document{}
 	err := regis.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
-		Relation("Card").Relation("Occupation").Relation("EmergencyContact").Relation("Correspondence").
+		Relation("Card").Relation("Occupation").Relation("EmergencyContact").
 		Where("application_number = ?", acc.Application.ApplicationNumber).Select()
 
 	if err != nil && err != pg.ErrNoRows {
@@ -179,15 +206,14 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 		ec.phone_number emergency_phone_number, ec.address_line_1 emergency_address_1,
 		ec.address_line_2 emergency_address_2, ec.address_line_3 emergency_address_3,
 		ec.address_city emergency_city, ec.zipcode emergency_zipcode,
-		COALESCE(corr.address_line_1, pi.address_line_1) address_line_1,
-		COALESCE(corr.address_line_2, pi.address_line_2) address_line_2,
-		COALESCE(corr.address_line_3, pi.address_line_3) address_line_3,
-		COALESCE(corr.address_city, pi.address_city) address_city,
-		COALESCE(corr.zipcode, pi.zipcode) zipcode
+		pi.address_line_1,
+		pi.address_line_2,
+		pi.address_line_3,
+		pi.address_city,
+		pi.zipcode
 		from accounts acc
 		left join applications app on acc.application_id = app.id
 		left join cards c on acc.card_id = c.id
-		left join correspondences corr on acc.correspondence_id = corr.id
 		left join emergency_contacts ec on acc.emergency_contact_id = ec.id
 		left join occupations o on acc.occupation_id = o.id
 		left join personal_informations pi on acc.personal_information_id = pi.id
@@ -203,29 +229,6 @@ func (regis *psqlRegistrationsRepository) GetAllRegData(c echo.Context, appNumbe
 	plRegister.SexString = ""
 
 	return plRegister, nil
-}
-
-func (regis *psqlRegistrationsRepository) GetCorrespondenceAddress(c echo.Context, appNumber string) (models.CorrespondenceAddress, error) {
-	var corrAddress models.CorrespondenceAddress
-
-	query := `select
-		COALESCE(corr.address_line_1, pi.address_line_1) address_line_1,
-		COALESCE(corr.address_line_2, pi.address_line_2) address_line_2,
-		COALESCE(corr.address_line_3, pi.address_line_3) address_line_3,
-		COALESCE(corr.address_city, pi.address_city) address_city
-		from accounts acc
-		left join applications app on acc.application_id = app.id
-		left join correspondences corr on acc.correspondence_id = corr.id
-		left join personal_informations pi on acc.personal_information_id = pi.id
-		where app.application_number = ?;`
-
-	_, err := regis.DBpg.QueryOne(&corrAddress, query, appNumber)
-
-	if err != nil {
-		return corrAddress, err
-	}
-
-	return corrAddress, nil
 }
 
 func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Context, acc models.Account) error {
@@ -319,27 +322,21 @@ func (regis *psqlRegistrationsRepository) GetZipcode(c echo.Context, addrData mo
 	return zipcode, nil
 }
 
-func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, acc models.Account) (string, string, error) {
-	var city string
-	zipcode := acc.Occupation.OfficeZipcode
+func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, zipcode string) (models.AddressData, error) {
+	addrData := models.AddressData{}
+	query := `SELECT city, province_name as province, sub_district, village FROM ref_postal_codes pc
+		left join ref_provinces p on pc.province_code = p.province_code WHERE pc.postal_code = ? LIMIT 1`
 
-	query := `SELECT city FROM ref_postal_codes pc
-		WHERE pc.postal_code = $1 LIMIT 1`
+	_, err := regis.DBpg.Query(&addrData, query, zipcode)
 
-	err := regis.Conn.QueryRow(query, acc.Occupation.OfficeZipcode).Scan(&city)
-
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil || (addrData == models.AddressData{}) {
 		logger.Make(c, nil).Debug(err)
 
-		return "", "", err
+		return addrData, err
 	}
 
-	if err == sql.ErrNoRows || acc.Occupation.OfficeZipcode == "" {
-		city = acc.PersonalInformation.AddressCity
-		zipcode = acc.PersonalInformation.Zipcode
-	}
-
-	return city, zipcode, nil
+	addrData.Zipcode = zipcode
+	return addrData, err
 }
 
 func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account, fnAfter func() error) error {

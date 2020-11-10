@@ -43,7 +43,6 @@ type Account struct {
 	PersonalInformationID int64               `json:"personalInformationId"`
 	OccupationID          int64               `json:"occupationId"`
 	EmergencyContactID    int64               `json:"emergencyContactId"`
-	CorrespondenceID      int64               `json:"correspondenceId"`
 	AccountNumber         string              `json:"accountNumber"`
 	CreatedAt             time.Time           `json:"createdAt"`
 	UpdatedAt             time.Time           `json:"updatedAt"`
@@ -53,11 +52,10 @@ type Account struct {
 	PersonalInformation   PersonalInformation `json:"personalInformation"`
 	Occupation            Occupation          `json:"occupation"`
 	EmergencyContact      EmergencyContact    `json:"emergencyContact"`
-	Correspondence        Correspondence      `json:"correspondence"`
 }
 
 // MappingRegistrationData a function to map all data registration
-func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalInformation) error {
+func (acc *Account) MappingRegistrationData(pl PayloadPersonalInformation, addrData AddressData) error {
 	acc.Card.CardName = pl.CardName
 
 	acc.PersonalInformation.FirstName = pl.FirstName
@@ -73,14 +71,17 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 	acc.PersonalInformation.MaritalStatus = pl.MaritalStatus
 	acc.PersonalInformation.MotherName = pl.MotherName
 	acc.PersonalInformation.HomeStatus = pl.HomeStatus
-	acc.PersonalInformation.AddressLine1 = pl.AddressLine1
-	acc.PersonalInformation.AddressLine2 = pl.AddressLine2
-	acc.PersonalInformation.AddressLine3 = pl.AddressLine3
 	acc.PersonalInformation.Zipcode = pl.Zipcode
 	acc.PersonalInformation.AddressCity = pl.AddressCity
 	acc.PersonalInformation.StayedSince = defStayedSince
 	acc.PersonalInformation.Child = defChildNumber
 	acc.PersonalInformation.RelativePhoneNumber = pl.RelativePhoneNumber
+
+	// set addressData
+	addrData = RemappAddress(addrData, 30)
+	acc.PersonalInformation.AddressLine1 = addrData.AddressLine1
+	acc.PersonalInformation.AddressLine2 = addrData.AddressLine2
+	acc.PersonalInformation.AddressLine3 = addrData.AddressLine3
 
 	if acc.PersonalInformation.HandPhoneNumber != "" {
 		acc.PersonalInformation.HomePhoneArea = pl.HomePhoneArea
@@ -99,16 +100,6 @@ func (acc *Account) MappingRegistrationData(c echo.Context, pl PayloadPersonalIn
 
 	// application documents
 	acc.Application.SetDocument(pl)
-
-	return nil
-}
-
-// MappingAddressData a function to map all data addresses
-func (acc *Account) MappingAddressData(c echo.Context, pl PayloadAddress) error {
-	acc.Correspondence.AddressLine1 = pl.AddressLine1
-	acc.Correspondence.AddressLine2 = pl.AddressLine2
-	acc.Correspondence.AddressLine3 = pl.AddressLine3
-	acc.Correspondence.AddressCity = pl.AddressCity
 
 	return nil
 }
@@ -134,26 +125,6 @@ type Bank struct {
 	CreatedAt   time.Time `json:"createdAt"`
 }
 
-// Correspondence is a struct to store correspondence data
-type Correspondence struct {
-	ID           int64     `json:"id"`
-	AddressLine1 string    `json:"addressLine1" pg:"address_line_1"`
-	AddressLine2 string    `json:"addressLine2" pg:"address_line_2"`
-	AddressLine3 string    `json:"addressLine3" pg:"address_line_3"`
-	AddressCity  string    `json:"addressCity"`
-	Zipcode      string    `json:"zipcode"`
-	CreatedAt    time.Time `json:"createdAt"`
-	UpdatedAt    time.Time `json:"updatedAt"`
-}
-
-// CorrespondenceAddress is a struct to store correspondence adress data
-type CorrespondenceAddress struct {
-	AddressLine1 string `json:"addressLine1" pg:"address_line_1"`
-	AddressLine2 string `json:"addressLine2" pg:"address_line_2"`
-	AddressLine3 string `json:"addressLine3" pg:"address_line_3"`
-	AddressCity  string `json:"addressCity"`
-}
-
 // EmergencyContact is a struct to store emergencyContact data
 type EmergencyContact struct {
 	ID           int64     `json:"id"`
@@ -172,8 +143,12 @@ type EmergencyContact struct {
 
 // AddressData is a struct to store address data
 type AddressData struct {
-	City        string `json:"city"`
-	Province    string `json:"province"`
-	Subdistrict string `json:"subdistrict"`
-	Village     string `json:"village"`
+	City         string `json:"city"`
+	Province     string `json:"province"`
+	Subdistrict  string `json:"subdistrict" pg:"sub_district"`
+	Village      string `json:"village"`
+	AddressLine1 string `json:"addressLine1"`
+	AddressLine2 string `json:"addressLine2"`
+	AddressLine3 string `json:"addressLine3"`
+	Zipcode      string `json:"zipcode"`
 }

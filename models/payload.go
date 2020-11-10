@@ -45,21 +45,21 @@ type PayloadCardLimit struct {
 // PayloadAddress a struct to store all payload for user address
 type PayloadAddress struct {
 	ApplicationNumber string `json:"applicationNumber" validate:"required"`
-	IsNew             int64  `json:"isNew" validate:"min=0,max=1"`
-	AddressLine1      string `json:"addressLine1" validate:"required_with=IsNew"`
+	AddressLine1      string `json:"addressLine1" validate:"required"`
 	AddressLine2      string `json:"addressLine2"`
 	AddressLine3      string `json:"addressLine3"`
-	AddressCity       string `json:"addressCity" validate:"required_with=IsNew"`
-	Province          string `json:"province" validate:"required_with=IsNew"`
-	Subdistrict       string `json:"subdistrict" validate:"required_with=IsNew"`
-	Village           string `json:"village" validate:"required_with=IsNew"`
+	AddressCity       string `json:"addressCity" validate:"required"`
+	Province          string `json:"province" validate:"required"`
+	Subdistrict       string `json:"subdistrict" validate:"required"`
+	Village           string `json:"village" validate:"required"`
+	CardDeliver       int64  `json:"cardDeliver" validate:"required"`
 }
 
 // PayloadPersonalInformation a struct to store all payload for a payload personal information
 type PayloadPersonalInformation struct {
 	ApplicationNumber    string `json:"applicationNumber,omitempty" validate:"required"`
 	FirstName            string `json:"firstName" validate:"required"`
-	LastName             string `json:"lastName" validate:"required"`
+	LastName             string `json:"lastName"`
 	CardName             string `json:"cardName" validate:"required"`
 	Npwp                 string `json:"npwp"`
 	Nik                  string `json:"nik" validate:"required"`
@@ -117,7 +117,7 @@ type RespRegistration struct {
 // PayloadBriRegister a struct to store all payload for a payload bri register
 type PayloadBriRegister struct {
 	FirstName            string `json:"firstName" validate:"required"`
-	LastName             string `json:"lastName" validate:"required"`
+	LastName             string `json:"lastName"`
 	CardName             string `json:"cardName" validate:"required"`
 	Npwp                 string `json:"npwp" validate:"required"`
 	Nik                  string `json:"nik" validate:"required"`

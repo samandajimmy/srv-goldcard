@@ -41,28 +41,18 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAd
 		return err
 	}
 
-	// validate new data address or not
-	if pl.IsNew == models.UseExistingAddress {
-		return nil
-	}
-
-	err = acc.MappingAddressData(c, pl)
-
-	if err != nil {
-		return models.ErrMappingData
-	}
-
 	// get zipcode
 	addrData := models.AddressData{City: pl.AddressCity, Province: pl.Province,
-		Subdistrict: pl.Subdistrict, Village: pl.Village}
-	zipcode, err := reg.regRepo.GetZipcode(c, addrData)
+		Subdistrict: pl.Subdistrict, Village: pl.Village, AddressLine1: pl.AddressLine1}
+	addrData.Zipcode, err = reg.regRepo.GetZipcode(c, addrData)
 
 	if err != nil {
 		return models.ErrZipcodeNotFound
 	}
 
-	acc.Correspondence.Zipcode = zipcode
-	err = reg.regRepo.PostAddress(c, acc)
+	addrData = models.RemappAddress(addrData, 30)
+	acc.CardDeliver = pl.CardDeliver
+	err = reg.regRepo.PostAddress(c, acc, addrData)
 
 	if err != nil {
 		return models.ErrPostAddressFailed
@@ -75,14 +65,43 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAd
 	return nil
 }
 
-func (reg *registrationsUseCase) GetAddress(c echo.Context, pl models.PayloadAppNumber) (models.CorrespondenceAddress, error) {
-	corr, err := reg.regRepo.GetCorrespondenceAddress(c, pl.ApplicationNumber)
+func (reg *registrationsUseCase) GetAddress(c echo.Context, pl models.PayloadAppNumber) (models.AddressData, error) {
+	addrData := models.AddressData{}
+	// get account by appNumber
+	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
-		return corr, err
+		return addrData, err
 	}
 
-	return corr, nil
+	pi := acc.PersonalInformation
+	occ := acc.Occupation
+
+	if acc.CardDeliver == models.BriCardDeliverHome {
+		addrData, err = reg.regRepo.GetCityFromZipcode(c, pi.Zipcode)
+
+		if err != nil {
+			return models.AddressData{}, models.ErrMappingData
+		}
+
+		addrData.AddressLine1 = pi.AddressLine1
+		addrData.AddressLine2 = pi.AddressLine2
+		addrData.AddressLine3 = pi.AddressLine3
+
+		return addrData, nil
+	}
+
+	addrData, err = reg.regRepo.GetCityFromZipcode(c, occ.OfficeZipcode)
+
+	if err != nil {
+		return models.AddressData{}, models.ErrMappingData
+	}
+
+	addrData.AddressLine1 = occ.OfficeAddress1
+	addrData.AddressLine2 = occ.OfficeAddress2
+	addrData.AddressLine3 = occ.OfficeAddress3
+
+	return addrData, nil
 }
 
 func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models.PayloadRegistration) (models.RespRegistration, error) {
@@ -120,7 +139,7 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 
 	app := models.Applications{ApplicationNumber: appNumber.String(), Status: models.AppStatusOngoing}
 	acc = models.Account{CIF: payload.CIF, BranchCode: payload.BranchCode, ProductRequest: models.DefBriProductRequest,
-		BillingCycle: models.DefBriBillingCycle, CardDeliver: models.DefBriCardDeliver, BankID: bankID, EmergencyContactID: ecID}
+		BillingCycle: models.DefBriBillingCycle, CardDeliver: models.BriCardDeliverHome, BankID: bankID, EmergencyContactID: ecID}
 	pi := models.PersonalInformation{HandPhoneNumber: payload.HandPhoneNumber}
 	err = reg.regRepo.CreateApplication(c, app, acc, pi)
 
@@ -152,23 +171,24 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 		return err
 	}
 
-	err = acc.MappingRegistrationData(c, pl)
-
-	if err != nil {
-		return models.ErrMappingData
-	}
-
 	// get zipcode
 	addrData := models.AddressData{City: pl.AddressCity, Province: pl.Province,
-		Subdistrict: pl.Subdistrict, Village: pl.Village}
+		Subdistrict: pl.Subdistrict, Village: pl.Village, AddressLine1: pl.AddressLine1}
 	zipcode, err := reg.regRepo.GetZipcode(c, addrData)
 
 	if err != nil {
 		return models.ErrZipcodeNotFound
 	}
 
+	pl.Zipcode = zipcode
+	addrData.Zipcode = zipcode
+	err = acc.MappingRegistrationData(pl, addrData)
+
+	if err != nil {
+		return models.ErrMappingData
+	}
+
 	// update account data
-	acc.PersonalInformation.Zipcode = zipcode
 	err = reg.regRepo.UpdateAllRegistrationData(c, acc)
 
 	if err != nil {
@@ -244,29 +264,24 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 }
 
 func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.PayloadOccupation) error {
-	var city string
-	var zipcode string
 	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
 		return err
 	}
 
-	err = acc.Occupation.MappingOccupation(pl)
+	addrData, err := reg.regRepo.GetCityFromZipcode(c, pl.OfficeZipcode)
 
 	if err != nil {
 		return models.ErrMappingData
 	}
 
-	city, zipcode, err = reg.regRepo.GetCityFromZipcode(c, acc)
+	pl.JobTitle = models.DefJobTitle
+	err = acc.Occupation.MappingOccupation(pl, addrData)
 
 	if err != nil {
 		return models.ErrMappingData
 	}
-
-	acc.Occupation.OfficeCity = city
-	acc.Occupation.OfficeZipcode = zipcode
-	acc.Occupation.JobTitle = models.DefJobTitle
 
 	err = reg.regRepo.PostOccupation(c, acc)
 

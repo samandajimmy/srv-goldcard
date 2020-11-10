@@ -8,7 +8,7 @@ import (
 
 // Repository represent the registration's repository contract
 type Repository interface {
-	PostAddress(echo.Context, models.Account) error
+	PostAddress(c echo.Context, acc models.Account, addrData models.AddressData) error
 	PostSavingAccount(echo.Context, models.Account) error
 	CreateApplication(echo.Context, models.Applications, models.Account, models.PersonalInformation) error
 	GetBankIDByCode(c echo.Context, bankCode string) (int64, error)
@@ -17,7 +17,7 @@ type Repository interface {
 	UpdateAllRegistrationData(c echo.Context, acc models.Account) error
 	GetEmergencyContactIDByType(c echo.Context, typeDef string) (int64, error)
 	GetZipcode(c echo.Context, addrData models.AddressData) (string, error)
-	GetCityFromZipcode(c echo.Context, acc models.Account) (string, string, error)
+	GetCityFromZipcode(c echo.Context, zipcode string) (models.AddressData, error)
 	UpdateCardLimit(c echo.Context, acc models.Account, fnAfter func() error) error
 	UpdateBrixkeyID(c echo.Context, acc models.Account) error
 	UpdateAppDocID(c echo.Context, acc models.Applications) error
@@ -32,7 +32,6 @@ type Repository interface {
 	GetSignatoryNameParam(c echo.Context) (string, error)
 	GetSignatoryNipParam(c echo.Context) (string, error)
 	DeactiveAccount(c echo.Context, acc models.Account) error
-	GetCorrespondenceAddress(c echo.Context, appNumber string) (models.CorrespondenceAddress, error)
 }
 
 // RestRepository represent the rest registrations repository contract
