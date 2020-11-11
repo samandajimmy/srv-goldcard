@@ -61,7 +61,7 @@ func (psqlUL *psqlUpdateLimitsRepository) GetLastLimitUpdate(c echo.Context, acc
 func (psqlUL *psqlUpdateLimitsRepository) GetAccountBySavingAccount(c echo.Context, savingAcc string) (models.Account, error) {
 	acc := models.Account{}
 	err := psqlUL.DBpg.Model(&acc).Relation("Application").Relation("PersonalInformation").
-		Relation("Card").Relation("Occupation").Relation("Correspondence").Relation("EmergencyContact").
+		Relation("Card").Relation("Occupation").Relation("EmergencyContact").
 		Where("application.saving_account = ? AND account.status = ?", savingAcc, models.AccStatusActive).
 		Limit(1).Select()
 

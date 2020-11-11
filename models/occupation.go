@@ -54,7 +54,7 @@ type Occupation struct {
 }
 
 // MappingOccupation a function to map all data occupation
-func (occ *Occupation) MappingOccupation(pl PayloadOccupation) error {
+func (occ *Occupation) MappingOccupation(pl PayloadOccupation, addrData AddressData) error {
 	occ.JobBidangUsaha = pl.JobBidangUsaha
 	occ.JobSubBidangUsaha = pl.JobSubBidangUsaha
 	occ.JobCategory = pl.JobCategory
@@ -63,13 +63,16 @@ func (occ *Occupation) MappingOccupation(pl PayloadOccupation) error {
 	occ.Company = pl.Company
 	occ.JobTitle = pl.JobTitle
 	occ.WorkSince = pl.WorkSince
-	occ.OfficeAddress1 = pl.OfficeAddress1
-	occ.OfficeAddress2 = pl.OfficeAddress2
-	occ.OfficeAddress3 = pl.OfficeAddress3
-	occ.OfficeZipcode = pl.OfficeZipcode
-	occ.OfficeCity = pl.OfficeCity
+	occ.OfficeZipcode = addrData.Zipcode
+	occ.OfficeCity = addrData.City
 	occ.OfficePhone = pl.OfficePhone
 	occ.Income = pl.Income * 12
 
+	addrData.AddressLine1 = pl.OfficeAddress1
+	// set addressData
+	addrData = RemappAddress(addrData, 30)
+	occ.OfficeAddress1 = addrData.AddressLine1
+	occ.OfficeAddress2 = addrData.AddressLine2
+	occ.OfficeAddress3 = addrData.AddressLine3
 	return nil
 }

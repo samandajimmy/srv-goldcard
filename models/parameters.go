@@ -185,26 +185,17 @@ func StringNameFormatter(name string, length int, withSpace bool) string {
 	result = name
 	for i := arrLen - 1; i >= 0; i-- {
 		// break if length of result is enough
-		// why using "<", because we will add a space after the loop
 		if len(result) < length {
 			break
 		}
 
 		// take first char of word and replace itself
 		if withSpace {
-			result = strings.ReplaceAll(result, arrStr[i], strings.ToUpper(arrStr[i][:1])+".")
+			result = strings.ReplaceAll(result, arrStr[i], strings.ToUpper(arrStr[i][:1]))
 			continue
 		}
 
-		result = strings.ReplaceAll(result, " "+arrStr[i], "."+strings.ToUpper(arrStr[i][:1]))
-	}
-
-	for i := arrLen - 1; i > 0; i-- {
-		// put the prev word back if its still too long
-		// why using ">=", because we will add a space after the loop
-		if len(result) > length {
-			result = strings.ReplaceAll(result, "."+arrStr[i][:1], "")
-		}
+		result = strings.ReplaceAll(result, " "+arrStr[i], "")
 	}
 
 	// the last attempt if its still not enough hard cut it out
@@ -257,4 +248,38 @@ func ReverseArray(data []ListTrx) []ListTrx {
 	}
 
 	return data
+}
+
+func RemappAddress(addr AddressData, length int) AddressData {
+	keyAddr := []string{"", "", ""}
+	arrStr := strings.Split(addr.AddressLine1, " ")
+	mapIdx := 0
+	newStr := arrStr[0]
+	totalLen := length * len(keyAddr)
+
+	if len(addr.AddressLine1) > totalLen {
+		return addr
+	}
+
+	for idx, str := range arrStr {
+		if idx == 0 {
+			continue
+		}
+
+		newStr += " " + str
+
+		if len(newStr) > length {
+			mapIdx += 1
+			newStr = str
+			continue
+		}
+
+		keyAddr[mapIdx] = newStr
+	}
+
+	addr.AddressLine1 = keyAddr[0]
+	addr.AddressLine2 = keyAddr[1]
+	addr.AddressLine3 = keyAddr[2]
+
+	return addr
 }

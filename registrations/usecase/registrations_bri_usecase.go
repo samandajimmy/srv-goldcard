@@ -39,10 +39,10 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 		return nil
 	}
 
-	// validate bri register specification
-	err := pl.ValidateBRIRegisterSpecification()
+	// mapping and validate bri register specification
+	_ = pl.ValidateBRIRegisterSpecification()
 
-	if err != nil {
+	if err := c.Validate(pl); err != nil {
 		logger.Make(c, nil).Debug(models.ErrValidateBRIRegSpec)
 
 		return models.ErrValidateBRIRegSpec
@@ -50,7 +50,7 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 
 	resp := api.BriResponse{}
 	reqBody := api.BriRequest{RequestData: pl}
-	err = api.RetryableBriPost(c, "/register", reqBody, &resp)
+	err := api.RetryableBriPost(c, "/register", reqBody, &resp)
 
 	if err != nil {
 		return err

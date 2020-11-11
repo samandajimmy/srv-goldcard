@@ -17,8 +17,11 @@ const (
 	// DefBriBillingCycle is to store default bri application billing cycle
 	DefBriBillingCycle = 3
 
-	// DefBriCardDeliver is to store default bri application card deliver
-	DefBriCardDeliver = 1
+	// BriCardDeliverHome is to store default bri application card deliver to home
+	BriCardDeliverHome = 1
+
+	// BriCardDeliverOffice is to store default bri application card deliver to office
+	BriCardDeliverOffice = 2
 
 	// DefAppDocFileExt is to store var default application document file ext
 	DefAppDocFileExt = "jpg"
@@ -277,6 +280,9 @@ type ApplicationForm struct {
 	FileNpwp           string  `json:"fileNpwp"`
 	FileAppForm        string  `json:"fileAppForm"`
 	FileSlipTe         string  `json:"fileSlipTe"`
+	ShippingAddress1   string  `json:"shippingAddress1"`
+	ShippingAddress2   string  `json:"shippingAddress2"`
+	ShippingAddress3   string  `json:"shippingAddress3"`
 }
 
 // SlipTE a struct to store all payload for Slip TE Document
@@ -310,6 +316,15 @@ func (af *ApplicationForm) MappingApplicationForm() error {
 	af.FileSelfie = TextFileNotFound
 	af.FileAppForm = TextFileFound
 	af.FileSlipTe = TextFileFound
+	af.ShippingAddress1 = acc.PersonalInformation.AddressLine1
+	af.ShippingAddress2 = acc.PersonalInformation.AddressLine2
+	af.ShippingAddress3 = acc.PersonalInformation.AddressLine3
+
+	if acc.CardDeliver == BriCardDeliverOffice {
+		af.ShippingAddress1 = acc.Occupation.OfficeAddress1
+		af.ShippingAddress2 = acc.Occupation.OfficeAddress2
+		af.ShippingAddress3 = acc.Occupation.OfficeAddress3
+	}
 
 	for _, document := range docs {
 		switch document.Type {
