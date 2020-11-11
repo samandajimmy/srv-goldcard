@@ -122,6 +122,27 @@ func (m *psqlTokenRepository) UpdateToken(c echo.Context, accToken *models.Accou
 	return nil
 }
 
+func (m *psqlTokenRepository) UpdateAllAccountTokenExpiry() error {
+	query := `UPDATE account_tokens SET expire_at = $1, updated_at = $2 RETURNING id`
+	stmt, err := m.Conn.Prepare(query)
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return err
+	}
+
+	_, err = stmt.Query(nil, time.Now())
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
 func stringToDuration(str string) time.Duration {
 	hours, _ := strconv.Atoi(str)
 

@@ -327,9 +327,9 @@ func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, zip
 	query := `SELECT city, province_name as province, sub_district, village FROM ref_postal_codes pc
 		left join ref_provinces p on pc.province_code = p.province_code WHERE pc.postal_code = ? LIMIT 1`
 
-	_, err := regis.DBpg.Query(&addrData, query, zipcode)
+	_, err := regis.DBpg.QueryOne(&addrData, query, zipcode)
 
-	if err != nil || (addrData == models.AddressData{}) {
+	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
 		return addrData, err

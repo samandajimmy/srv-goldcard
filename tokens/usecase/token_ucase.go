@@ -89,6 +89,17 @@ func (tkn *tokenUseCase) RefreshToken(c echo.Context, username string, password 
 	return accToken, nil
 }
 
+func (tkn *tokenUseCase) RefreshAllToken() error {
+	// update all account token data
+	err := tkn.tokenRepo.UpdateAllAccountTokenExpiry()
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func verifyToken(accToken *models.AccountToken, password string, isUpdate bool) error {
 	now := models.NowUTC()
 	// validate account

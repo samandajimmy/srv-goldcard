@@ -127,6 +127,9 @@ func main() {
 	// PING
 	ech.GET("/ping", ping)
 
+	// run refresh all token
+	_ = tokenUseCase.RefreshAllToken()
+
 	err = ech.Start(":" + os.Getenv(`PORT`))
 
 	if err != nil {

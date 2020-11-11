@@ -11,4 +11,5 @@ type Repository interface {
 	Create(c echo.Context, accToken *models.AccountToken) error
 	GetByUsername(c echo.Context, accToken *models.AccountToken) error
 	UpdateToken(c echo.Context, accToken *models.AccountToken) error
+	UpdateAllAccountTokenExpiry() error
 }
