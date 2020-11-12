@@ -255,15 +255,14 @@ func RemappAddress(addr AddressData, length int) AddressData {
 	arrStr := strings.Split(addr.AddressLine1, " ")
 	mapIdx := 0
 	newStr := arrStr[0]
-	totalLen := length * len(keyAddr)
-
-	if len(addr.AddressLine1) > totalLen {
-		return addr
-	}
 
 	for idx, str := range arrStr {
 		if idx == 0 {
 			continue
+		}
+
+		if mapIdx > 2 {
+			break
 		}
 
 		newStr += " " + str
