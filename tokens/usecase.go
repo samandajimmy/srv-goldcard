@@ -11,4 +11,5 @@ type UseCase interface {
 	CreateToken(c echo.Context, accToken *models.AccountToken) error
 	GetToken(c echo.Context, username string, password string) (*models.AccountToken, error)
 	RefreshToken(c echo.Context, username string, password string) (*models.AccountToken, error)
+	RefreshAllToken() error
 }
