@@ -35,6 +35,7 @@ func (ph *processHandUseCase) PostProcessHandler(c echo.Context, ps models.Proce
 		// Update Process Handler reason
 		res.Reason = res.Reason + "||" + ps.Reason
 		res.Error = ps.Error
+		res.ErrorCount += 1
 		_ = ph.updateReasonProcStatus(c, res)
 
 		return nil
@@ -103,7 +104,7 @@ func (ph *processHandUseCase) UpdateErrorStatus(c echo.Context, acc models.Accou
 }
 
 func (ph *processHandUseCase) updateReasonProcStatus(c echo.Context, ps models.ProcessStatus) error {
-	col := []string{"reason", "updated_at", "error"}
+	col := []string{"reason", "updated_at", "error", "error_count"}
 
 	err := ph.phRepo.UpdateProcessHandler(ps, col)
 

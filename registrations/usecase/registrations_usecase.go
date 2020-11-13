@@ -419,8 +419,6 @@ func (reg *registrationsUseCase) FinalRegistrationScheduler(c echo.Context, pl m
 	err = reg.FinalRegistration(c, pl, reg.afterOpenGoldcard)
 
 	if err != nil {
-		// counter error on table process_statuses
-		go reg.phUC.UpdateCounterError(c, acc)
 		return err
 	}
 
