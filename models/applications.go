@@ -151,6 +151,11 @@ type Applications struct {
 // SetStatus as a setter for application status
 func (app *Applications) SetStatus(msg string) {
 	stat := app.getStatus(msg)
+
+	if stat == app.Status {
+		return
+	}
+
 	app.Status = stat
 	r := reflect.ValueOf(app)
 	rNow := reflect.ValueOf(NowDbpg())
