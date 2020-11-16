@@ -52,34 +52,6 @@ func (ph *processHandUseCase) PostProcessHandler(c echo.Context, ps models.Proce
 	return nil
 }
 
-// UpdateCounterError Method Update counter error on table process_statuses
-func (ph *processHandUseCase) UpdateCounterError(c echo.Context, acc models.Account) {
-	var ps models.ProcessStatus
-	err := ps.MapUpdateProcessStatus(models.ApplicationTableName, acc.Application.ID)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
-
-	psOld, err := ph.phRepo.GetProcessHandler(ps)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
-
-	col := []string{"updated_at", "error_count"}
-
-	ps.ErrorCount = psOld.ErrorCount + 1
-	err = ph.phRepo.UpdateProcessHandler(ps, col)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
-}
-
 // UpdateErrorStatus Method Update error status on table process_statuses
 func (ph *processHandUseCase) UpdateErrorStatus(c echo.Context, acc models.Account) error {
 	var ps models.ProcessStatus
