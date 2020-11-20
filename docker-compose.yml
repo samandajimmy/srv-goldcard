@@ -4,11 +4,15 @@ services:
     image: postgres:9.6-alpine
     ports:
       - 54321:5432
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
 
   app:
     build: .
     ports:
       - 9090:9090
+    depends_on:
+      - db
     environment:
       - PORT=9090
       - CONTEXT_TIMEOUT=2
@@ -16,27 +20,27 @@ services:
       - DB_USER=postgres
       - DB_PORT=
       - DB_PASS=
-      - DB_NAME=goldcarddb
+      - DB_NAME=postgres
       - DB_LOGGER=false
       - WITH_JWT=true
       - JWT_SECRET=samandajimmy
       - JWT_TOKEN_EXP=24
       - BASIC_USERNAME=jsr
       - BASIC_PASSWORD=jsr
-      - BRI_HOST=https://sandbox.partner.api.bri.co.id
-      - BRI_GRANT_TYPE=client_credentials
-      - BRI_CLIENT_ID=YtkJkC2vrGGxsD7KVjSLWAk38cPq4thm
-      - BRI_CLIENT_SECRET=HG2X0VaAP0nRmc4X
-      - PDS_API_BASIC_USER=aplikasijs
-      - PDS_API_BASIC_PASS=aplikasi123
-      - PDS_API_HOST=https://apidigitaldev.pegadaian.co.id/v4
-      - CONFIG_DIR=/src/gade/srv-goldcard/configs
-      - SWITCHING_HOST=https://devpds.pegadaian.co.id:9080
-      - SWITCHING_CLIENT_ID=9997
-      - SWITCHING_CHANNEL_ID=6017
-      - SWITCHING_USERNAME=aplikasijs
-      - SWITCHING_PASSWORD=aplikasi123
-      - SWITCHING_PASSWORD_TOKEN=pgd123!
-      - SWITCHING_FLAG=K
+      - BRI_HOST=
+      - BRI_GRANT_TYPE=
+      - BRI_CLIENT_ID=
+      - BRI_CLIENT_SECRET=
+      - BRI_BASE_PATH=
+      - PDS_API_BASIC_USER=
+      - PDS_API_BASIC_PASS=
+      - PDS_API_HOST=
+      - SWITCHING_HOST=
+      - SWITCHING_CLIENT_ID=
+      - SWITCHING_CHANNEL_ID=
+      - SWITCHING_USERNAME=
+      - SWITCHING_PASSWORD=
+      - SWITCHING_PASSWORD_TOKEN=
+      - SWITCHING_FLAG=
       - RETRY_ON_ERR=3
-
+      - WITH_REGISTRATION=false
