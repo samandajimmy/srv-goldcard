@@ -3,6 +3,7 @@ package http
 import (
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
+	"os"
 
 	"github.com/labstack/echo"
 )
@@ -22,18 +23,21 @@ func NewRegistrationsHandler(
 		registrationsUseCase: regUseCase,
 	}
 
-	// End Point For External
-	echoGroup.API.POST("/registrations", handler.Registrations)
-	echoGroup.API.POST("/registrations/address", handler.PostAddress)
+	// End Point For External'
+	if os.Getenv("WITH_REGISTRATION") == "true" {
+		echoGroup.API.POST("/registrations", handler.Registrations)
+		echoGroup.API.POST("/registrations/address", handler.PostAddress)
+		echoGroup.API.POST("/registrations/saving-account", handler.PostSavingAccount)
+		echoGroup.API.POST("/registrations/personal-informations", handler.personalInfomations)
+		echoGroup.API.POST("/registrations/card-limit", handler.cardLimit)
+		echoGroup.API.POST("/registrations/final", handler.final)
+		echoGroup.API.POST("/registrations/occupation", handler.PostOccupation)
+		echoGroup.API.POST("/registrations/scheduler/final", handler.schedulerFinal)
+		echoGroup.API.POST("/registrations/reset", handler.ResetRegistration)
+	}
+
 	echoGroup.API.GET("/registrations/address", handler.GetAddress)
-	echoGroup.API.POST("/registrations/saving-account", handler.PostSavingAccount)
-	echoGroup.API.POST("/registrations/personal-informations", handler.personalInfomations)
-	echoGroup.API.POST("/registrations/card-limit", handler.cardLimit)
-	echoGroup.API.POST("/registrations/final", handler.final)
 	echoGroup.API.POST("/registrations/application-status", handler.applicationStatus)
-	echoGroup.API.POST("/registrations/occupation", handler.PostOccupation)
-	echoGroup.API.POST("/registrations/scheduler/final", handler.schedulerFinal)
-	echoGroup.API.POST("/registrations/reset", handler.ResetRegistration)
 
 }
 

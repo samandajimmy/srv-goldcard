@@ -15,9 +15,7 @@ func TestStringNameFormatter(t *testing.T) {
 
 func TestJoinAddress(t *testing.T) {
 	pl := models.AddressData{
-		AddressLine1: "Perum Sarua Keneh. Jl. Panglima Sudirman No. 75 Blok A RT 001 RW 002 Kota Probolinggo Jawa Timur",
-		Subdistrict:  "KARANG TENGAH",
-		Village:      "TUNJUNGSEKAR",
+		AddressLine1: "Jl. Harsono RM No 2, Gedung IT BRI, Ragunan",
 	}
 	str := models.RemappAddress(pl, 30)
 
