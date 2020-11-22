@@ -8,7 +8,7 @@ import (
 
 // Repository represent the registration's repository contract
 type Repository interface {
-	PostAddress(c echo.Context, acc models.Account, addrData models.AddressData) error
+	PostAddress(c echo.Context, acc models.Account) error
 	PostSavingAccount(echo.Context, models.Account) error
 	CreateApplication(echo.Context, models.Applications, models.Account, models.PersonalInformation) error
 	GetBankIDByCode(c echo.Context, bankCode string) (int64, error)

@@ -41,18 +41,9 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAd
 		return err
 	}
 
-	// get zipcode
-	addrData := models.AddressData{City: pl.AddressCity, Province: pl.Province,
-		Subdistrict: pl.Subdistrict, Village: pl.Village, AddressLine1: pl.AddressLine1}
-	addrData.Zipcode, err = reg.regRepo.GetZipcode(c, addrData)
-
-	if err != nil {
-		return models.ErrZipcodeNotFound
-	}
-
-	addrData = models.RemappAddress(addrData, 30)
+	// set card deliver
 	acc.CardDeliver = pl.CardDeliver
-	err = reg.regRepo.PostAddress(c, acc, addrData)
+	err = reg.regRepo.PostAddress(c, acc)
 
 	if err != nil {
 		return models.ErrPostAddressFailed

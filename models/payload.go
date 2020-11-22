@@ -45,13 +45,6 @@ type PayloadCardLimit struct {
 // PayloadAddress a struct to store all payload for user address
 type PayloadAddress struct {
 	ApplicationNumber string `json:"applicationNumber" validate:"required"`
-	AddressLine1      string `json:"addressLine1" validate:"required"`
-	AddressLine2      string `json:"addressLine2"`
-	AddressLine3      string `json:"addressLine3"`
-	AddressCity       string `json:"addressCity" validate:"required"`
-	Province          string `json:"province" validate:"required"`
-	Subdistrict       string `json:"subdistrict" validate:"required"`
-	Village           string `json:"village" validate:"required"`
 	CardDeliver       int64  `json:"cardDeliver" validate:"required"`
 }
 
