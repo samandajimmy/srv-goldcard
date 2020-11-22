@@ -184,8 +184,10 @@ type PayloadOccupation struct {
 	OfficeAddress1    string `json:"officeAddress1" validate:"required"`
 	OfficeAddress2    string `json:"officeAddress2"`
 	OfficeAddress3    string `json:"officeAddress3"`
-	OfficeZipcode     string `json:"officeZipcode" validate:"required"`
-	OfficeCity        string `json:"officeCity"`
+	OfficeCity        string `json:"officeCity" validate:"required"`
+	OfficeProvince    string `json:"officeProvince" validate:"required"`
+	OfficeSubdistrict string `json:"officeSubdistrict" validate:"required"`
+	OfficeVillage     string `json:"officeVillage" validate:"required"`
 	OfficePhone       string `json:"officePhone" validate:"required"`
 	Income            int64  `json:"income" validate:"required"`
 }
