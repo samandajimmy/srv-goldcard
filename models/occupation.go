@@ -46,7 +46,10 @@ type Occupation struct {
 	OfficeAddress2    string    `json:"officeAddress2" pg:"office_address_2"`
 	OfficeAddress3    string    `json:"officeAddress3" pg:"office_address_3"`
 	OfficeZipcode     string    `json:"officeZipcode"`
+	OfficeProvince    string    `json:"officeProvince"`
 	OfficeCity        string    `json:"officeCity"`
+	OfficeSubdistrict string    `json:"officeSubdistrict"`
+	OfficeVillage     string    `json:"officeVillage"`
 	OfficePhone       string    `json:"officePhone"`
 	Income            int64     `json:"income"`
 	CreatedAt         time.Time `json:"createdAt"`
@@ -64,7 +67,10 @@ func (occ *Occupation) MappingOccupation(pl PayloadOccupation, addrData AddressD
 	occ.JobTitle = pl.JobTitle
 	occ.WorkSince = pl.WorkSince
 	occ.OfficeZipcode = addrData.Zipcode
+	occ.OfficeProvince = addrData.Province
 	occ.OfficeCity = addrData.City
+	occ.OfficeSubdistrict = addrData.Subdistrict
+	occ.OfficeVillage = addrData.Village
 	occ.OfficePhone = pl.OfficePhone
 	occ.Income = pl.Income * 12
 
