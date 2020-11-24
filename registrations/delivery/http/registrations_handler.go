@@ -25,7 +25,6 @@ func NewRegistrationsHandler(
 
 	// End Point For External'
 	if os.Getenv("WITH_REGISTRATION") == "true" {
-		echoGroup.API.POST("/registrations", handler.Registrations)
 		echoGroup.API.POST("/registrations/address", handler.PostAddress)
 		echoGroup.API.POST("/registrations/saving-account", handler.PostSavingAccount)
 		echoGroup.API.POST("/registrations/personal-informations", handler.personalInfomations)
@@ -36,6 +35,7 @@ func NewRegistrationsHandler(
 		echoGroup.API.POST("/registrations/reset", handler.ResetRegistration)
 	}
 
+	echoGroup.API.POST("/registrations", handler.Registrations)
 	echoGroup.API.GET("/registrations/address", handler.GetAddress)
 	echoGroup.API.POST("/registrations/application-status", handler.applicationStatus)
 
