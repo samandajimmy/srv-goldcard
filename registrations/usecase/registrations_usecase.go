@@ -65,43 +65,42 @@ func (reg *registrationsUseCase) PostAddress(c echo.Context, pl models.PayloadAd
 	return nil
 }
 
-func (reg *registrationsUseCase) GetAddress(c echo.Context, pl models.PayloadAppNumber) (models.AddressData, error) {
-	addrData := models.AddressData{}
+func (reg *registrationsUseCase) GetAddress(c echo.Context, pl models.PayloadAppNumber) (models.RespGetAddress, error) {
+	respGetAddr := models.RespGetAddress{}
 	// get account by appNumber
 	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
-		return addrData, err
+		return respGetAddr, err
 	}
 
 	pi := acc.PersonalInformation
 	occ := acc.Occupation
 
-	if acc.CardDeliver == models.BriCardDeliverHome {
-		addrData, err = reg.regRepo.GetCityFromZipcode(c, pi.Zipcode)
+	// set card deliver
+	respGetAddr.CardDeliver = acc.CardDeliver
 
-		if err != nil {
-			return models.AddressData{}, models.ErrMappingData
-		}
+	// set office address data in resp get address struct
+	respGetAddr.Office.AddressLine1 = occ.OfficeAddress1
+	respGetAddr.Office.AddressLine2 = occ.OfficeAddress2
+	respGetAddr.Office.AddressLine3 = occ.OfficeAddress3
+	respGetAddr.Office.Province = occ.OfficeProvince
+	respGetAddr.Office.City = occ.OfficeCity
+	respGetAddr.Office.Subdistrict = occ.OfficeSubdistrict
+	respGetAddr.Office.Village = occ.OfficeVillage
+	respGetAddr.Office.Zipcode = occ.OfficeZipcode
 
-		addrData.AddressLine1 = pi.AddressLine1
-		addrData.AddressLine2 = pi.AddressLine2
-		addrData.AddressLine3 = pi.AddressLine3
+	// set domicile address data in resp get address struct
+	respGetAddr.Domicile.AddressLine1 = pi.AddressLine1
+	respGetAddr.Domicile.AddressLine2 = pi.AddressLine2
+	respGetAddr.Domicile.AddressLine3 = pi.AddressLine3
+	respGetAddr.Domicile.Province = pi.AddressProvince
+	respGetAddr.Domicile.City = pi.AddressCity
+	respGetAddr.Domicile.Subdistrict = pi.AddressSubdistrict
+	respGetAddr.Domicile.Village = pi.AddressVillage
+	respGetAddr.Domicile.Zipcode = pi.Zipcode
 
-		return addrData, nil
-	}
-
-	addrData, err = reg.regRepo.GetCityFromZipcode(c, occ.OfficeZipcode)
-
-	if err != nil {
-		return models.AddressData{}, models.ErrMappingData
-	}
-
-	addrData.AddressLine1 = occ.OfficeAddress1
-	addrData.AddressLine2 = occ.OfficeAddress2
-	addrData.AddressLine3 = occ.OfficeAddress3
-
-	return addrData, nil
+	return respGetAddr, nil
 }
 
 func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models.PayloadRegistration) (models.RespRegistration, error) {

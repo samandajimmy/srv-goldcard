@@ -354,3 +354,10 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 
 	return nil
 }
+
+// PayloadCoreGtePayment is a struct to store all payload for get
+type RespGetAddress struct {
+	CardDeliver int64       `json:"cardDeliver"`
+	Office      AddressData `json:"office"`
+	Domicile    AddressData `json:"domicile"`
+}

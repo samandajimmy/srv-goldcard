@@ -9,7 +9,7 @@ import (
 // UseCase represent the registrations usecases
 type UseCase interface {
 	PostAddress(echo.Context, models.PayloadAddress) error
-	GetAddress(echo.Context, models.PayloadAppNumber) (models.AddressData, error)
+	GetAddress(echo.Context, models.PayloadAppNumber) (models.RespGetAddress, error)
 	PostSavingAccount(echo.Context, models.PayloadSavingAccount) error
 	PostPersonalInfo(echo.Context, models.PayloadPersonalInformation) error
 	PostRegistration(echo.Context, models.PayloadRegistration) (models.RespRegistration, error)
