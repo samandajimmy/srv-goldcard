@@ -84,51 +84,11 @@ func (regis *psqlRegistrationsRepository) GetBankIDByCode(c echo.Context, bankCo
 	return bankID, nil
 }
 
-func (regis *psqlRegistrationsRepository) PostAddress(c echo.Context, acc models.Account, addrData models.AddressData) error {
-	pi := acc.PersonalInformation
-	occ := acc.Occupation
+func (regis *psqlRegistrationsRepository) PostAddress(c echo.Context, acc models.Account) error {
+	acc.UpdatedAt = models.NowDbpg()
 
 	// update card deliver
-	_, err := regis.DBpg.Model(&acc).Column([]string{"card_deliver"}...).WherePK().Update()
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
-	// updata data address based on card deliver status
-	if acc.CardDeliver == models.BriCardDeliverHome {
-		pi.AddressCity = addrData.City
-		pi.AddressLine1 = addrData.AddressLine1
-		pi.AddressLine2 = addrData.AddressLine2
-		pi.AddressLine3 = addrData.AddressLine3
-		pi.Zipcode = addrData.Zipcode
-		pi.UpdatedAt = models.NowDbpg()
-		_, err := regis.DBpg.Model(&pi).
-			Column([]string{"address_city", "address_line_1", "address_line_2", "address_line_3",
-				"zipcode", "updated_at"}...).
-			WherePK().Update()
-
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-
-			return err
-		}
-
-		return nil
-	}
-
-	occ.OfficeCity = addrData.City
-	occ.OfficeAddress1 = addrData.AddressLine1
-	occ.OfficeAddress2 = addrData.AddressLine2
-	occ.OfficeAddress3 = addrData.AddressLine3
-	occ.OfficeZipcode = addrData.Zipcode
-	occ.UpdatedAt = models.NowDbpg()
-	_, err = regis.DBpg.Model(&occ).
-		Column([]string{"office_city", "office_address_1", "office_address_2", "office_address_3",
-			"office_zipcode", "updated_at"}...).
-		WherePK().Update()
+	_, err := regis.DBpg.Model(&acc).Column([]string{"card_deliver", "updated_at"}...).WherePK().Update()
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
