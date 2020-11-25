@@ -107,7 +107,7 @@ func (pdsNotif *PdsNotification) GcActivation(acc Account, notifType string) {
 		pdsNotif.ContentFooter = []string{"Segera lakukan pergantian PIN Kartu Emas Fisik anda dengan cara :",
 			"PIN(spasi)KK(spasi)6 digit pertama No. KK BRI#4 Digit Terakhir No. KK BRI#tgl lahir ddmmyyyy",
 			"Contoh:", "PIN KK 518828#1234#17081945", "Kirim ke 3300 melalui nomor Handphone yang terdaftar",
-			"Info PIN https://bit.ly/xxx"}
+			"Info PIN https://kartukredit.bri.co.id/service/e-wellcome-pack"}
 		pdsNotif.NotificationDescription = "Aktivasi Berhasil"
 		pdsNotif.ContentList = []ContentList{
 			{
