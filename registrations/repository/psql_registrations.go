@@ -245,11 +245,13 @@ func (regis *psqlRegistrationsRepository) UpdateAllRegistrationData(c echo.Conte
 			sex = $9, education = $10, marital_status = $11, mother_name = $12, home_phone_area = $13,
 			home_phone_number = $14, home_status = $15, address_line_1 = $16, address_line_2 = $17,
 			address_line_3 = $18, zipcode = $19, address_city = $20, stayed_since = $21, child = $22,
-			updated_at = $23, relative_phone_number = $24 WHERE id = $25`, nilFilters, pi.FirstName, pi.LastName, pi.Email,
+			updated_at = $23, relative_phone_number = $24, address_province = $25, address_subdistrict = $26, 
+			address_village = $27 WHERE id = $28`, nilFilters, pi.FirstName, pi.LastName, pi.Email,
 			pi.Npwp, pi.Nik, pi.BirthPlace, pi.BirthDate, pi.Nationality, "male", pi.Education,
 			pi.MaritalStatus, pi.MotherName, pi.HomePhoneArea, pi.HomePhoneNumber, pi.HomeStatus,
 			pi.AddressLine1, pi.AddressLine2, pi.AddressLine3, pi.Zipcode, pi.AddressCity,
-			pi.StayedSince, pi.Child, time.Now(), pi.RelativePhoneNumber, acc.PersonalInformationID),
+			pi.StayedSince, pi.Child, time.Now(), pi.RelativePhoneNumber, pi.AddressProvince,
+			pi.AddressSubdistrict, pi.AddressVillage, acc.PersonalInformationID),
 		// update account
 		gcdb.NewPipelineStmt(`UPDATE accounts set product_request = $1, billing_cycle = $2,
 			card_deliver = $3, updated_at = $4 WHERE id = $5`,
@@ -278,13 +280,14 @@ func (regis *psqlRegistrationsRepository) PostOccupation(c echo.Context, acc mod
 		// insert occupation
 		gcdb.NewPipelineStmt(`INSERT INTO occupations (job_bidang_usaha, job_sub_bidang_usaha,
 			job_category, job_status, total_employee, company, job_title, work_since,
-			office_address_1, office_address_2, office_address_3, office_zipcode, office_city,
-			office_phone, income, created_at)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16) RETURNING id;`,
+			office_address_1, office_address_2, office_address_3, office_zipcode, office_province,
+			office_city, office_subdistrict, office_village, office_phone, income, created_at)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19) RETURNING id;`,
 			[]string{"occID"}, occ.JobBidangUsaha, occ.JobSubBidangUsaha, occ.JobCategory,
 			occ.JobStatus, occ.TotalEmployee, occ.Company, occ.JobTitle, occ.WorkSince,
 			occ.OfficeAddress1, occ.OfficeAddress2, occ.OfficeAddress3, occ.OfficeZipcode,
-			occ.OfficeCity, occ.OfficePhone, occ.Income, time.Now()),
+			occ.OfficeProvince, occ.OfficeCity, occ.OfficeSubdistrict, occ.OfficeVillage,
+			occ.OfficePhone, occ.Income, time.Now()),
 		// update account
 		gcdb.NewPipelineStmt(`UPDATE accounts set occupation_id = {occID}, updated_at = $1 WHERE id = $2`,
 			nilFilters, time.Now(), acc.ID),

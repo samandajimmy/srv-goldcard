@@ -72,7 +72,10 @@ func (acc *Account) MappingRegistrationData(pl PayloadPersonalInformation, addrD
 	acc.PersonalInformation.MotherName = pl.MotherName
 	acc.PersonalInformation.HomeStatus = pl.HomeStatus
 	acc.PersonalInformation.Zipcode = pl.Zipcode
+	acc.PersonalInformation.AddressProvince = pl.Province
 	acc.PersonalInformation.AddressCity = pl.AddressCity
+	acc.PersonalInformation.AddressSubdistrict = pl.Subdistrict
+	acc.PersonalInformation.AddressVillage = pl.Village
 	acc.PersonalInformation.StayedSince = defStayedSince
 	acc.PersonalInformation.Child = defChildNumber
 	acc.PersonalInformation.RelativePhoneNumber = pl.RelativePhoneNumber

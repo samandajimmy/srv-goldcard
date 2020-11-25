@@ -184,8 +184,10 @@ type PayloadOccupation struct {
 	OfficeAddress1    string `json:"officeAddress1" validate:"required"`
 	OfficeAddress2    string `json:"officeAddress2"`
 	OfficeAddress3    string `json:"officeAddress3"`
-	OfficeZipcode     string `json:"officeZipcode" validate:"required"`
-	OfficeCity        string `json:"officeCity"`
+	OfficeCity        string `json:"officeCity" validate:"required"`
+	OfficeProvince    string `json:"officeProvince" validate:"required"`
+	OfficeSubdistrict string `json:"officeSubdistrict" validate:"required"`
+	OfficeVillage     string `json:"officeVillage" validate:"required"`
 	OfficePhone       string `json:"officePhone" validate:"required"`
 	Income            int64  `json:"income" validate:"required"`
 }
@@ -351,4 +353,11 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.ProductRequest = StringCutter(plBRIReg.ProductRequest, 30)
 
 	return nil
+}
+
+// PayloadCoreGtePayment is a struct to store all payload for get
+type RespGetAddress struct {
+	CardDeliver int64       `json:"cardDeliver"`
+	Office      AddressData `json:"office"`
+	Domicile    AddressData `json:"domicile"`
 }

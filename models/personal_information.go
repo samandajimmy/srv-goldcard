@@ -66,7 +66,10 @@ type PersonalInformation struct {
 	AddressLine2        string    `json:"addressLine2" pg:"address_line_2"`
 	AddressLine3        string    `json:"addressLine3" pg:"address_line_3"`
 	Zipcode             string    `json:"zipcode"`
+	AddressProvince     string    `json:"addressProvince"`
 	AddressCity         string    `json:"addressCity"`
+	AddressSubdistrict  string    `json:"addressSubdistrict"`
+	AddressVillage      string    `json:"addressVillage"`
 	StayedSince         string    `json:"stayedSince"`
 	Child               int64     `json:"child"`
 	RelativePhoneNumber string    `json:"relativePhoneNumber"`
