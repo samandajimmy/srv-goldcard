@@ -126,7 +126,8 @@ func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, 
 	docs := []models.Document{}
 	err := regis.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
 		Relation("Card").Relation("Occupation").Relation("EmergencyContact").
-		Where("application_number = ?", acc.Application.ApplicationNumber).Select()
+		Where("application_number = ? and application.status != ?",
+			acc.Application.ApplicationNumber, models.AccStatusInactive).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)

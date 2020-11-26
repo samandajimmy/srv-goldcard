@@ -32,12 +32,12 @@ func NewRegistrationsHandler(
 		echoGroup.API.POST("/registrations/final", handler.final)
 		echoGroup.API.POST("/registrations/occupation", handler.PostOccupation)
 		echoGroup.API.POST("/registrations/scheduler/final", handler.schedulerFinal)
-		echoGroup.API.POST("/registrations/reset", handler.ResetRegistration)
 	}
 
 	echoGroup.API.POST("/registrations", handler.Registrations)
 	echoGroup.API.GET("/registrations/address", handler.GetAddress)
 	echoGroup.API.POST("/registrations/application-status", handler.applicationStatus)
+	echoGroup.API.POST("/registrations/reset", handler.ResetRegistration)
 
 }
 

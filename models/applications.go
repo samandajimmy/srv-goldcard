@@ -49,6 +49,9 @@ var (
 	// AppStatusActive is to store var application status active
 	AppStatusActive = "active"
 
+	// AppStatusInactive is to store var application status inactive
+	AppStatusInactive = "inactive"
+
 	// AppStatusSent is to store var application status card_sent
 	AppStatusSent = "card_sent"
 
