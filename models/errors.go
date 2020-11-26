@@ -272,6 +272,9 @@ var (
 
 	// ErrGtePaymenTrxIdExist to store gte payment trx id already existed error message
 	ErrGtePaymenTrxIdExist = errors.New("Transaksi ID pembayaran GTE sudah diproses sebelumnya")
+
+	// ErrAddrNotGood to store address data not okay error message
+	ErrAddrNotGood = errors.New("Data alamat tidak sesuai")
 )
 
 // DynamicErr to return parameterize errors
