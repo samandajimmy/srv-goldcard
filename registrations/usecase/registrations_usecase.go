@@ -137,7 +137,10 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 		return respRegNil, models.ErrCreateApplication
 	}
 
-	return models.RespRegistration{ApplicationNumber: app.ApplicationNumber}, nil
+	return models.RespRegistration{
+		ApplicationNumber: app.ApplicationNumber,
+		ApplicationStatus: app.Status,
+	}, nil
 }
 
 func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.PayloadPersonalInformation) error {
