@@ -1,6 +1,7 @@
 package models
 
 import (
+	"gade/srv-goldcard/logger"
 	"time"
 
 	"github.com/labstack/echo"
@@ -81,7 +82,14 @@ func (acc *Account) MappingRegistrationData(pl PayloadPersonalInformation, addrD
 	acc.PersonalInformation.RelativePhoneNumber = pl.RelativePhoneNumber
 
 	// set addressData
-	addrData = RemappAddress(addrData, 30)
+	addrData, err := RemappAddress(addrData, 30)
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return err
+	}
+
 	acc.PersonalInformation.AddressLine1 = addrData.AddressLine1
 	acc.PersonalInformation.AddressLine2 = addrData.AddressLine2
 	acc.PersonalInformation.AddressLine3 = addrData.AddressLine3

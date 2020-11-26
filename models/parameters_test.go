@@ -13,11 +13,12 @@ func TestStringNameFormatter(t *testing.T) {
 	assert.Equal(t, "SAMANDA RASU", str)
 }
 
-func TestJoinAddress(t *testing.T) {
+func TestRemappAddress(t *testing.T) {
 	pl := models.AddressData{
 		AddressLine1: "Jl. Harsono RM No 2, Gedung IT BRI, Ragunan",
 	}
-	str := models.RemappAddress(pl, 30)
+	str, err := models.RemappAddress(pl, 30)
 
 	assert.Equal(t, "SAMANDA RASU", str)
+	assert.Equal(t, "SAMANDA RASU", err)
 }

@@ -5,6 +5,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"math"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -250,15 +251,27 @@ func ReverseArray(data []ListTrx) []ListTrx {
 	return data
 }
 
-func RemappAddress(addr AddressData, length int) AddressData {
+func RemappAddress(addr AddressData, length int) (AddressData, error) {
 	keyAddr := []string{"", "", ""}
-	arrStr := strings.Split(addr.AddressLine1, " ")
+
+	// Make a Regex to say we only want letters and numbers
+	specialChar := regexp.MustCompile("[^a-zA-Z0-9]+")
+	space := regexp.MustCompile(`\s+`)
+	// remove special characters
+	processedString := specialChar.ReplaceAllString(addr.AddressLine1, " ")
+	// remove double spaces
+	processedString = space.ReplaceAllString(processedString, " ")
+	arrStr := strings.Split(processedString, " ")
 	mapIdx := 0
 	newStr := arrStr[0]
 
 	for idx, str := range arrStr {
 		if idx == 0 {
 			continue
+		}
+
+		if len(str) >= (length - 1) {
+			return AddressData{}, ErrAddrNotGood
 		}
 
 		if mapIdx > 2 {
@@ -280,5 +293,5 @@ func RemappAddress(addr AddressData, length int) AddressData {
 	addr.AddressLine2 = keyAddr[1]
 	addr.AddressLine3 = keyAddr[2]
 
-	return addr
+	return addr, nil
 }
