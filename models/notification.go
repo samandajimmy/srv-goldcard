@@ -52,12 +52,22 @@ func (pdsNotif *PdsNotification) GcApplication(acc Account, notifType string) {
 	pdsNotif.NotificationTitle = "Kartu Emas"
 	pdsNotif.ContentList = []ContentList{
 		{
-			Key:   "Tanggal",
-			Value: acc.Application.ApplicationProcessedDate.Format("02/01/2006"),
+			Key: "Tanggal",
+			Value: func() string {
+				if notifType == "succeeded" {
+					return acc.Application.ApplicationProcessedDate.Format(DMYSLASH)
+				}
+				return time.Now().Format(DMYSLASH)
+			}(),
 		},
 		{
-			Key:   "Waktu",
-			Value: acc.Application.ApplicationProcessedDate.Format("15:04"),
+			Key: "Waktu",
+			Value: func() string {
+				if notifType == "succeeded" {
+					return acc.Application.ApplicationProcessedDate.Format("15:04")
+				}
+				return time.Now().Format("15:04")
+			}(),
 		},
 		{
 			Key:   "Referensi",
