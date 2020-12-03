@@ -5,6 +5,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"reflect"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -77,6 +78,27 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 	return appStatus, nil
 }
 
+func (reg *registrationsUseCase) RefreshAppTimeoutJob() {
+	// update app that should be timeout
+	err := reg.regRepo.ForceUpdateAppStatusTimeout()
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+	}
+
+	// get apps that need to be timeout later
+	apps, err := reg.regRepo.GetAppOngoing()
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+	}
+
+	for _, app := range apps {
+		go reg.appTimeoutJob(nil, app, models.NowUTC())
+	}
+
+}
+
 func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.Account,
 	briPl models.PayloadBriRegister, accChan chan models.Account, errAppBri, errAppCore chan error) error {
 	var notif models.PdsNotification
@@ -119,4 +141,16 @@ func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.A
 			}
 		}
 	}
+}
+
+func (reg *registrationsUseCase) appTimeoutJob(c echo.Context, app models.Applications, now time.Time) {
+	diff := app.ExpiredAt.Sub(now)
+	delay := time.Duration(diff.Seconds())
+
+	go func() {
+		logger.Make(c, nil).Debug("Store timeout job to background for appNumber: " + app.ApplicationNumber)
+		time.Sleep(delay * time.Second)
+		logger.Make(c, nil).Debug("Start to make appNumber: " + app.ApplicationNumber + " expired!")
+		_ = reg.regRepo.UpdateAppStatusTimeout(c, app)
+	}()
 }

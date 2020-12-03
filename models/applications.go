@@ -55,6 +55,9 @@ var (
 	// AppStatusSent is to store var application status card_sent
 	AppStatusSent = "card_sent"
 
+	// AppStatusExpired is to store var application status expired
+	AppStatusExpired = "expired"
+
 	// AppStepSavingAcc is to store var application step saving account
 	AppStepSavingAcc int64 = 1
 
@@ -145,6 +148,7 @@ type Applications struct {
 	CardSendDate             time.Time  `json:"cardSendDate,omitempty"`
 	CardSentDate             time.Time  `json:"cardSentDate,omitempty"`
 	RejectedDate             time.Time  `json:"rejectedDate,omitempty"`
+	ExpiredAt                time.Time  `json:"expiredAt"`
 	Documents                []Document `json:"documents" pg:"-"`
 	CoreOpen                 bool       `json:"coreOpen"`
 	CreatedAt                time.Time  `json:"createdAt"`
@@ -169,7 +173,11 @@ func (app *Applications) SetStatus(msg string) {
 // GetStatusDateKey to get status date struct key
 func (app *Applications) GetStatusDateKey() string {
 	if app.Status == "" {
-		logger.Make(nil, nil).Fatal("Application status cannot be nil")
+		return ""
+	}
+
+	if mapStatusDate[app.Status] == "" {
+		return ""
 	}
 
 	snake := matchFirstCap.ReplaceAllString(mapStatusDate[app.Status], "${1}_${2}")
