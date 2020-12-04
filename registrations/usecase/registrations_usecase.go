@@ -10,6 +10,7 @@ import (
 	"gade/srv-goldcard/retry"
 	"gade/srv-goldcard/transactions"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
@@ -166,7 +167,9 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 
 	// get zipcode
 	addrData := models.AddressData{City: pl.AddressCity, Province: pl.Province,
-		Subdistrict: pl.Subdistrict, Village: pl.Village, AddressLine1: pl.AddressLine1}
+		Subdistrict: pl.Subdistrict, Village: pl.Village, AddressLine1: pl.AddressLine1 +
+			" Kel " + strings.Title(strings.ToLower(pl.Village)) +
+			" Kec " + strings.Title(strings.ToLower(pl.Subdistrict))}
 	zipcode, err := reg.regRepo.GetZipcode(c, addrData)
 
 	if err != nil {
@@ -276,7 +279,7 @@ func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.Payloa
 	err = acc.Occupation.MappingOccupation(pl, addrData)
 
 	if err != nil {
-		return models.ErrMappingData
+		return err
 	}
 
 	err = reg.regRepo.PostOccupation(c, acc)

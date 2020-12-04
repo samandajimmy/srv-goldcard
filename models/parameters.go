@@ -280,13 +280,20 @@ func RemappAddress(addr AddressData, length int) (AddressData, error) {
 
 		newStr += " " + str
 
-		if len(newStr) > length {
-			mapIdx += 1
-			newStr = str
+		// check if the newStr is still can be appended
+		if len(newStr) <= length {
+			keyAddr[mapIdx] = newStr
 			continue
 		}
 
-		keyAddr[mapIdx] = newStr
+		// check if the last arrStr and still can be appended to keyAddr slice 1 2 3
+		if idx == len(arrStr)-1 && mapIdx+1 < len(keyAddr) {
+			keyAddr[mapIdx+1] = str
+			break
+		}
+
+		mapIdx += 1
+		newStr = str
 	}
 
 	addr.AddressLine1 = keyAddr[0]

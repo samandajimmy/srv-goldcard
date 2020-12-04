@@ -2,6 +2,7 @@ package models
 
 import (
 	"gade/srv-goldcard/logger"
+	"strings"
 	"time"
 )
 
@@ -59,6 +60,12 @@ type Occupation struct {
 
 // MappingOccupation a function to map all data occupation
 func (occ *Occupation) MappingOccupation(pl PayloadOccupation, addrData AddressData) error {
+	// validation for payload office company should not be more than 30 char
+	if len(pl.Company) > 30 {
+		logger.Make(nil, nil).Debug(ErrCompanyMaxChar)
+		return ErrCompanyMaxChar
+	}
+
 	occ.JobBidangUsaha = pl.JobBidangUsaha
 	occ.JobSubBidangUsaha = pl.JobSubBidangUsaha
 	occ.JobCategory = pl.JobCategory
@@ -75,7 +82,9 @@ func (occ *Occupation) MappingOccupation(pl PayloadOccupation, addrData AddressD
 	occ.OfficePhone = pl.OfficePhone
 	occ.Income = pl.Income * 12
 
-	addrData.AddressLine1 = pl.OfficeAddress1
+	addrData.AddressLine1 = pl.Company + " " + pl.OfficeAddress1 +
+		" Kel " + strings.Title(strings.ToLower(pl.OfficeVillage)) +
+		" Kec " + strings.Title(strings.ToLower(pl.OfficeSubdistrict))
 	// set addressData
 	addrData, err := RemappAddress(addrData, 30)
 
