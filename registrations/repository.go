@@ -32,6 +32,9 @@ type Repository interface {
 	GetSignatoryNameParam(c echo.Context) (string, error)
 	GetSignatoryNipParam(c echo.Context) (string, error)
 	DeactiveAccount(c echo.Context, acc models.Account) error
+	UpdateAppStatusTimeout(echo.Context, models.Applications) error
+	ForceUpdateAppStatusTimeout() error
+	GetAppOngoing() ([]models.Applications, error)
 }
 
 // RestRepository represent the rest registrations repository contract

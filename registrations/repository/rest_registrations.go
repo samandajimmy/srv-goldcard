@@ -136,10 +136,31 @@ func (rr *restRegistrations) SendNotification(c echo.Context, notif models.PdsNo
 		endpoint += ""
 	}
 
-	err := api.RetryablePdsPost(c, endpoint, reqBody, &resp)
+	err := api.RetryablePdsPost(c, endpoint, reqBody, &resp, echo.MIMEApplicationJSON)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (rr *restRegistrations) AuthLogin() error {
+	resp := api.PdsResponse{}
+	reqBody := map[string]string{
+		"email":    "082141217929",
+		"password": "gadai123",
+		"agen":     "android",
+		"version":  "3",
+	}
+	endpoint := "/auth/login/new"
+	err := api.RetryablePdsPost(nil, endpoint, reqBody, &resp, echo.MIMEApplicationForm)
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+		logger.MakeStructToJSON(resp)
 
 		return err
 	}

@@ -129,6 +129,7 @@ func main() {
 
 	// run refresh all token
 	_ = tokenUseCase.RefreshAllToken()
+	go registrationsUseCase.RefreshAppTimeoutJob()
 
 	err = ech.Start(":" + os.Getenv(`PORT`))
 
