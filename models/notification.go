@@ -29,6 +29,7 @@ type ContentList struct {
 }
 
 func (pdsNotif *PdsNotification) GcApplication(acc Account, notifType string) {
+	var timeNotif time.Time
 	pdsNotif.PhoneNumber = acc.PersonalInformation.HandPhoneNumber
 	pdsNotif.CIF = acc.CIF
 	switch notifType {
@@ -38,12 +39,14 @@ func (pdsNotif *PdsNotification) GcApplication(acc Account, notifType string) {
 		pdsNotif.ContentDescription = []string{"Mohon maaf Pengajuan Kartu Emas anda belum berhasil."}
 		pdsNotif.ContentFooter = []string{"Silahkan untuk melakukan pengajuan kembali dengan melengkapi data-data yang sesuai."}
 		pdsNotif.NotificationDescription = "Pengajuan Gagal"
+		timeNotif = time.Now()
 	case "succeeded":
 		pdsNotif.EmailSubject = "Pengajuan Kartu Emas Pegadaian Berhasil"
 		pdsNotif.ContentTitle = "Pengajuan Kartu Emas Pegadaian Berhasil"
 		pdsNotif.ContentDescription = []string{"Selamat Pengajuan Kartu Emas anda Berhasil"}
 		pdsNotif.ContentFooter = []string{"Kartu Emas akan segera diproses, pengiriman kartu maksimal 14 hari kerja."}
 		pdsNotif.NotificationDescription = "Pengajuan Berhasil"
+		timeNotif = acc.Application.ApplicationProcessedDate
 	default:
 		logger.Make(nil, nil).Fatal("notifType could not be empty")
 	}
@@ -52,22 +55,12 @@ func (pdsNotif *PdsNotification) GcApplication(acc Account, notifType string) {
 	pdsNotif.NotificationTitle = "Kartu Emas"
 	pdsNotif.ContentList = []ContentList{
 		{
-			Key: "Tanggal",
-			Value: func() string {
-				if notifType == "succeeded" {
-					return acc.Application.ApplicationProcessedDate.Format(DMYSLASH)
-				}
-				return time.Now().Format(DMYSLASH)
-			}(),
+			Key:   "Tanggal",
+			Value: timeNotif.Format(DMYSLASH),
 		},
 		{
-			Key: "Waktu",
-			Value: func() string {
-				if notifType == "succeeded" {
-					return acc.Application.ApplicationProcessedDate.Format("15:04")
-				}
-				return time.Now().Format("15:04")
-			}(),
+			Key:   "Waktu",
+			Value: timeNotif.Format("15:04"),
 		},
 		{
 			Key:   "Referensi",
