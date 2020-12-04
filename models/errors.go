@@ -275,6 +275,9 @@ var (
 
 	// ErrCoreOpen to store error failed when post open goldcard to core
 	ErrCoreOpen = errors.New("Pengajuan pembukaan kartu emas gagal")
+
+	// ErrAddrNotGood to store address data not okay error message
+	ErrAddrNotGood = errors.New("Data alamat tidak sesuai")
 )
 
 // DynamicErr to return parameterize errors
