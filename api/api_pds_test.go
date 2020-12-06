@@ -6,20 +6,25 @@ import (
 	"testing"
 
 	"github.com/labstack/echo"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewPdsAPI(t *testing.T) {
 	response := map[string]interface{}{}
-	body := map[string]interface{}{
-		"message": "ini message nya",
-		"noHp":    "081511150290",
+	body := map[string]string{
+		"email":    "082141217929",
+		"password": "gadai123",
+		"agen":     "android",
+		"version":  "3",
 	}
 
 	pds, _ := api.NewPdsAPI(nil, echo.MIMEApplicationForm)
-	req, _ := pds.Request("/notification/send_sms_promo", echo.POST, body)
+	req, _ := pds.Request("/auth/login/new", echo.POST, body)
 	resp, _ := pds.Do(req, &response)
 
 	fmt.Println(req)
 	fmt.Println(resp)
 	fmt.Println(response)
+
+	assert.Equal(t, "SAMANDA RASU", response)
 }
