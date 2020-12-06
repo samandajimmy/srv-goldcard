@@ -22,4 +22,5 @@ type UseCase interface {
 	ResetRegistration(c echo.Context, pl models.PayloadAppNumber) error
 	GenerateSlipTEDocument(c echo.Context, acc *models.Account) error
 	UploadAppDoc(c echo.Context, brixkey string, doc models.Document) error
+	RefreshAppTimeoutJob()
 }

@@ -17,6 +17,8 @@ type PdsResponse struct {
 	Message string                   `json:"message"`
 	Errors  string                   `json:"errors"`
 	Data    []map[string]interface{} `json:"data,omitempty"`
+	User    map[string]interface{}   `json:"user,omitempty"`
+	Token   string                   `json:"token,omitempty"`
 }
 
 // APIpds struct represents a request for API PDS
@@ -50,8 +52,8 @@ func NewPdsAPI(c echo.Context, contentType string) (APIpds, error) {
 }
 
 // PdsPost function to request PDS API with post method
-func PdsPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
-	pds, err := NewPdsAPI(c, echo.MIMEApplicationJSON)
+func PdsPost(c echo.Context, endpoint string, reqBody, resp interface{}, contentType string) error {
+	pds, err := NewPdsAPI(c, contentType)
 
 	if err != nil {
 		return err
@@ -68,7 +70,10 @@ func PdsPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return models.ErrExternalAPI
+		resp = PdsResponse{
+			Status:  "error",
+			Message: err.Error(),
+		}
 	}
 
 	res := resp.(*PdsResponse)
@@ -95,9 +100,9 @@ func PdsPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
 }
 
 // RetryablePdsPost function to retryable request PDS API with post method
-func RetryablePdsPost(c echo.Context, endpoint string, reqBody interface{}, resp interface{}) error {
+func RetryablePdsPost(c echo.Context, endpoint string, reqBody interface{}, resp interface{}, contentType string) error {
 	fn := func() error {
-		return PdsPost(c, endpoint, reqBody, resp)
+		return PdsPost(c, endpoint, reqBody, resp, contentType)
 	}
 
 	err := RetryablePost(c, "PDS API: POST "+endpoint, fn)

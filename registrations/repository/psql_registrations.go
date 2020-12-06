@@ -30,9 +30,9 @@ func (regis *psqlRegistrationsRepository) CreateApplication(c echo.Context, app 
 	var nilFilters []string
 
 	stmts := []*gcdb.PipelineStmt{
-		gcdb.NewPipelineStmt(`INSERT INTO applications (application_number, status, created_at)
-			VALUES ($1, $2, $3) RETURNING id;`,
-			[]string{"appID"}, app.ApplicationNumber, app.Status, time.Now()),
+		gcdb.NewPipelineStmt(`INSERT INTO applications (application_number, status, created_at, expired_at)
+			VALUES ($1, $2, $3, $4) RETURNING id;`,
+			[]string{"appID"}, app.ApplicationNumber, app.Status, app.CreatedAt, app.ExpiredAt),
 		gcdb.NewPipelineStmt(`INSERT INTO personal_informations (hand_phone_number, created_at)
 			VALUES ($1, $2) RETURNING id;`,
 			[]string{"piID"}, pi.HandPhoneNumber, time.Now()),
@@ -124,10 +124,11 @@ func (regis *psqlRegistrationsRepository) PostSavingAccount(c echo.Context, acc 
 func (regis *psqlRegistrationsRepository) GetAccountByAppNumber(c echo.Context, acc *models.Account) error {
 	newAcc := models.Account{}
 	docs := []models.Document{}
+	excludedStatus := []string{models.AppStatusInactive, models.AppStatusExpired}
 	err := regis.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
 		Relation("Card").Relation("Occupation").Relation("EmergencyContact").
-		Where("application_number = ? and application.status != ?",
-			acc.Application.ApplicationNumber, models.AccStatusInactive).Select()
+		Where("application_number = ? and application.status not in (?)",
+			acc.Application.ApplicationNumber, pg.In(excludedStatus)).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(c, nil).Debug(err)
@@ -380,13 +381,49 @@ func (regis *psqlRegistrationsRepository) GetAppStatus(c echo.Context, app model
 	return appStatus, nil
 }
 
+func (regis *psqlRegistrationsRepository) UpdateAppStatusTimeout(c echo.Context, app models.Applications) error {
+	app.UpdatedAt = models.NowDbpg()
+	app.Status = models.AppStatusExpired
+
+	_, err := regis.DBpg.Model(&app).Set("status = ?status, updated_at = ?updated_at").
+		Where("application_number = ? and status = ?", app.ApplicationNumber, models.AppStatusOngoing).
+		Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
+func (regis *psqlRegistrationsRepository) ForceUpdateAppStatusTimeout() error {
+	app := models.Applications{}
+
+	_, err := regis.DBpg.Model(app).Exec(`UPDATE applications SET status = ?, updated_at = ?
+		where expired_at <= ? and status = ?`, models.AppStatusExpired, models.NowDbpg(), time.Now(),
+		models.AppStatusOngoing)
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
 func (regis *psqlRegistrationsRepository) UpdateAppStatus(c echo.Context, app models.Applications) error {
 	app.UpdatedAt = models.NowDbpg()
 	key := app.GetStatusDateKey()
+	dynQuery := "status = ?status, updated_at = ?updated_at"
 
-	_, err := regis.DBpg.Model(&app).
-		Set(fmt.Sprintf(`status = ?status, %s = ?%s, updated_at = ?updated_at`, key, key)).
-		WherePK().Update()
+	if key != "" {
+		dynQuery = fmt.Sprintf(dynQuery+", %s = ?%s", key, key)
+	}
+
+	_, err := regis.DBpg.Model(&app).Set(dynQuery).WherePK().Update()
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
@@ -471,9 +508,10 @@ func (regis *psqlRegistrationsRepository) GetCoreServiceStatus(c echo.Context) e
 func (regis *psqlRegistrationsRepository) UpdateCoreOpen(c echo.Context, acc *models.Account) error {
 	app := models.Applications{
 		CoreOpen:  true,
-		UpdatedAt: time.Now(),
+		UpdatedAt: models.NowDbpg(),
 	}
-	_, err := regis.DBpg.Model(&app).Column("core_open", "updated_at").Where("application_number = ?", acc.Application.ApplicationNumber).Update()
+	_, err := regis.DBpg.Model(&app).Column("core_open", "updated_at").
+		Where("application_number = ?", acc.Application.ApplicationNumber).Update()
 
 	if err != nil {
 		return err
@@ -566,4 +604,18 @@ func (regis *psqlRegistrationsRepository) DeactiveAccount(c echo.Context, acc mo
 	}
 
 	return nil
+}
+
+func (regis *psqlRegistrationsRepository) GetAppOngoing() ([]models.Applications, error) {
+	apps := []models.Applications{}
+	err := regis.DBpg.Model(&apps).Where("expired_at > ? and status = ?", time.Now(),
+		models.AppStatusOngoing).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(nil, nil).Debug(err)
+
+		return apps, err
+	}
+
+	return apps, nil
 }

@@ -9,8 +9,10 @@ import (
 	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/retry"
 	"gade/srv-goldcard/transactions"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
@@ -128,7 +130,17 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 		return respRegNil, models.ErrEmergecyContactNotFound
 	}
 
-	app := models.Applications{ApplicationNumber: appNumber.String(), Status: models.AppStatusOngoing}
+	// set expiryAt time
+	now := time.Now()
+	expiryDur, _ := strconv.ParseInt(os.Getenv(`APP_TIMEOUT_DURATION`), 10, 64)
+	expiryAt := now.Add(time.Duration(expiryDur) * time.Second)
+
+	app := models.Applications{
+		ApplicationNumber: appNumber.String(),
+		Status:            models.AppStatusOngoing,
+		ExpiredAt:         expiryAt,
+		CreatedAt:         now,
+	}
 	acc = models.Account{CIF: payload.CIF, BranchCode: payload.BranchCode, ProductRequest: models.DefBriProductRequest,
 		BillingCycle: models.DefBriBillingCycle, CardDeliver: models.BriCardDeliverHome, BankID: bankID, EmergencyContactID: ecID}
 	pi := models.PersonalInformation{HandPhoneNumber: payload.HandPhoneNumber}
@@ -137,6 +149,9 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 	if err != nil {
 		return respRegNil, models.ErrCreateApplication
 	}
+
+	// run job for expiration process on background
+	go reg.appTimeoutJob(c, app, app.CreatedAt)
 
 	return models.RespRegistration{
 		ApplicationNumber: app.ApplicationNumber,

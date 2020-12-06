@@ -2,10 +2,10 @@ package logger
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/fatih/structs"
 	"github.com/labstack/echo"
@@ -20,7 +20,6 @@ const (
 var (
 	strExclude = []string{"password", "base64", "npwp", "phone", "nik", "ktp", "gaji", "othr",
 		"slik"}
-	errEchoContextNil = errors.New("Echo context tidak boleh nil")
 )
 
 type requestLogger struct {
@@ -88,7 +87,7 @@ func MakeWithoutReportCaller(c echo.Context, payload interface{}) *logrus.Entry 
 // GetEchoRID to get echo request ID
 func GetEchoRID(c echo.Context) string {
 	if c == nil {
-		Make(nil, nil).Fatal(errEchoContextNil)
+		return "self-request-" + time.Now().Format("20060102150405.999")
 	}
 
 	return c.Response().Header().Get(echo.HeaderXRequestID)
