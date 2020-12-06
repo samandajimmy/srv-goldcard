@@ -60,12 +60,6 @@ type Occupation struct {
 
 // MappingOccupation a function to map all data occupation
 func (occ *Occupation) MappingOccupation(pl PayloadOccupation, addrData AddressData) error {
-	// validation for payload office company should not be more than 30 char
-	if len(pl.Company) > 30 {
-		logger.Make(nil, nil).Debug(ErrCompanyMaxChar)
-		return ErrCompanyMaxChar
-	}
-
 	occ.JobBidangUsaha = pl.JobBidangUsaha
 	occ.JobSubBidangUsaha = pl.JobSubBidangUsaha
 	occ.JobCategory = pl.JobCategory

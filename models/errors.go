@@ -275,9 +275,6 @@ var (
 
 	// ErrAddrNotGood to store address data not okay error message
 	ErrAddrNotGood = errors.New("Data alamat tidak sesuai")
-
-	// ErrCompanyMaxChar to store error maximum allowed char
-	ErrCompanyMaxChar = errors.New("Data nama perusahaan melebihi batas maksimum 30 karakter")
 )
 
 // DynamicErr to return parameterize errors
