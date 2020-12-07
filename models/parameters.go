@@ -254,6 +254,11 @@ func ReverseArray(data []ListTrx) []ListTrx {
 func RemappAddress(addr AddressData, length int) (AddressData, error) {
 	keyAddr := []string{"", "", ""}
 
+	// full address data
+	fullAddr := []string{addr.AddressLine1, "Kel", strings.Title(strings.ToLower(addr.Village)),
+		"Kec", strings.Title(strings.ToLower(addr.Subdistrict))}
+	addr.AddressLine1 = strings.Join(fullAddr, " ")
+
 	// Make a Regex to say we only want letters and numbers
 	specialChar := regexp.MustCompile("[^a-zA-Z0-9]+")
 	space := regexp.MustCompile(`\s+`)

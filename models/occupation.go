@@ -2,7 +2,6 @@ package models
 
 import (
 	"gade/srv-goldcard/logger"
-	"strings"
 	"time"
 )
 
@@ -76,9 +75,6 @@ func (occ *Occupation) MappingOccupation(pl PayloadOccupation, addrData AddressD
 	occ.OfficePhone = pl.OfficePhone
 	occ.Income = pl.Income * 12
 
-	addrData.AddressLine1 = pl.Company + " " + pl.OfficeAddress1 +
-		" Kel " + strings.Title(strings.ToLower(pl.OfficeVillage)) +
-		" Kec " + strings.Title(strings.ToLower(pl.OfficeSubdistrict))
 	// set addressData
 	addrData, err := RemappAddress(addrData, 30)
 

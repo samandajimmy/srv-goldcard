@@ -11,7 +11,6 @@ import (
 	"gade/srv-goldcard/transactions"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -182,9 +181,7 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 
 	// get zipcode
 	addrData := models.AddressData{City: pl.AddressCity, Province: pl.Province,
-		Subdistrict: pl.Subdistrict, Village: pl.Village, AddressLine1: pl.AddressLine1 +
-			" Kel " + strings.Title(strings.ToLower(pl.Village)) +
-			" Kec " + strings.Title(strings.ToLower(pl.Subdistrict))}
+		Subdistrict: pl.Subdistrict, Village: pl.Village, AddressLine1: pl.AddressLine1}
 	zipcode, err := reg.regRepo.GetZipcode(c, addrData)
 
 	if err != nil {
@@ -283,7 +280,8 @@ func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.Payloa
 
 	// get zipcode
 	addrData := models.AddressData{City: pl.OfficeCity, Province: pl.OfficeProvince,
-		Subdistrict: pl.OfficeSubdistrict, Village: pl.OfficeVillage, AddressLine1: pl.OfficeAddress1}
+		Subdistrict: pl.OfficeSubdistrict, Village: pl.OfficeVillage,
+		AddressLine1: pl.Company + " " + pl.OfficeAddress1}
 	addrData.Zipcode, err = reg.regRepo.GetZipcode(c, addrData)
 
 	if err != nil {
