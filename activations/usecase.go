@@ -8,7 +8,7 @@ import (
 
 // UseCase represent the activations usecases
 type UseCase interface {
-	InquiryActivation(c echo.Context, pl models.PayloadAppNumber) (models.CardBalance, models.ResponseErrors)
+	InquiryActivation(c echo.Context, acc models.Account) (models.CardBalance, models.ResponseErrors)
 	PostActivations(echo.Context, models.PayloadActivations) (models.RespActivations, error)
 	ValidateActivation(c echo.Context, pa models.PayloadActivations) models.ResponseErrors
 }

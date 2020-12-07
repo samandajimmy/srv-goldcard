@@ -132,6 +132,9 @@ var (
 	// ErrPostActivationsFailed to errors post activations failed
 	ErrPostActivationsFailed = errors.New("Gagal melakukan aktivasi")
 
+	// ErrCardActivated to store error message card has been activated
+	ErrCardActivated = errors.New("Kartu telah aktif sebelumnya.")
+
 	// ErrGetDocument to errors get document failed
 	ErrGetDocument = errors.New("Gagal mendapatkan dokumen")
 
