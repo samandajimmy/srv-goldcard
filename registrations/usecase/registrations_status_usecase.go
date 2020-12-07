@@ -100,47 +100,24 @@ func (reg *registrationsUseCase) RefreshAppTimeoutJob() {
 }
 
 func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.Account,
-	briPl models.PayloadBriRegister, accChan chan models.Account, errAppBri, errAppCore chan error) error {
+	briPl models.PayloadBriRegister, accChan chan models.Account) error {
 	var notif models.PdsNotification
 	accChannel := <-accChan
 	// function to apply to bri
-	applyBri := func() {
-		err := reg.briApply(c, acc, briPl)
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			errAppBri <- err
-			return
-		}
-		errAppBri <- nil
+	err := reg.briApply(c, acc, briPl)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		// send notif app failed
+		notif.GcApplication(accChannel, "failed")
+		_ = reg.rrr.SendNotification(c, notif, "")
+		return err
 	}
 
-	for {
-		select {
-		case err := <-errAppCore:
-			if err == nil {
-				go applyBri()
-			}
-			if err != nil {
-				// send notif app failed
-				notif.GcApplication(accChannel, "failed")
-				_ = reg.rrr.SendNotification(c, notif, "")
-				return err
-			}
-		case err := <-errAppBri:
-			if err != nil {
-				// send notif app failed
-				notif.GcApplication(accChannel, "failed")
-				_ = reg.rrr.SendNotification(c, notif, "")
-				return err
-			}
-			if err == nil {
-				// send notif app succeeded
-				notif.GcApplication(accChannel, "succeeded")
-				_ = reg.rrr.SendNotification(c, notif, "")
-				return err
-			}
-		}
-	}
+	// send notif app succeeded
+	notif.GcApplication(accChannel, "succeeded")
+	_ = reg.rrr.SendNotification(c, notif, "")
+	return nil
 }
 
 func (reg *registrationsUseCase) appTimeoutJob(c echo.Context, app models.Applications, now time.Time) {

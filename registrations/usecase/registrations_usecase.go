@@ -334,6 +334,8 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 }
 
 func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber, fn models.FuncAfterGC) error {
+	var notif models.PdsNotification
+
 	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
@@ -361,30 +363,18 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	}
 
 	// open and lock gold limit to core
-	errAppBri := make(chan error)
-	errAppCore := make(chan error)
 	accChan := make(chan models.Account)
-	go func() {
-		// this validation for check is core already open before
-		if acc.Application.CoreOpen {
-			errAppCore <- nil
-			return
-		}
 
-		err = reg.rrr.OpenGoldcard(c, acc, false)
+	// do open goldcard on core
+	err = reg.openCore(c, &acc)
 
-		if err != nil {
-			// insert error to process handler
-			// change error status become true on table proess_statuses
-			go reg.upsertProcessHandler(c, &acc, err)
-			logger.Make(c, nil).Debug(err)
-			errAppCore <- err
-			return
-		}
-		// update Core open Status
-		reg.coreOpenStatus(c, acc)
-		errAppCore <- nil
-	}()
+	if err != nil {
+		// send notif app failed
+		notif.GcApplication(acc, "failed")
+		_ = reg.rrr.SendNotification(c, notif, "")
+
+		return err
+	}
 
 	// concurrently update application status and current_step
 	go func() {
@@ -402,12 +392,34 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	}()
 
 	// channeling after core open goldcard finish
-	err = fn(c, &acc, briPl, accChan, errAppBri, errAppCore)
+	err = fn(c, &acc, briPl, accChan)
 
 	if err != nil {
 		return err
 	}
 
+	return nil
+}
+
+func (reg *registrationsUseCase) openCore(c echo.Context, acc *models.Account) error {
+	// this validation for check is core already open before
+	if acc.Application.CoreOpen {
+		return nil
+	}
+
+	err := reg.rrr.OpenGoldcard(c, *acc, false)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+		// set application status rejected
+		acc.Application.SetStatus(models.AppStatusRejected)
+		_ = reg.regRepo.UpdateAppStatus(c, acc.Application)
+
+		return models.ErrCoreOpen
+	}
+
+	// update Core open Status
+	reg.coreOpenStatus(c, *acc)
 	return nil
 }
 
@@ -445,9 +457,9 @@ func (reg *registrationsUseCase) FinalRegistrationScheduler(c echo.Context, pl m
 }
 
 func (reg *registrationsUseCase) concurrentlyAfterOpenGoldcard(c echo.Context, acc *models.Account,
-	briPl models.PayloadBriRegister, accChan chan models.Account, errAppBri, errAppCore chan error) error {
+	briPl models.PayloadBriRegister, accChan chan models.Account) error {
 	go func() {
-		_ = reg.afterOpenGoldcard(c, acc, briPl, accChan, errAppBri, errAppCore)
+		_ = reg.afterOpenGoldcard(c, acc, briPl, accChan)
 	}()
 
 	return nil
