@@ -411,6 +411,10 @@ func (reg *registrationsUseCase) openCore(c echo.Context, acc *models.Account) e
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
+		// set application status rejected
+		acc.Application.SetStatus(models.AppStatusRejected)
+		_ = reg.regRepo.UpdateAppStatus(c, acc.Application)
+
 		return models.ErrCoreOpen
 	}
 

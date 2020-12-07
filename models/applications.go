@@ -55,6 +55,9 @@ var (
 	// AppStatusSent is to store var application status card_sent
 	AppStatusSent = "card_sent"
 
+	// AppStatusRejected is to store var application status rejected
+	AppStatusRejected = "application rejected"
+
 	// AppStatusExpired is to store var application status expired
 	AppStatusExpired = "expired"
 
