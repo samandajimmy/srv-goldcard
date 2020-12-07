@@ -75,7 +75,6 @@ func (occ *Occupation) MappingOccupation(pl PayloadOccupation, addrData AddressD
 	occ.OfficePhone = pl.OfficePhone
 	occ.Income = pl.Income * 12
 
-	addrData.AddressLine1 = pl.OfficeAddress1
 	// set addressData
 	addrData, err := RemappAddress(addrData, 30)
 

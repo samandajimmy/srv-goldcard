@@ -193,7 +193,7 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 	err = acc.MappingRegistrationData(pl, addrData)
 
 	if err != nil {
-		return models.ErrMappingData
+		return err
 	}
 
 	// update account data
@@ -280,7 +280,8 @@ func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.Payloa
 
 	// get zipcode
 	addrData := models.AddressData{City: pl.OfficeCity, Province: pl.OfficeProvince,
-		Subdistrict: pl.OfficeSubdistrict, Village: pl.OfficeVillage, AddressLine1: pl.OfficeAddress1}
+		Subdistrict: pl.OfficeSubdistrict, Village: pl.OfficeVillage,
+		AddressLine1: pl.Company + " " + pl.OfficeAddress1}
 	addrData.Zipcode, err = reg.regRepo.GetZipcode(c, addrData)
 
 	if err != nil {
@@ -291,7 +292,7 @@ func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.Payloa
 	err = acc.Occupation.MappingOccupation(pl, addrData)
 
 	if err != nil {
-		return models.ErrMappingData
+		return err
 	}
 
 	err = reg.regRepo.PostOccupation(c, acc)

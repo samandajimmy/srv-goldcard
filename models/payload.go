@@ -171,7 +171,7 @@ type PayloadOccupation struct {
 	JobCategory       int64  `json:"jobCategory" validate:"required"`
 	JobStatus         int64  `json:"jobStatus" validate:"required"`
 	TotalEmployee     int64  `json:"totalEmployee" validate:"required"`
-	Company           string `json:"company" validate:"required"`
+	Company           string `json:"company" validate:"required,max=30"`
 	JobTitle          string `json:"jobTitle"`
 	WorkSince         string `json:"workSince" validate:"required"`
 	OfficeAddress1    string `json:"officeAddress1" validate:"required"`
