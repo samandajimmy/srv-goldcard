@@ -193,7 +193,7 @@ func (reg *registrationsUseCase) PostPersonalInfo(c echo.Context, pl models.Payl
 	err = acc.MappingRegistrationData(pl, addrData)
 
 	if err != nil {
-		return models.ErrMappingData
+		return err
 	}
 
 	// update account data
