@@ -362,7 +362,6 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	}
 
 	// open and lock gold limit to core
-	errAppBri := make(chan error)
 	accChan := make(chan models.Account)
 
 	// do open goldcard on core
@@ -392,7 +391,7 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 	}()
 
 	// channeling after core open goldcard finish
-	err = fn(c, &acc, briPl, accChan, errAppBri)
+	err = fn(c, &acc, briPl, accChan)
 
 	if err != nil {
 		return err
@@ -457,9 +456,9 @@ func (reg *registrationsUseCase) FinalRegistrationScheduler(c echo.Context, pl m
 }
 
 func (reg *registrationsUseCase) concurrentlyAfterOpenGoldcard(c echo.Context, acc *models.Account,
-	briPl models.PayloadBriRegister, accChan chan models.Account, errAppBri chan error) error {
+	briPl models.PayloadBriRegister, accChan chan models.Account) error {
 	go func() {
-		_ = reg.afterOpenGoldcard(c, acc, briPl, accChan, errAppBri)
+		_ = reg.afterOpenGoldcard(c, acc, briPl, accChan)
 	}()
 
 	return nil

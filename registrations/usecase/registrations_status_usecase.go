@@ -100,23 +100,14 @@ func (reg *registrationsUseCase) RefreshAppTimeoutJob() {
 }
 
 func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.Account,
-	briPl models.PayloadBriRegister, accChan chan models.Account, errAppBri chan error) error {
+	briPl models.PayloadBriRegister, accChan chan models.Account) error {
 	var notif models.PdsNotification
 	accChannel := <-accChan
 	// function to apply to bri
-	go func() {
-		err := reg.briApply(c, acc, briPl)
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			errAppBri <- err
-			return
-		}
-		errAppBri <- nil
-	}()
-
-	err := <-errAppBri
+	err := reg.briApply(c, acc, briPl)
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
 		// send notif app failed
 		notif.GcApplication(accChannel, "failed")
 		_ = reg.rrr.SendNotification(c, notif, "")
