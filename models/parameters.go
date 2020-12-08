@@ -307,3 +307,13 @@ func RemappAddress(addr AddressData, length int) (AddressData, error) {
 
 	return addr, nil
 }
+
+func ArrayContainsInt(intIncluder []int, value int) bool {
+	for _, include := range intIncluder {
+		if include == value {
+			return true
+		}
+	}
+
+	return false
+}

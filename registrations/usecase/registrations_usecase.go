@@ -281,7 +281,14 @@ func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.Payloa
 	// get zipcode
 	addrData := models.AddressData{City: pl.OfficeCity, Province: pl.OfficeProvince,
 		Subdistrict: pl.OfficeSubdistrict, Village: pl.OfficeVillage,
-		AddressLine1: pl.Company + " " + pl.OfficeAddress1}
+		AddressLine1: pl.OfficeAddress1}
+	// job category need company name
+	inclCompanyName := []int{1, 4, 5}
+	// if job category is must included with company name
+	if result := models.ArrayContainsInt(inclCompanyName, int(pl.JobCategory)); result {
+		addrData.AddressLine1 = pl.Company + " " + pl.OfficeAddress1
+	}
+
 	addrData.Zipcode, err = reg.regRepo.GetZipcode(c, addrData)
 
 	if err != nil {
