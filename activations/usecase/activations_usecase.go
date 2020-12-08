@@ -24,18 +24,35 @@ type activationsUseCase struct {
 
 // ActivationUseCase represent Activation Use Case
 func ActivationUseCase(aRepo activations.Repository, arRepo activations.RestRepository,
-	rRepo registrations.Repository, rrRepo registrations.RestRepository, rUsecase registrations.UseCase, trRepo transactions.RestRepository) activations.UseCase {
+	rRepo registrations.Repository, rrRepo registrations.RestRepository, rUsecase registrations.UseCase,
+	trRepo transactions.RestRepository) activations.UseCase {
 	return &activationsUseCase{aRepo, arRepo, rRepo, rrRepo, rUsecase, trRepo}
 }
 
-func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.PayloadAppNumber) (models.CardBalance, models.ResponseErrors) {
+func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, acc models.Account) (models.CardBalance, models.ResponseErrors) {
 	var errors models.ResponseErrors
 	var cardBal models.CardBalance
+	var err error
+
 	// get account and check app number
-	acc, err := aUsecase.rUsecase.CheckApplication(c, pl)
+	if acc.ID == int64(0) {
+		appNumber := models.PayloadAppNumber{
+			ApplicationNumber: acc.Application.ApplicationNumber,
+		}
+
+		acc, err = aUsecase.rUsecase.CheckApplication(c, appNumber)
+	}
 
 	if err != nil {
 		errors.SetTitle(err.Error())
+		return cardBal, errors
+	}
+
+	// if account or card has been activated
+	if acc.Status == models.AccStatusActive &&
+		acc.Application.Status == models.AppStatusActive &&
+		acc.Card.Status == models.CardStatusActive {
+		errors.SetTitle(models.ErrCardActivated.Error())
 		return cardBal, errors
 	}
 
@@ -59,6 +76,7 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 		return cardBal, errors
 	}
 
+	// return response if there's no decreasing
 	if !isDecreased {
 		return cardBal, errors
 	}
@@ -74,6 +92,7 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	}
 
 	if _, ok := userDetail["saldoEfektif"].(string); !ok {
+		logger.Make(c, nil).Debug(models.ErrSetVar)
 		errors.SetTitle(models.ErrSetVar.Error())
 		return cardBal, errors
 	}
@@ -81,7 +100,9 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 	goldEffBalance, err := strconv.ParseFloat(userDetail["saldoEfektif"].(string), 64)
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
 		errors.SetTitle(models.ErrGetEffBalance.Error())
+
 		return cardBal, errors
 	}
 
@@ -96,6 +117,7 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, pl models.
 		return cardBal, errors
 	}
 
+	// got enough effective gold balance
 	errors.SetTitleCode(
 		"44",
 		models.ErrDecreasedSTL.Error(),
@@ -113,25 +135,19 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 	if err != nil {
 		return respActNil, err
 	}
-	err = acc.MappingCardActivationsData(c, pa)
 
-	if err != nil {
-		return respActNil, models.ErrMappingData
-	}
+	acc.Card.CardNumber = pa.FirstSixDigits + models.AppendXCardNumber + pa.LastFourDigits
+	acc.Card.ValidUntil = pa.ExpDate
 
 	// Inquiry activation
-	appNumber := models.PayloadAppNumber{
-		ApplicationNumber: acc.Application.ApplicationNumber,
-	}
-
-	cardBal, errs := aUsecase.InquiryActivation(c, appNumber)
+	cardBal, errs := aUsecase.InquiryActivation(c, acc)
 
 	if errs.Title != "" && errs.Code != "44" {
 		return respActNil, errors.New(errs.Title)
 	}
 
 	// do re registration of the inquiry code 44
-	if errs.Code != "44" {
+	if errs.Code == "44" && acc.AccountNumber == "" {
 		err = aUsecase.reRegistration(c, acc, cardBal)
 
 		if err != nil {
@@ -139,23 +155,7 @@ func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.Pa
 		}
 	}
 
-	// init activation channel
-	errActCore := make(chan error)
-
-	go func() {
-		// Activations to core
-		err = aUsecase.arRepo.ActivationsToCore(c, &acc)
-
-		if err != nil {
-			errActCore <- err
-
-			return
-		}
-
-		errActCore <- nil
-	}()
-
-	err = aUsecase.afterActivationGoldcard(c, &acc, pa, errActCore)
+	err = aUsecase.goldcardActivation(c, &acc, pa)
 
 	if err != nil {
 		return respActNil, models.ErrPostActivationsFailed
@@ -185,100 +185,66 @@ func (aUsecase *activationsUseCase) ValidateActivation(c echo.Context, pa models
 	return errors
 }
 
-func (aUsecase *activationsUseCase) afterActivationGoldcard(c echo.Context, acc *models.Account, pa models.PayloadActivations, errActCore chan error) error {
+func (aUsecase *activationsUseCase) goldcardActivation(c echo.Context, acc *models.Account, pa models.PayloadActivations) error {
 	var notif models.PdsNotification
+	errActCore := make(chan error)
 	errActBri := make(chan error)
-	errActUpdate := make(chan error)
-	errActivation := make(chan error)
 
-	// Activations to BRI
-	briActivation := func() {
-		err := aUsecase.arRepo.ActivationsToBRI(c, *acc, pa)
+	// activation to core
+	go func() {
+		if acc.AccountNumber != "" {
+			errActCore <- nil
+
+			return
+		}
+
+		err := aUsecase.arRepo.ActivationsToCore(c, acc)
 
 		if err != nil {
-			logger.Make(c, nil).Debug(err)
+			errActCore <- err
+
+			return
+		}
+
+		errActCore <- nil
+	}()
+
+	// activation to BRI
+	go func() {
+		err := aUsecase.briActivation(c, acc, pa)
+
+		if err != nil {
 			errActBri <- err
+
 			return
 		}
 
 		errActBri <- nil
-	}
-
-	updateActivation := func() {
-		// get card information
-		cardInformation, err := aUsecase.trRepo.GetBRICardInformation(c, *acc)
-
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			errActUpdate <- err
-			return
-		}
-
-		acc.Card.EncryptedCardNumber = cardInformation.BillKey
-		err = aUsecase.aRepo.PostActivations(c, *acc)
-
-		if err != nil {
-			logger.Make(c, nil).Debug(err)
-			errActUpdate <- err
-			return
-		}
-
-		errActUpdate <- nil
-	}
-
-	sendSucceededNotif := func() {
-		notif.GcActivation(*acc, "succeeded")
-		_ = aUsecase.rrRepo.SendNotification(c, notif, "")
-	}
-
-	sendFailedNotif := func() {
-		notif.GcActivation(*acc, "failed")
-		_ = aUsecase.rrRepo.SendNotification(c, notif, "")
-	}
-
-	go func() {
-		for {
-			select {
-			case err := <-errActCore:
-				if err == nil {
-					go briActivation()
-				}
-
-				if err != nil {
-					// send notif activation failed
-					go sendFailedNotif()
-					errActivation <- err
-				}
-			case err := <-errActBri:
-				if err == nil {
-					go updateActivation()
-				}
-
-				if err != nil {
-					// send notif activation failed
-					go sendFailedNotif()
-					errActivation <- err
-				}
-			case err := <-errActUpdate:
-				if err == nil {
-					// send notif activation succeeded
-					go sendSucceededNotif()
-					errActivation <- nil
-				}
-
-				if err != nil {
-					// send notif activation failed
-					go sendFailedNotif()
-					errActivation <- err
-				}
-			}
-		}
 	}()
 
-	if err := <-errActivation; err != nil {
-		logger.Make(c, nil).Debug(err)
-		return err
+	errCore := <-errActCore
+	errBri := <-errActBri
+
+	defer func() {
+		_ = aUsecase.aRepo.PostActivations(c, *acc)
+	}()
+
+	if errCore != nil {
+		return errCore
 	}
+
+	if errBri != nil {
+		return errBri
+	}
+
+	acc.Application.Status = models.AppStatusActive
+	acc.Card.Status = models.CardStatusActive
+	acc.Status = models.AccStatusActive
+
+	go func() {
+		notif.GcActivation(*acc)
+		_ = aUsecase.rrRepo.SendNotification(c, notif, "")
+	}()
 
 	return nil
 }
@@ -335,6 +301,34 @@ func (aUsecase *activationsUseCase) reRegistration(c echo.Context, acc models.Ac
 	if err != nil {
 		return err
 	}
+
+	return nil
+}
+
+func (aUsecase *activationsUseCase) briActivation(c echo.Context, acc *models.Account, pa models.PayloadActivations) error {
+	if acc.Card.EncryptedCardNumber != "" {
+		return nil
+	}
+
+	err := aUsecase.arRepo.ActivationsToBRI(c, *acc, pa)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	// get card information
+	cardInformation, err := aUsecase.trRepo.GetBRICardInformation(c, *acc)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	acc.Card.EncryptedCardNumber = cardInformation.BillKey
+	acc.Card.ActivatedDate = time.Now()
 
 	return nil
 }

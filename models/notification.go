@@ -90,53 +90,42 @@ func (pdsNotif *PdsNotification) GcApplication(acc Account, notifType string) {
 	}
 }
 
-func (pdsNotif *PdsNotification) GcActivation(acc Account, notifType string) {
-	actDate := acc.Card.UpdatedAt // TODO should change this with activation date
+func (pdsNotif *PdsNotification) GcActivation(acc Account) {
+	actDate := acc.Card.ActivatedDate
 	ac := accounting.Accounting{Symbol: "Rp. ", Precision: 2}
 	pdsNotif.NotificationTitle = "Kartu Emas"
 	pdsNotif.PhoneNumber = acc.PersonalInformation.HandPhoneNumber
 	pdsNotif.CIF = acc.CIF
-
-	switch notifType {
-	case "failed":
-		pdsNotif.EmailSubject = "Aktivasi Kartu Emas Pegadaian Gagal"
-		pdsNotif.ContentTitle = pdsNotif.EmailSubject
-		pdsNotif.ContentDescription = []string{"Pastikan data pada kartu dan PIN aplikasi Pegadaian anda sesuai dengan yang anda input."}
-		pdsNotif.NotificationDescription = "Aktivasi Gagal"
-	case "succeeded":
-		pdsNotif.EmailSubject = "Aktivasi Kartu Emas Pegadaian Berhasil"
-		pdsNotif.ContentTitle = pdsNotif.EmailSubject
-		pdsNotif.ContentDescription = []string{"Selamat Aktivasi Kartu Emas Berhasil"}
-		pdsNotif.ContentFooter = []string{"Segera lakukan pergantian PIN Kartu Emas Fisik anda dengan cara :",
-			"PIN(spasi)KK(spasi)6 digit pertama No. KK BRI#4 Digit Terakhir No. KK BRI#tgl lahir ddmmyyyy",
-			"Contoh:", "PIN KK 518828#1234#17081945", "Kirim ke 3300 melalui nomor Handphone yang terdaftar",
-			"Info PIN https://kartukredit.bri.co.id/service/e-wellcome-pack"}
-		pdsNotif.NotificationDescription = "Aktivasi Berhasil"
-		pdsNotif.ContentList = []ContentList{
-			{
-				Key:   "Tanggal",
-				Value: actDate.Format("02/01/2006"),
-			},
-			{
-				Key:   "Waktu",
-				Value: actDate.Format("15:04"),
-			},
-			{
-				Key:   "No",
-				Value: acc.Card.CardNumber,
-			},
-			{
-				Key: "Nama Nasabah",
-				Value: strings.Join([]string{acc.PersonalInformation.FirstName,
-					acc.PersonalInformation.LastName}, " "),
-			},
-			{
-				Key:   "Limit Kartu",
-				Value: ac.FormatMoney(acc.Card.CardLimit),
-			},
-		}
-	default:
-		logger.Make(nil, nil).Fatal("notifType could not be empty")
+	pdsNotif.EmailSubject = "Aktivasi Kartu Emas Pegadaian Berhasil"
+	pdsNotif.ContentTitle = pdsNotif.EmailSubject
+	pdsNotif.ContentDescription = []string{"Selamat Aktivasi Kartu Emas Berhasil"}
+	pdsNotif.ContentFooter = []string{"Segera lakukan pergantian PIN Kartu Emas Fisik anda dengan cara :",
+		"PIN(spasi)KK(spasi)6 digit pertama No. KK BRI#4 Digit Terakhir No. KK BRI#tgl lahir ddmmyyyy",
+		"Contoh:", "PIN KK 518828#1234#17081945", "Kirim ke 3300 melalui nomor Handphone yang terdaftar",
+		"Info PIN https://kartukredit.bri.co.id/service/e-wellcome-pack"}
+	pdsNotif.NotificationDescription = "Aktivasi Berhasil"
+	pdsNotif.ContentList = []ContentList{
+		{
+			Key:   "Tanggal",
+			Value: actDate.Format("02/01/2006"),
+		},
+		{
+			Key:   "Waktu",
+			Value: actDate.Format("15:04"),
+		},
+		{
+			Key:   "No",
+			Value: acc.Card.CardNumber,
+		},
+		{
+			Key: "Nama Nasabah",
+			Value: strings.Join([]string{acc.PersonalInformation.FirstName,
+				acc.PersonalInformation.LastName}, " "),
+		},
+		{
+			Key:   "Limit Kartu",
+			Value: ac.FormatMoney(acc.Card.CardLimit),
+		},
 	}
 }
 

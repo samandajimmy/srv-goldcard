@@ -33,18 +33,22 @@ func (pa *psqlActivations) PostActivations(c echo.Context, acc models.Account) e
 		gcdb.NewPipelineStmt(`UPDATE applications SET status = $1, updated_at = $2
 			WHERE id = $3`,
 			nilFilters, app.Status, time.Now(), acc.ApplicationID),
-		gcdb.NewPipelineStmt(`UPDATE cards SET status = $1, card_number = $2, valid_until = $3, encrypted_card_number = $4, updated_at = $5
-			WHERE id = $6`,
-			nilFilters, card.Status, card.CardNumber, card.ValidUntil, card.EncryptedCardNumber, time.Now(), acc.CardID),
+		gcdb.NewPipelineStmt(`UPDATE cards SET status = $1, card_number = $2, valid_until = $3,
+			encrypted_card_number = $4, activated_date = $5, updated_at = $6
+			WHERE id = $7`,
+			nilFilters, card.Status, card.CardNumber, card.ValidUntil, card.EncryptedCardNumber,
+			card.ActivatedDate, time.Now(), acc.CardID),
 	}
 
 	err := gcdb.WithTransaction(pa.Conn, func(tx gcdb.Transaction) error {
 		return gcdb.RunPipelineQueryRow(tx, stmts...)
 	})
+
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 		return err
 	}
+
 	return nil
 }
 
@@ -59,37 +63,6 @@ func (pa *psqlActivations) UpdateGoldLimit(c echo.Context, card models.Card) err
 		return err
 	}
 
-	return nil
-}
-
-func (act *psqlActivations) GetAccountByAppNumber(c echo.Context, acc *models.Account) error {
-	newAcc := models.Account{}
-	docs := []models.Document{}
-	err := act.DBpg.Model(&newAcc).Relation("Application").Relation("Card").Relation("PersonalInformation").
-		Where("application_number = ?", acc.Application.ApplicationNumber).
-		Where("application.status = ?", models.AppStatusSent).Select()
-
-	if err != nil && err != pg.ErrNoRows {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
-	if err == pg.ErrNoRows {
-		return models.ErrAppNumberNotFound
-	}
-
-	err = act.DBpg.Model(&docs).Where("application_id = ?", newAcc.ApplicationID).Select()
-
-	if err != nil && err != pg.ErrNoRows {
-		logger.Make(c, nil).Debug(err)
-
-		return err
-	}
-
-	newAcc.Application.Documents = docs
-
-	*acc = newAcc
 	return nil
 }
 

@@ -3,8 +3,6 @@ package models
 import (
 	"gade/srv-goldcard/logger"
 	"time"
-
-	"github.com/labstack/echo"
 )
 
 var (
@@ -12,7 +10,7 @@ var (
 
 	AccStatusInactive = "inactive"
 
-	appendXCardNumber = "xxxxxx"
+	AppendXCardNumber = "xxxxxx"
 
 	RelationStr = map[int64]string{
 		1:  "Suami/Istri",
@@ -111,17 +109,6 @@ func (acc *Account) MappingRegistrationData(pl PayloadPersonalInformation, addrD
 
 	// application documents
 	acc.Application.SetDocument(pl)
-
-	return nil
-}
-
-// MappingCardActivationsData a function to map all data activations
-func (acc *Account) MappingCardActivationsData(c echo.Context, pa PayloadActivations) error {
-	acc.Card.CardNumber = pa.FirstSixDigits + appendXCardNumber + pa.LastFourDigits
-	acc.Card.ValidUntil = pa.ExpDate
-	acc.Application.Status = AppStatusActive
-	acc.Card.Status = cardStatusActive
-	acc.Status = AccStatusActive
 
 	return nil
 }

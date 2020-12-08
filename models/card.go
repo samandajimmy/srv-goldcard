@@ -19,8 +19,8 @@ const (
 	defMoneyTaken float64 = 0.94
 	// defCeilingLimit to store a value of ceiling limit 80% of defMoneyTaken
 	defCeilingLimit float64 = 0.8
-	// cardStatusActive to store a value of card status active
-	cardStatusActive string = "active"
+	// CardStatusActive to store a value of card status active
+	CardStatusActive string = "active"
 	// RequestPathCardBlock to store path BRI endpoint for block card
 	RequestPathCardBlock string = "/card/block"
 	// RequestPathCardStolen to store path BRI endpoint for stolen card
@@ -49,6 +49,7 @@ type Card struct {
 	EncryptedCardNumber string    `json:"encryptedCardNumber"`
 	UpdatedAt           time.Time `json:"updatedAt"`
 	CreatedAt           time.Time `json:"createdAt"`
+	ActivatedDate       time.Time `json:"activatedDate"`
 }
 
 // ConvertMoneyToGold to convert rupiah into gram

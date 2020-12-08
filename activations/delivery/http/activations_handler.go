@@ -42,7 +42,10 @@ func (ah *ActivationsHandler) ActivationsInquiry(c echo.Context) error {
 		return ah.response.Body(c, err)
 	}
 
-	_, err := ah.aUsecase.InquiryActivation(c, pl)
+	acc := models.Account{}
+	acc.Application.ApplicationNumber = pl.ApplicationNumber
+
+	_, err := ah.aUsecase.InquiryActivation(c, acc)
 
 	if err.Title != "" {
 		ah.response.SetResponse("", &err)

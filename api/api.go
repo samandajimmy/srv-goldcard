@@ -30,6 +30,9 @@ var (
 	// APIRCSuccess represents response code success
 	APIRCSuccess = "00"
 
+	// APIRCError represents response code error
+	APIRCError = "99"
+
 	whitelistedEndpoints = []string{"/deduplication", "/goldcard/inquiry"}
 )
 

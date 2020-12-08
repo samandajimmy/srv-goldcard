@@ -95,9 +95,9 @@ func NewBriAPI(c echo.Context) (APIbri, error) {
 
 // BriPost function to request BRI API with post method
 func BriPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
-	bri, err := NewBriAPI(c)
 	oldEndpoint := endpoint
 	endpoint = os.Getenv(`BRI_BASE_PATH`) + oldEndpoint
+	bri, err := NewBriAPI(c)
 
 	if err != nil {
 		return err
@@ -114,7 +114,10 @@ func BriPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		return models.ErrExternalAPI
+		resp = BriResponse{
+			ResponseCode:    APIRCError,
+			ResponseMessage: err.Error(),
+		}
 	}
 
 	res := resp.(*BriResponse)
