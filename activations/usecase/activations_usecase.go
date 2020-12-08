@@ -109,10 +109,12 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, acc models
 	appliedGoldLimit := acc.Card.GoldLimit
 	currGoldLimit := acc.Card.SetGoldLimit(acc.Card.CardLimit, currStl)
 	// because we need user to have at least 0.1 effective gold balance
-	deficitGoldLimit := models.CustomRound("round", currGoldLimit-appliedGoldLimit, 10000) + models.MinEffBalance
+	deficitGoldLimit := models.CustomRound("round", currGoldLimit-appliedGoldLimit, 10000)
+	cardBal.CurrGoldLimit = currGoldLimit
+	cardBal.CurrStl = currStl
 
 	// got not enough effective gold balance
-	if goldEffBalance < deficitGoldLimit {
+	if goldEffBalance < deficitGoldLimit+models.MinEffBalance {
 		errors.SetTitleCode("55", models.ErrDecreasedSTL.Error(), models.ErrDecreasedSTLDesc.Error())
 		return cardBal, errors
 	}
@@ -124,7 +126,7 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, acc models
 		models.DynamicErr(models.ErrDecreasedSTLOpenDesc, []interface{}{deficitGoldLimit}).Error(),
 	)
 
-	return models.CardBalance{}, errors
+	return cardBal, errors
 }
 
 func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.PayloadActivations) (models.RespActivations, error) {
