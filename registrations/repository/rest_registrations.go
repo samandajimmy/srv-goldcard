@@ -125,7 +125,7 @@ func (rr *restRegistrations) CloseGoldcard(c echo.Context, acc models.Account) e
 func (rr *restRegistrations) SendNotification(c echo.Context, notif models.PdsNotification, notifType string) error {
 	resp := api.PdsResponse{}
 	reqBody := notif
-	endpoint := "/goldcard/notification"
+	endpoint := "/notification/send"
 
 	switch notifType {
 	case "email":

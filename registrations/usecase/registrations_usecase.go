@@ -140,9 +140,10 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 		ExpiredAt:         expiryAt,
 		CreatedAt:         now,
 	}
-	acc = models.Account{CIF: payload.CIF, BranchCode: payload.BranchCode, ProductRequest: models.DefBriProductRequest,
-		BillingCycle: models.DefBriBillingCycle, CardDeliver: models.BriCardDeliverHome, BankID: bankID, EmergencyContactID: ecID}
 	pi := models.PersonalInformation{HandPhoneNumber: payload.HandPhoneNumber}
+	acc = models.Account{CIF: payload.CIF, BranchCode: payload.BranchCode, ProductRequest: models.DefBriProductRequest,
+		BillingCycle: models.DefBriBillingCycle, CardDeliver: models.BriCardDeliverHome, BankID: bankID,
+		EmergencyContactID: ecID, Application: app, PersonalInformation: pi}
 	err = reg.regRepo.CreateApplication(c, app, acc, pi)
 
 	if err != nil {
@@ -150,7 +151,9 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 	}
 
 	// run job for expiration process on background
-	go reg.appTimeoutJob(c, app, app.CreatedAt)
+	diff := app.ExpiredAt.Sub(app.CreatedAt)
+	delay := time.Duration(diff.Seconds())
+	go reg.appTimeoutJob(c, acc, diff, delay)
 
 	return models.RespRegistration{
 		ApplicationNumber: app.ApplicationNumber,
