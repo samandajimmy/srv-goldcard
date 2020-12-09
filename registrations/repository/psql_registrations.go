@@ -382,10 +382,26 @@ func (regis *psqlRegistrationsRepository) GetAppStatus(c echo.Context, app model
 }
 
 func (regis *psqlRegistrationsRepository) UpdateAppStatusTimeout(c echo.Context, app models.Applications) error {
+	appCheck := models.Applications{}
 	app.UpdatedAt = models.NowDbpg()
 	app.Status = models.AppStatusExpired
 
-	_, err := regis.DBpg.Model(&app).Set("status = ?status, updated_at = ?updated_at").
+	err := regis.DBpg.Model(&appCheck).
+		Where("application_number = ? and status = ?", app.ApplicationNumber, models.AppStatusOngoing).Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	if err == pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return models.ErrGetParameter
+	}
+
+	_, err = regis.DBpg.Model(&app).Set("status = ?status, updated_at = ?updated_at").
 		Where("application_number = ? and status = ?", app.ApplicationNumber, models.AppStatusOngoing).
 		Update()
 
@@ -402,7 +418,7 @@ func (regis *psqlRegistrationsRepository) ForceUpdateAppStatusTimeout() error {
 	app := models.Applications{}
 
 	_, err := regis.DBpg.Model(app).Exec(`UPDATE applications SET status = ?, updated_at = ?
-		where expired_at <= ? and status = ?`, models.AppStatusExpired, models.NowDbpg(), time.Now(),
+		where expired_at <= ? and status = ?`, models.AppStatusExpired, models.NowDbpg(), models.NowDbpg(),
 		models.AppStatusOngoing)
 
 	if err != nil {
@@ -606,16 +622,18 @@ func (regis *psqlRegistrationsRepository) DeactiveAccount(c echo.Context, acc mo
 	return nil
 }
 
-func (regis *psqlRegistrationsRepository) GetAppOngoing() ([]models.Applications, error) {
-	apps := []models.Applications{}
-	err := regis.DBpg.Model(&apps).Where("expired_at > ? and status = ?", time.Now(),
-		models.AppStatusOngoing).Select()
+func (regis *psqlRegistrationsRepository) GetAppOngoing() ([]models.Account, error) {
+	accs := []models.Account{}
+
+	err := regis.DBpg.Model(&accs).Relation("Application").Relation("PersonalInformation").
+		Where("Application.expired_at > ? and Application.status = ?", models.NowDbpg(),
+			models.AppStatusOngoing).Select()
 
 	if err != nil && err != pg.ErrNoRows {
 		logger.Make(nil, nil).Debug(err)
 
-		return apps, err
+		return accs, err
 	}
 
-	return apps, nil
+	return accs, nil
 }

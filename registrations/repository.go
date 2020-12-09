@@ -34,7 +34,7 @@ type Repository interface {
 	DeactiveAccount(c echo.Context, acc models.Account) error
 	UpdateAppStatusTimeout(echo.Context, models.Applications) error
 	ForceUpdateAppStatusTimeout() error
-	GetAppOngoing() ([]models.Applications, error)
+	GetAppOngoing() ([]models.Account, error)
 }
 
 // RestRepository represent the rest registrations repository contract

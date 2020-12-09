@@ -70,10 +70,7 @@ func PdsPost(c echo.Context, endpoint string, reqBody, resp interface{}, content
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		resp = PdsResponse{
-			Status:  "error",
-			Message: err.Error(),
-		}
+		return err
 	}
 
 	res := resp.(*PdsResponse)

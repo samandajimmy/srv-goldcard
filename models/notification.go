@@ -10,6 +10,10 @@ import (
 	"github.com/leekchan/accounting"
 )
 
+const (
+	GcAppExpired = "gc_app_expired"
+)
+
 // PdsNotification is a struct to store PdsNotification data
 type PdsNotification struct {
 	PhoneNumber             string        `json:"phoneNumber"`
@@ -21,6 +25,7 @@ type PdsNotification struct {
 	ContentList             []ContentList `json:"contentList"`
 	NotificationTitle       string        `json:"notificationTitle"`
 	NotificationDescription string        `json:"notificationDescription"`
+	Type                    string        `json:"type"`
 }
 
 type ContentList struct {
@@ -28,10 +33,23 @@ type ContentList struct {
 	Value string `json:"value"`
 }
 
+func (pdsNotif *PdsNotification) GcApplicationExpired(acc Account) {
+	pdsNotif.PhoneNumber = acc.PersonalInformation.HandPhoneNumber
+	pdsNotif.CIF = acc.CIF
+	pdsNotif.NotificationTitle = "Kartu Emas"
+	pdsNotif.EmailSubject = "Pengajuan Kartu Emas Pegadaian Kedaluwarsa"
+	pdsNotif.ContentTitle = "Pengajuan Kartu Emas Pegadaian Kedaluwarsa"
+	pdsNotif.ContentDescription = []string{"Mohon maaf Pengajuan Kartu Emas anda telah kedaluwarsa."}
+	pdsNotif.ContentFooter = []string{"Silahkan untuk melakukan pengajuan kembali."}
+	pdsNotif.NotificationDescription = "Pengajuan Kartu Emas Anda telah kedaluwarsa"
+	pdsNotif.Type = GcAppExpired
+}
+
 func (pdsNotif *PdsNotification) GcApplication(acc Account, notifType string) {
 	var timeNotif time.Time
 	pdsNotif.PhoneNumber = acc.PersonalInformation.HandPhoneNumber
 	pdsNotif.CIF = acc.CIF
+	pdsNotif.NotificationTitle = "Kartu Emas"
 	switch notifType {
 	case "failed":
 		pdsNotif.EmailSubject = "Pengajuan Kartu Emas Pegadaian Gagal"
@@ -52,7 +70,6 @@ func (pdsNotif *PdsNotification) GcApplication(acc Account, notifType string) {
 	}
 
 	ac := accounting.Accounting{Symbol: "Rp. ", Precision: 2}
-	pdsNotif.NotificationTitle = "Kartu Emas"
 	pdsNotif.ContentList = []ContentList{
 		{
 			Key:   "Tanggal",

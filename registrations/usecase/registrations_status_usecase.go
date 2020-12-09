@@ -87,14 +87,19 @@ func (reg *registrationsUseCase) RefreshAppTimeoutJob() {
 	}
 
 	// get apps that need to be timeout later
-	apps, err := reg.regRepo.GetAppOngoing()
+	accs, err := reg.regRepo.GetAppOngoing()
 
 	if err != nil {
 		logger.Make(nil, nil).Debug(err)
 	}
 
-	for _, app := range apps {
-		go reg.appTimeoutJob(nil, app, models.NowUTC())
+	var diff, delay time.Duration
+
+	for _, acc := range accs {
+		diff = acc.Application.ExpiredAt.Sub(models.NowUTC())
+		delay = time.Duration(diff.Seconds())
+
+		go reg.appTimeoutJob(nil, acc, diff, delay)
 	}
 
 }
@@ -120,14 +125,18 @@ func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.A
 	return nil
 }
 
-func (reg *registrationsUseCase) appTimeoutJob(c echo.Context, app models.Applications, now time.Time) {
-	diff := app.ExpiredAt.Sub(now)
-	delay := time.Duration(diff.Seconds())
+func (reg *registrationsUseCase) appTimeoutJob(c echo.Context, acc models.Account, diff, delay time.Duration) {
+	var notif models.PdsNotification
 
 	go func() {
-		logger.Make(c, nil).Debug("Store timeout job to background for appNumber: " + app.ApplicationNumber)
+		logger.Make(c, nil).Debug("Store timeout job to background for appNumber: " + acc.Application.ApplicationNumber)
 		time.Sleep(delay * time.Second)
-		logger.Make(c, nil).Debug("Start to make appNumber: " + app.ApplicationNumber + " expired!")
-		_ = reg.regRepo.UpdateAppStatusTimeout(c, app)
+		logger.Make(c, nil).Debug("Start to make appNumber: " + acc.Application.ApplicationNumber + " expired!")
+
+		if err := reg.regRepo.UpdateAppStatusTimeout(c, acc.Application); err == nil {
+			// send notif
+			notif.GcApplicationExpired(acc)
+			_ = reg.rrr.SendNotification(c, notif, "mobile")
+		}
 	}()
 }

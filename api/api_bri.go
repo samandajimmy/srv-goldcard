@@ -114,10 +114,7 @@ func BriPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
-		resp = BriResponse{
-			ResponseCode:    APIRCError,
-			ResponseMessage: err.Error(),
-		}
+		return err
 	}
 
 	res := resp.(*BriResponse)
