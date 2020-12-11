@@ -608,10 +608,21 @@ func (regis *psqlRegistrationsRepository) GetSignatoryNipParam(c echo.Context) (
 }
 
 func (regis *psqlRegistrationsRepository) DeactiveAccount(c echo.Context, acc models.Account) error {
-	acc.UpdatedAt = models.NowDbpg()
+	var nilFilters []string
 	acc.Status = models.AccStatusInactive
-	col := []string{"status", "updated_at"}
-	_, err := regis.DBpg.Model(&acc).Column(col...).WherePK().Update()
+
+	stmts := []*gcdb.PipelineStmt{
+		// update account
+		gcdb.NewPipelineStmt("UPDATE accounts SET status = $1, updated_at = $2 WHERE id = $3;",
+			nilFilters, acc.Status, time.Now(), acc.ID),
+		// update application
+		gcdb.NewPipelineStmt(`UPDATE applications set status = $1, updated_at = $2 WHERE id = $3`,
+			nilFilters, models.AppStatusInactive, time.Now(), acc.Application.ID),
+	}
+
+	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
+		return gcdb.RunPipelineQueryRow(tx, stmts...)
+	})
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)

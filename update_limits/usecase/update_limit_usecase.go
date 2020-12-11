@@ -227,7 +227,7 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 		RefId:     refId,
 		AccountID: acc.ID,
 		CardLimit: pl.NominalLimit,
-		GoldLimit: acc.Card.SetGoldLimit(acc.Card.CardLimit, currStl),
+		GoldLimit: acc.Card.SetGoldLimit(pl.NominalLimit, currStl),
 		StlLimit:  currStl,
 		Status:    models.LimitUpdateStatusInquired,
 	}
