@@ -15,7 +15,7 @@ const (
 	DefBriProductRequest = "KARTUEMAS"
 
 	// DefBriBillingCycle is to store default bri application billing cycle
-	DefBriBillingCycle = 3
+	DefBriBillingCycle = 2
 
 	// BriCardDeliverHome is to store default bri application card deliver to home
 	BriCardDeliverHome = 1

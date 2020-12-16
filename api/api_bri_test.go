@@ -58,7 +58,7 @@ var registerRequest = map[string]interface{}{
 	"emergencyCity":        "KOTA JAKARTA BARAT",
 	"emergencyPhoneNumber": "0811233244",
 	"productRequest":       "MEASY",
-	"billingCycle":         3,
+	"billingCycle":         2,
 }
 
 func TestNewBriAPI(t *testing.T) {
