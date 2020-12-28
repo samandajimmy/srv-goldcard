@@ -1,0 +1,2 @@
+ALTER TABLE occupations
+ALTER COLUMN income TYPE NUMERIC(15,0)
