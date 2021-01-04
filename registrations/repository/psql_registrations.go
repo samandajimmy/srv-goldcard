@@ -648,3 +648,25 @@ func (regis *psqlRegistrationsRepository) GetAppOngoing() ([]models.Account, err
 
 	return accs, nil
 }
+
+func (regis *psqlRegistrationsRepository) ForceDeliverAccount(c echo.Context, acc models.Account) error {
+	var nilFilters []string
+
+	stmts := []*gcdb.PipelineStmt{
+		// update application
+		gcdb.NewPipelineStmt(`UPDATE applications set status = $1, updated_at = $2 WHERE id = $3`,
+			nilFilters, models.AppStatusForceDeliver, time.Now(), acc.Application.ID),
+	}
+
+	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {
+		return gcdb.RunPipelineQueryRow(tx, stmts...)
+	})
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}

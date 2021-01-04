@@ -619,3 +619,20 @@ func (reg *registrationsUseCase) ResetRegistration(c echo.Context, pl models.Pay
 
 	return nil
 }
+
+func (reg *registrationsUseCase) ForceDeliver(c echo.Context, pl models.PayloadAppNumber) error {
+	// Get account
+	acc, err := reg.CheckApplication(c, pl)
+
+	if err != nil {
+		return err
+	}
+
+	err = reg.regRepo.ForceDeliverAccount(c, acc)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
