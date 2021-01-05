@@ -133,7 +133,7 @@ type PayloadBriRegister struct {
 	HomePhoneArea        string `json:"homePhoneArea" validate:"required"`
 	HomePhoneNumber      string `json:"homePhoneNumber" validate:"required"`
 	Email                string `json:"email" validate:"required"`
-	Income               int64  `json:"income" validate:"required"`
+	Income               int64  `json:"income" validate:"required,max=9999999999999"`
 	JobBidangUsaha       int64  `json:"jobBidangUsaha" validate:"required"`
 	JobSubBidangUsaha    int64  `json:"jobSubBidangUsaha" validate:"required"`
 	JobCategory          int64  `json:"jobCategory" validate:"required"`
@@ -313,9 +313,6 @@ type PayloadCoreGtePayment struct {
 
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI
 func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
-	// variable for bri register specification
-	var BRIMaxIncome int64 = 9999999999999
-
 	plBRIReg.FirstName = StringNameFormatter(plBRIReg.FirstName, 15, false)
 	plBRIReg.LastName = StringNameFormatter(plBRIReg.LastName, 14, false)
 	plBRIReg.CardName = StringNameFormatter(plBRIReg.CardName, 19, true)
@@ -347,9 +344,6 @@ func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.EmergencyCity = StringCutter(plBRIReg.EmergencyCity, 50)
 	plBRIReg.EmergencyPhoneNumber = StringCutter(plBRIReg.EmergencyPhoneNumber, 13)
 	plBRIReg.ProductRequest = StringCutter(plBRIReg.ProductRequest, 30)
-	if plBRIReg.Income > BRIMaxIncome {
-		plBRIReg.Income = BRIMaxIncome
-	}
 
 	return nil
 }
