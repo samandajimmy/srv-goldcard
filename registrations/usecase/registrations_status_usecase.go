@@ -62,7 +62,6 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 		acc.Application.ID = acc.ApplicationID
 		acc.Application.SetStatus(data["appStatus"].(string))
 
-		err = nil
 		if acc.Application.Status != models.AppStatusForceDeliver {
 			err = reg.regRepo.UpdateAppStatus(c, acc.Application)
 		}
