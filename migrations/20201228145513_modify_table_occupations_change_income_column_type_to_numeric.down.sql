@@ -1,0 +1,2 @@
+ALTER TABLE occupations
+ALTER COLUMN income TYPE INTEGER
