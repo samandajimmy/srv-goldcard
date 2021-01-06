@@ -23,4 +23,5 @@ type UseCase interface {
 	GenerateSlipTEDocument(c echo.Context, acc *models.Account) error
 	UploadAppDoc(c echo.Context, brixkey string, doc models.Document) error
 	RefreshAppTimeoutJob()
+	ForceDeliver(c echo.Context, pl models.PayloadAppNumber) error
 }
