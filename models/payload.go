@@ -311,6 +311,11 @@ type PayloadCoreGtePayment struct {
 	TrxId              string `json:"trxId" validate:"required"`
 }
 
+// PayloadCoreGtePayment is a struct to store all payload for get
+type PayloadGetSertPublicHoliday struct {
+	PublicHolidayDate []string `json:"publicHolidayDate"`
+}
+
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI
 func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.FirstName = StringNameFormatter(plBRIReg.FirstName, 15, false)

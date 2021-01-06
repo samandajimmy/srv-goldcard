@@ -14,6 +14,10 @@ type Requirements struct {
 	UmurMenikah       int64   `json:"umur_menikah"`
 }
 
+type PublicHolidayDate struct {
+	PublicHolidayDate string `json:"publicHolidayDate"`
+}
+
 // RequirementsValue represent value of Requirements struct
 var RequirementsValue = Requirements{
 	AktivasiFinansial: "1",
