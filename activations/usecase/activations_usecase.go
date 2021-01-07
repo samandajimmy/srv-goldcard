@@ -112,7 +112,7 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, acc models
 	deficitGoldLimit := models.CustomRound("round", currGoldLimit-appliedGoldLimit, 10000)
 	cardBal.CurrGoldLimit = currGoldLimit
 	cardBal.CurrStl = currStl
-	cardBal.DeficitGoldLimit = deficitGoldLimit * -1
+	cardBal.DeficitGoldLimit = deficitGoldLimit
 	cardBal.SavingAccount = acc.Application.SavingAccount
 
 	// got not enough effective gold balance
