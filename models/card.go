@@ -115,6 +115,8 @@ func (cs *CardStatuses) MappingBlockCard(briCardBlockStatus BRICardBlockStatus, 
 
 // CardBalance is a struct to store card balance detail
 type CardBalance struct {
-	CurrGoldLimit float64
-	CurrStl       int64
+	CurrGoldLimit    float64
+	CurrStl          int64
+	DeficitGoldLimit float64
+	SavingAccount    string
 }
