@@ -3,7 +3,6 @@ package usecase
 import (
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/productreqs"
-	"time"
 
 	"github.com/labstack/echo"
 )
@@ -22,19 +21,22 @@ func (prodreqs *productreqsUseCase) ProductRequirements(c echo.Context) (models.
 	return models.RequirementsValue, nil
 }
 
-// GetSertPublicHolidayDate represent to get or insert public holiday date
-func (prodreqs *productreqsUseCase) GetSertPublicHolidayDate(c echo.Context, phd models.PayloadGetSertPublicHoliday) (models.PublicHolidayDate, error) {
-	var err error
-	for _, data := range phd.PublicHolidayDate {
-		// validating inputed holiday date
-		_, err = time.Parse("02/01/2006", data)
+// InsertPublicHolidayDate represent to insert public holiday date
+func (prodreqs *productreqsUseCase) InsertPublicHolidayDate(c echo.Context, phd models.PayloadInsertPublicHoliday) (models.PublicHolidayDate, error) {
+	pubHoliDate, err := prodreqs.prRepo.GetSertPublicHolidayDate(c, phd.PublicHolidayDate)
 
-		if err != nil {
-			return models.PublicHolidayDate{}, models.ErrDateFormat
-		}
+	if err != nil {
+		return models.PublicHolidayDate{}, err
 	}
 
-	pubHoliDate, err := prodreqs.prRepo.GetSertPublicHolidayDate(c, phd.PublicHolidayDate)
+	return models.PublicHolidayDate{
+		PublicHolidayDate: pubHoliDate,
+	}, nil
+}
+
+// GetPublicHolidayDate represent to get public holiday date
+func (prodreqs *productreqsUseCase) GetPublicHolidayDate(c echo.Context) (models.PublicHolidayDate, error) {
+	pubHoliDate, err := prodreqs.prRepo.GetSertPublicHolidayDate(c, []string{})
 
 	if err != nil {
 		return models.PublicHolidayDate{}, err

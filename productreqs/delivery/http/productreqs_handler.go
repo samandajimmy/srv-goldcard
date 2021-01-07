@@ -23,7 +23,8 @@ func NewProductreqsHandler(echoGroup models.EchoGroup, pu productreqs.UseCase) {
 
 	// End Point For External
 	echoGroup.API.GET("/product/requirements", handler.productRequirements)
-	echoGroup.API.POST("/product/getsert-public-holiday", handler.GetSertPublicHolidayDate)
+	echoGroup.API.POST("/product/public-holiday", handler.InsertPublicHolidayDate)
+	echoGroup.API.GET("/product/public-holiday", handler.GetPublicHolidayDate)
 }
 
 func (preq *ProductreqsHandler) productRequirements(c echo.Context) error {
@@ -42,9 +43,9 @@ func (preq *ProductreqsHandler) productRequirements(c echo.Context) error {
 	return preq.response.Body(c, nil)
 }
 
-// GetSertPublicHolidayDate a handler to handle public holiday get or insert
-func (preq *ProductreqsHandler) GetSertPublicHolidayDate(c echo.Context) error {
-	var phd models.PayloadGetSertPublicHoliday
+// InsertPublicHolidayDate a handler to handle public holiday insert
+func (preq *ProductreqsHandler) InsertPublicHolidayDate(c echo.Context) error {
+	var phd models.PayloadInsertPublicHoliday
 	preq.response, preq.respErrors = models.NewResponse()
 
 	if err := c.Bind(&phd); err != nil {
@@ -61,7 +62,25 @@ func (preq *ProductreqsHandler) GetSertPublicHolidayDate(c echo.Context) error {
 		return preq.response.Body(c, err)
 	}
 
-	resp, err := preq.productReqsUseCase.GetSertPublicHolidayDate(c, phd)
+	resp, err := preq.productReqsUseCase.InsertPublicHolidayDate(c, phd)
+
+	if err != nil {
+		preq.respErrors.SetTitle(err.Error())
+		preq.response.SetResponse("", &preq.respErrors)
+
+		return preq.response.Body(c, err)
+	}
+
+	preq.response.SetResponse(resp, &preq.respErrors)
+
+	return preq.response.Body(c, err)
+}
+
+// GetPublicHolidayDate a handler to handle public holiday get
+func (preq *ProductreqsHandler) GetPublicHolidayDate(c echo.Context) error {
+	preq.response, preq.respErrors = models.NewResponse()
+
+	resp, err := preq.productReqsUseCase.GetPublicHolidayDate(c)
 
 	if err != nil {
 		preq.respErrors.SetTitle(err.Error())

@@ -9,5 +9,6 @@ import (
 // UseCase represent the product requirements usecases
 type UseCase interface {
 	ProductRequirements(echo.Context) (models.Requirements, error)
-	GetSertPublicHolidayDate(echo.Context, models.PayloadGetSertPublicHoliday) (models.PublicHolidayDate, error)
+	InsertPublicHolidayDate(echo.Context, models.PayloadInsertPublicHoliday) (models.PublicHolidayDate, error)
+	GetPublicHolidayDate(c echo.Context) (models.PublicHolidayDate, error)
 }

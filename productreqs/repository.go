@@ -6,5 +6,5 @@ import (
 
 // Repository represent the product requirements's repository contract
 type Repository interface {
-	GetSertPublicHolidayDate(echo.Context, []string) (string, error)
+	GetSertPublicHolidayDate(c echo.Context, phds []string) (string, error)
 }

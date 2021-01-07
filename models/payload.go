@@ -311,9 +311,9 @@ type PayloadCoreGtePayment struct {
 	TrxId              string `json:"trxId" validate:"required"`
 }
 
-// PayloadCoreGtePayment is a struct to store all payload for get
-type PayloadGetSertPublicHoliday struct {
-	PublicHolidayDate []string `json:"publicHolidayDate"`
+// PayloadInsertPublicHoliday is a struct to store all payload for insert public holiday date
+type PayloadInsertPublicHoliday struct {
+	PublicHolidayDate []string `json:"publicHolidayDate" validate:"required,gte=1"`
 }
 
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI

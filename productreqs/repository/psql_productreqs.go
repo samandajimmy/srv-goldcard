@@ -6,6 +6,7 @@ import (
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/productreqs"
 	"strings"
+	"time"
 
 	"github.com/go-pg/pg/v9"
 	"github.com/labstack/echo"
@@ -28,26 +29,50 @@ func (prodReq *psqlProductReqsRepository) GetSertPublicHolidayDate(c echo.Contex
 		Where("key = ?", "PUBLIC_HOLIDAY_DATE").
 		Limit(1).Select()
 
-	if err != nil && err != pg.ErrNoRows {
-		logger.Make(c, nil).Debug(err)
-
-		return "", err
-	}
-
-	// append inputted public holiday date in database with inputted request payload
-	pubHoliDateVal := strings.Replace(pubHoliDate.Value, ",", "", -1)
-	appendedPubHoliDateVal := models.UniquifyStringSlice(append(strings.Fields(pubHoliDateVal), phds...))
-
-	// set public holiday date param value to string with delimited comma
-	pubHoliDate.Value = strings.Join(appendedPubHoliDateVal, ", ")
-	pubHoliDate.UpdatedAt = models.NowDbpg()
-	_, err = prodReq.DBpg.Model(&pubHoliDate).Column([]string{"value", "updated_at"}...).WherePK().Update()
-
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 
 		return "", err
 	}
 
+	var newDataExist bool = false
+	for _, data := range phds {
+		// validating inputed holiday date
+		_, err = time.Parse("02/01/2006", data)
+
+		if err != nil {
+			return "", models.ErrDateFormat
+		}
+
+		// if value not exist in public holiday date then append
+		if !strings.Contains(pubHoliDate.Value, data) {
+			pubHoliDate.Value += ", " + data
+			newDataExist = true
+		}
+	}
+
+	// if there is no date then return response
+	if !newDataExist {
+		return pubHoliDate.Value, nil
+	}
+
+	// if new data exist then do update
+	if err = prodReq.updatePublicHolidayDate(c, pubHoliDate); err != nil {
+		return "", err
+	}
+
 	return pubHoliDate.Value, nil
+}
+
+func (prodReq *psqlProductReqsRepository) updatePublicHolidayDate(c echo.Context, pubHoliDate models.Parameter) error {
+	pubHoliDate.UpdatedAt = models.NowDbpg()
+	_, err := prodReq.DBpg.Model(&pubHoliDate).Column([]string{"value", "updated_at"}...).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
 }
