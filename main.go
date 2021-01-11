@@ -21,6 +21,7 @@ import (
 	_processHandlerRepository "gade/srv-goldcard/process_handler/repository"
 	_processHandlerUseCase "gade/srv-goldcard/process_handler/usecase"
 	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
+	_productreqsRepository "gade/srv-goldcard/productreqs/repository"
 	_productreqsUseCase "gade/srv-goldcard/productreqs/usecase"
 	_registrationsHttpDelivery "gade/srv-goldcard/registrations/delivery/http"
 	_registrationsRepository "gade/srv-goldcard/registrations/repository"
@@ -101,9 +102,10 @@ func main() {
 	restUpdateLimitRepo := _updateLimitRepository.NewRestUpdateLimits()
 	cardsRepository := _cardsRepository.NewPsqlCardsRepository(dbConn, dbpg)
 	restCardsRepo := _cardsRepository.NewRestCards()
+	productReqsRepo := _productreqsRepository.NewPsqlProductReqsRepository(dbConn, dbpg)
 
 	// USECASES
-	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase()
+	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase(productReqsRepo)
 	processHandlerUseCase := _processHandlerUseCase.ProcessHandUseCase(processHandlerRepo, registrationsRepository)
 	tokenUseCase := _tokenUseCase.NewTokenUseCase(tokenRepository, timeoutContext)
 	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, billingsRepository, restTransactionsRepo, registrationsRepository, restRegistrationsRepo)

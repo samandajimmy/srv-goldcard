@@ -281,6 +281,9 @@ var (
 
 	// ErrAddrNotGood to store address data not okay error message
 	ErrAddrNotGood = errors.New("Data alamat tidak sesuai")
+
+	// ErrDateFormat to store error when inputted date cant be parse do date
+	ErrDateFormat = errors.New("Format tanggal tidak sesuai. Input tanggal harus dalam format dd/mm/yyyy")
 )
 
 // DynamicErr to return parameterize errors
