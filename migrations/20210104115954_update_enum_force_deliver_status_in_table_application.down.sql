@@ -22,3 +22,6 @@ BEGIN
     END IF;
 END
 $$;
+
+ALTER TABLE applications
+DROP force_deliver_at;

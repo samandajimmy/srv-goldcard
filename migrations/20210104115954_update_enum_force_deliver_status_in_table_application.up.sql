@@ -23,3 +23,6 @@ BEGIN
     END IF;
 END
 $$;
+
+ALTER TABLE applications
+ADD force_deliver_at TIMESTAMP DEFAULT NULL;

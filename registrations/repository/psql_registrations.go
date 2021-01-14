@@ -650,7 +650,7 @@ func (regis *psqlRegistrationsRepository) GetAppOngoing() ([]models.Account, err
 }
 
 func (regis *psqlRegistrationsRepository) ForceDeliverAccount(c echo.Context, acc models.Account) error {
-	query := `UPDATE applications set status = $1, updated_at = $2 WHERE id = $3;`
+	query := `UPDATE applications set status = $1, force_deliver_at = $2, updated_at = $3 WHERE id = $4;`
 	stmt, err := regis.Conn.Prepare(query)
 
 	if err != nil {
@@ -659,7 +659,7 @@ func (regis *psqlRegistrationsRepository) ForceDeliverAccount(c echo.Context, ac
 		return err
 	}
 
-	_, err = stmt.Exec(models.AppStatusForceDeliver, time.Now(), acc.Application.ID)
+	_, err = stmt.Exec(models.AppStatusForceDeliver, time.Now(), time.Now(), acc.Application.ID)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
