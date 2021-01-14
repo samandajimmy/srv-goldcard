@@ -1,0 +1,2 @@
+ALTER TABLE parameters
+ALTER COLUMN value TYPE VARCHAR(100)
