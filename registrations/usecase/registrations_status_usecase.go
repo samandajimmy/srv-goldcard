@@ -37,6 +37,16 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 		return appStatus, err
 	}
 
+	appStatus, err = reg.regRepo.GetAppStatus(c, acc.Application)
+
+	if err != nil {
+		return appStatus, models.ErrGetAppStatus
+	}
+
+	if acc.Application.Status == models.AppStatusForceDeliver {
+		return appStatus, nil
+	}
+
 	// concurrently get app status from BRI API then update to our DB
 	go func() {
 		resp := api.BriResponse{}
@@ -62,9 +72,7 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 		acc.Application.ID = acc.ApplicationID
 		acc.Application.SetStatus(data["appStatus"].(string))
 
-		if acc.Application.Status != models.AppStatusForceDeliver {
-			err = reg.regRepo.UpdateAppStatus(c, acc.Application)
-		}
+		err = reg.regRepo.UpdateAppStatus(c, acc.Application)
 
 		if err != nil {
 			logger.Make(c, nil).Debug(err)
