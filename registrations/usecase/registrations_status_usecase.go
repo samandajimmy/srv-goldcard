@@ -54,7 +54,7 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 			"briXkey": acc.BrixKey,
 		}
 
-		err := api.RetryableBriPost(c, "/v1/cobranding/card/appstatus", reqBody, &resp)
+		err := api.RetryableBriPost(c, "/card/appstatus", reqBody, &resp)
 
 		if err != nil {
 			logger.Make(c, nil).Debug(err)
