@@ -199,6 +199,7 @@ type PayloadCardBlock struct {
 	AccountNumber string `json:"accountNumber" validate:"required"`
 	Reason        string `json:"reason" validate:"required"`
 	ReasonCode    string `json:"reasonCode" validate:"required"`
+	BlockedDate   string `json:"blockedDate"`
 }
 
 // PayloadBRIPendingTransactions a struct to store all payload for transactions pending from BRI
@@ -358,4 +359,10 @@ type RespGetAddress struct {
 	CardDeliver int64       `json:"cardDeliver"`
 	Office      AddressData `json:"office"`
 	Domicile    AddressData `json:"domicile"`
+}
+
+// PayloadCoreGtePayment is a struct to store all payload for get
+type RespCardStatus struct {
+	Status     string `json:"status"`
+	IsReplaced string `json:"isReplaced"`
 }

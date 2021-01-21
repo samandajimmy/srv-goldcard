@@ -50,3 +50,20 @@ func TestRemappAddress(t *testing.T) {
 	assert.Equal(t, "SAMANDA RASU", str)
 	assert.Equal(t, "SAMANDA RASU", err)
 }
+
+func TestArrayContains(t *testing.T) {
+	// context when data type is int
+	result := models.ArrayContains([]int{1, 21, 18}, 18)
+
+	assert.Equal(t, true, result)
+
+	// context when data type is string
+	result = models.ArrayContains([]string{"jimmy", "samanda"}, "rasu")
+
+	assert.Equal(t, false, result)
+
+	// context when data type is different
+	result = models.ArrayContains([]int{1, 2}, int64(2))
+
+	assert.Equal(t, false, result)
+}

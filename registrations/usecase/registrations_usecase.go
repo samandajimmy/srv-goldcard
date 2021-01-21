@@ -288,7 +288,7 @@ func (reg *registrationsUseCase) PostOccupation(c echo.Context, pl models.Payloa
 	// job category need company name
 	inclCompanyName := []int{1, 4, 5}
 	// if job category is must included with company name
-	if result := models.ArrayContainsInt(inclCompanyName, int(pl.JobCategory)); result {
+	if result := models.ArrayContains(inclCompanyName, int(pl.JobCategory)); result {
 		addrData.AddressLine1 = pl.Company + " " + pl.OfficeAddress1
 	}
 

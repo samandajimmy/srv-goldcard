@@ -308,12 +308,36 @@ func RemappAddress(addr AddressData, length int) (AddressData, error) {
 	return addr, nil
 }
 
-func ArrayContainsInt(intIncluder []int, value int) bool {
-	for _, include := range intIncluder {
+// ArrayContains a function to compare value from an array with dynamic data type
+func ArrayContains(includer interface{}, value interface{}) bool {
+	includes := interfaceSlice(includer)
+
+	for _, include := range includes {
 		if include == value {
 			return true
 		}
 	}
 
 	return false
+}
+
+func interfaceSlice(slice interface{}) []interface{} {
+	s := reflect.ValueOf(slice)
+
+	if s.Kind() != reflect.Slice {
+		panic("InterfaceSlice() given a non-slice type")
+	}
+
+	// Keep the distinction between nil and empty slice input
+	if s.IsNil() {
+		return nil
+	}
+
+	ret := make([]interface{}, s.Len())
+
+	for i := 0; i < s.Len(); i++ {
+		ret[i] = s.Index(i).Interface()
+	}
+
+	return ret
 }
