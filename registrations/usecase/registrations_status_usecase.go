@@ -72,6 +72,15 @@ func (reg *registrationsUseCase) GetAppStatus(c echo.Context, pl models.PayloadA
 		acc.Application.ID = acc.ApplicationID
 		acc.Application.SetStatus(data["appStatus"].(string))
 
+		if acc.Application.Status == models.AppStatusCardSuspended {
+			err = reg.regRepo.FillRejectedDate(c, acc.Application)
+		}
+
+		if err != nil {
+			logger.Make(c, nil).Debug(err)
+			return
+		}
+
 		err = reg.regRepo.UpdateAppStatus(c, acc.Application)
 
 		if err != nil {

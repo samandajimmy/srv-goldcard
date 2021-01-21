@@ -64,6 +64,12 @@ var (
 	// AppStatusForceDeliver is to store var application status force delivery
 	AppStatusForceDeliver = "force_deliver"
 
+	// AppStatusCardSuspended is to store var application status card suspended
+	AppStatusCardSuspended = "card_suspended"
+
+	// CardSuspendedFillRejectedDate is to store var application date row for card suspended
+	CardSuspendedFillRejectedDate = "RejectedDate"
+
 	// AppStepSavingAcc is to store var application step saving account
 	AppStepSavingAcc int64 = 1
 
@@ -175,7 +181,7 @@ func (app *Applications) SetStatus(msg string) {
 	mapStat := mapStatusDate[stat]
 
 	if mapStat == "" {
-		return
+		mapStat = CardSuspendedFillRejectedDate
 	}
 
 	fStatDt := r.Elem().FieldByName(mapStat)

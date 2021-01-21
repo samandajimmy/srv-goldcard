@@ -36,6 +36,7 @@ type Repository interface {
 	ForceUpdateAppStatusTimeout() error
 	GetAppOngoing() ([]models.Account, error)
 	ForceDeliverAccount(c echo.Context, acc models.Account) error
+	FillRejectedDate(c echo.Context, acc models.Applications) error
 }
 
 // RestRepository represent the rest registrations repository contract
