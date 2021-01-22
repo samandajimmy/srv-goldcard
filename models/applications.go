@@ -96,6 +96,7 @@ var (
 		"card_send":             "CardSendDate",
 		"card_sent":             "CardSentDate",
 		"rejected":              "RejectedDate",
+		"card_suspended":        "RejectedDate",
 	}
 	MapDocType = map[string]string{
 		"KtpImageBase64":       "ktp",
@@ -164,15 +165,16 @@ type Applications struct {
 // SetStatus as a setter for application status
 func (app *Applications) SetStatus(msg string) {
 	stat := app.getStatus(msg)
+	mapStat := mapStatusDate[stat]
 
-	if stat == app.Status {
+	if stat == app.Status || mapStat == "" {
 		return
 	}
 
 	app.Status = stat
 	r := reflect.ValueOf(app)
 	rNow := reflect.ValueOf(NowDbpg())
-	fStatDt := r.Elem().FieldByName(mapStatusDate[stat])
+	fStatDt := r.Elem().FieldByName(mapStat)
 	fStatDt.Set(rNow)
 }
 
