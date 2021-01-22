@@ -14,12 +14,13 @@ type Token struct {
 
 // AccountToken to store account token data
 type AccountToken struct {
-	ID        int64      `json:"id,omitempty"`
-	Username  string     `json:"username"`
-	Password  string     `json:"password,omitempty"`
-	Token     string     `json:"token"`
-	ExpireAt  *time.Time `json:"expireAt"`
-	Status    *int64     `json:"status,omitempty"`
-	CreatedAt *time.Time `json:"created_at"`
-	UpdatedAt *time.Time `json:"updated_at"`
+	ID        int64         `json:"id,omitempty"`
+	Username  string        `json:"username"`
+	Password  string        `json:"password,omitempty"`
+	Token     string        `json:"token"`
+	ExpireAt  *time.Time    `json:"expireAt"`
+	Status    *int64        `json:"status,omitempty"`
+	CreatedAt *time.Time    `json:"created_at"`
+	UpdatedAt *time.Time    `json:"updated_at"`
+	ExpiresAt time.Duration `json:"expiresAt" pg:"-"`
 }

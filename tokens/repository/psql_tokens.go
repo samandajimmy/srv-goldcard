@@ -62,6 +62,7 @@ func (m *psqlTokenRepository) Create(c echo.Context, accToken *models.AccountTok
 	}
 
 	accToken.ID = lastID
+	accToken.ExpiresAt = time.Duration(time.Until(*accToken.ExpireAt).Seconds())
 	return nil
 }
 
@@ -86,6 +87,7 @@ func (m *psqlTokenRepository) GetByUsername(c echo.Context, accToken *models.Acc
 	accToken.ExpireAt = &expireAt.Time
 	accToken.CreatedAt = &createdAt.Time
 	accToken.UpdatedAt = &updatedAt.Time
+	accToken.ExpiresAt = time.Duration(accToken.ExpireAt.Sub(models.NowUTC()).Seconds())
 
 	return nil
 }
