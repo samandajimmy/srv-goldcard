@@ -64,9 +64,6 @@ var (
 	// AppStatusForceDeliver is to store var application status force delivery
 	AppStatusForceDeliver = "force_deliver"
 
-	// AppStatusCardSuspended is to store var application status card suspended
-	AppStatusCardSuspended = "card_suspended"
-
 	// AppStepSavingAcc is to store var application step saving account
 	AppStepSavingAcc int64 = 1
 
