@@ -23,6 +23,7 @@ func NewCardsHandler(echoGroup models.EchoGroup, ca cards.UseCase) {
 
 	// End Point For External
 	echoGroup.API.POST("/cards/block", handler.CardBlock)
+	echoGroup.API.GET("/cards/status", handler.CardStatus)
 }
 
 func (chn *CardsHandler) CardBlock(c echo.Context) error {
@@ -53,5 +54,36 @@ func (chn *CardsHandler) CardBlock(c echo.Context) error {
 	}
 
 	chn.response.SetResponse("", &chn.respErrors)
+	return chn.response.Body(c, err)
+}
+
+func (chn *CardsHandler) CardStatus(c echo.Context) error {
+	var pl models.PayloadAccNumber
+	chn.response, chn.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pl); err != nil {
+		chn.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		chn.response.SetResponse("", &chn.respErrors)
+
+		return chn.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		chn.respErrors.SetTitle(err.Error())
+		chn.response.SetResponse("", &chn.respErrors)
+
+		return chn.response.Body(c, err)
+	}
+
+	resp, err := chn.cardsUseCase.GetCardStatus(c, pl)
+
+	if err != nil {
+		chn.respErrors.SetTitle(err.Error())
+		chn.response.SetResponse("", &chn.respErrors)
+
+		return chn.response.Body(c, err)
+	}
+
+	chn.response.SetResponse(resp, &chn.respErrors)
 	return chn.response.Body(c, err)
 }

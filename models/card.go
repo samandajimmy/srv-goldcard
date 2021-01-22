@@ -1,12 +1,10 @@
 package models
 
 import (
+	"gade/srv-goldcard/logger"
 	"math"
-	"strconv"
 	"time"
 )
-
-var IsReactivatedNo = "no"
 
 const (
 	// DecreasedLimit to store a value of decreasing limit
@@ -29,27 +27,36 @@ const (
 	ReasonCodeStolen string = "stolen"
 	// CardStatusInactive card status inactive
 	CardStatusInactive string = "inactive"
+	// CardStatusBlocked card status blocked
+	CardStatusBlocked string = "blocked"
+	// IsReactivatedNo is re activation status false
+	IsReactivatedNo string = "no"
+	// ReasonCodeOther is block reason code other
+	ReasonCodeOther string = "other"
 )
+
+var allowedBlockCodes = []string{"F", "L"}
 
 // Card is a struct to store card data
 type Card struct {
-	ID                  int64     `json:"id"`
-	CardName            string    `json:"cardName"`
-	CardNumber          string    `json:"cardNumber"`
-	CardLimit           int64     `json:"cardLimit"`
-	GoldLimit           float64   `json:"goldLimit"`
-	StlLimit            int64     `json:"stlLimit"`
-	ValidUntil          string    `json:"validUntil"`
-	PinNumber           string    `json:"pinNumber"`
-	Description         string    `json:"description"`
-	Balance             int64     `json:"balance"`
-	GoldBalance         float64   `json:"goldBalance"`
-	StlBalance          int64     `json:"stlBalance"`
-	Status              string    `json:"status"`
-	EncryptedCardNumber string    `json:"encryptedCardNumber"`
-	UpdatedAt           time.Time `json:"updatedAt"`
-	CreatedAt           time.Time `json:"createdAt"`
-	ActivatedDate       time.Time `json:"activatedDate"`
+	ID                  int64        `json:"id"`
+	CardName            string       `json:"cardName"`
+	CardNumber          string       `json:"cardNumber"`
+	CardLimit           int64        `json:"cardLimit"`
+	GoldLimit           float64      `json:"goldLimit"`
+	StlLimit            int64        `json:"stlLimit"`
+	ValidUntil          string       `json:"validUntil"`
+	PinNumber           string       `json:"pinNumber"`
+	Description         string       `json:"description"`
+	Balance             int64        `json:"balance"`
+	GoldBalance         float64      `json:"goldBalance"`
+	StlBalance          int64        `json:"stlBalance"`
+	Status              string       `json:"status"`
+	EncryptedCardNumber string       `json:"encryptedCardNumber"`
+	UpdatedAt           time.Time    `json:"updatedAt"`
+	CreatedAt           time.Time    `json:"createdAt"`
+	ActivatedDate       time.Time    `json:"activatedDate"`
+	CardStatus          CardStatuses `json:"cardStatus" pg:"-"`
 }
 
 // ConvertMoneyToGold to convert rupiah into gram
@@ -83,34 +90,45 @@ func (c *Card) SetCardLimit(stl int64) error {
 	return nil
 }
 
+func (c *Card) MappingBlockCard(cardBlock CardBlock) (CardStatuses, error) {
+	var err error
+	var cardStatus CardStatuses
+
+	cardStatus.Reason = cardBlock.Reason
+	cardStatus.ReasonCode = cardBlock.ReasonCode
+	cardStatus.CardID = c.ID
+	cardStatus.IsReactivated = IsReactivatedNo
+	cardStatus.BlockedDate, err = time.Parse(DateTimeFormat, cardBlock.BlockedDate)
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return cardStatus, err
+	}
+
+	return cardStatus, nil
+}
+
 // BRICardBlockStatus to store response BRI card block status
 type BRICardBlockStatus struct {
-	ReportingDate int64  `json:"reportingDate"`
+	ReportingDate string `json:"reportingDate"`
 	ReportDesc    string `json:"reportDesc"`
 }
 
 // CardStatuses is a struct to store card statuses
 type CardStatuses struct {
-	ID              int64     `json:"id"`
-	Reason          string    `json:"reason"`
-	ReasonCode      string    `json:"reasonCode"`
-	IsReactivated   string    `json:"isReactivated"`
-	CardID          int64     `json:"cardId"`
-	BlockedDate     time.Time `json:"blockedDate"`
-	ReactivatedDate time.Time `json:"reactivatedDate"`
-	UpdatedAt       time.Time `json:"updatedAt"`
-	CreatedAt       time.Time `json:"createdAt"`
-}
-
-func (cs *CardStatuses) MappingBlockCard(briCardBlockStatus BRICardBlockStatus, pl PayloadCardBlock, card Card) error {
-	reportDt := strconv.Itoa(int(briCardBlockStatus.ReportingDate))
-	cs.Reason = pl.Reason
-	cs.ReasonCode = pl.ReasonCode
-	cs.CardID = card.ID
-	cs.IsReactivated = IsReactivatedNo
-	cs.BlockedDate, _ = time.Parse(DateTimeFormat, reportDt)
-
-	return nil
+	ID                      int64     `json:"id"`
+	Reason                  string    `json:"reason"`
+	ReasonCode              string    `json:"reasonCode"`
+	IsReactivated           string    `json:"isReactivated"`
+	IsReplaced              string    `json:"isReplaced"`
+	LastEncryptedCardNumber string    `json:"lastEncryptedCardNumber"`
+	CardID                  int64     `json:"cardId"`
+	BlockedDate             time.Time `json:"blockedDate"`
+	ReactivatedDate         time.Time `json:"reactivatedDate"`
+	ReplacedDate            time.Time `json:"replacedDate"`
+	UpdatedAt               time.Time `json:"updatedAt"`
+	CreatedAt               time.Time `json:"createdAt"`
 }
 
 // CardBalance is a struct to store card balance detail
@@ -119,4 +137,20 @@ type CardBalance struct {
 	CurrStl          int64
 	DeficitGoldLimit float64
 	SavingAccount    string
+}
+
+// CardBlock a struct to store card block data
+type CardBlock struct {
+	Reason      string `json:"reason"`
+	ReasonCode  string `json:"reasonCode"`
+	BlockedDate string `json:"blockedDate"`
+	BlockedCode string `json:"blockedCode"`
+}
+
+func (cb *CardBlock) IsCardBlockedBri() bool {
+	if cb.BlockedCode == "" {
+		return true
+	}
+
+	return ArrayContains(allowedBlockCodes, cb.BlockedCode)
 }
