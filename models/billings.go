@@ -89,7 +89,6 @@ func (pgdBil *PegadaianBilling) MappingPegadaianBilling(c echo.Context, pl Paylo
 	pgdBil.FileName = pl.FileName
 	pgdBil.FileBase64 = pl.FileBase64
 	pgdBil.FileExtension = pl.FileExtension
-	pgdBil.CreatedAt = NowDbpg()
 
 	return nil
 }

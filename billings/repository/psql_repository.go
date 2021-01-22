@@ -6,6 +6,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"strconv"
+	"time"
 
 	"github.com/go-pg/pg/v9"
 	"github.com/labstack/echo"
@@ -121,6 +122,8 @@ func (PSQLBill *psqlBillings) GetBillingPrintDateParam(c echo.Context) (string, 
 }
 
 func (PSQLBill *psqlBillings) PostPegadaianBillings(c echo.Context, pgdBil models.PegadaianBilling) error {
+	pgdBil.CreatedAt = time.Now()
+
 	query := `INSERT INTO pegadaian_billings (ref_id, billing_date, file_name, file_base64, file_extension, created_at)
 	VALUES ($1, $2, $3, $4, $5, $6) RETURNING id;`
 	stmt, err := PSQLBill.Conn.Prepare(query)

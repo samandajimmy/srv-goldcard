@@ -106,12 +106,14 @@ func (reg *registrationsUseCase) RefreshAppTimeoutJob() {
 
 	var diff, delay time.Duration
 
-	for _, acc := range accs {
-		diff = acc.Application.ExpiredAt.Sub(models.NowUTC())
-		delay = time.Duration(diff.Seconds())
+	go func() {
+		for _, acc := range accs {
+			diff = acc.Application.ExpiredAt.Sub(models.NowUTC())
+			delay = time.Duration(diff.Seconds())
 
-		go reg.appTimeoutJob(nil, acc, diff, delay)
-	}
+			reg.appTimeoutJob(nil, acc, diff, delay)
+		}
+	}()
 
 }
 
