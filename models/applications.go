@@ -67,9 +67,6 @@ var (
 	// AppStatusCardSuspended is to store var application status card suspended
 	AppStatusCardSuspended = "card_suspended"
 
-	// CardSuspendedFillRejectedDate is to store var application date row for card suspended
-	CardSuspendedFillRejectedDate = "RejectedDate"
-
 	// AppStepSavingAcc is to store var application step saving account
 	AppStepSavingAcc int64 = 1
 
@@ -102,6 +99,7 @@ var (
 		"card_send":             "CardSendDate",
 		"card_sent":             "CardSentDate",
 		"rejected":              "RejectedDate",
+		"card_suspended":        "RejectedDate",
 	}
 	MapDocType = map[string]string{
 		"KtpImageBase64":       "ktp",
@@ -170,20 +168,15 @@ type Applications struct {
 // SetStatus as a setter for application status
 func (app *Applications) SetStatus(msg string) {
 	stat := app.getStatus(msg)
+	mapStat := mapStatusDate[stat]
 
-	if stat == app.Status {
+	if stat == app.Status || mapStat == "" {
 		return
 	}
 
 	app.Status = stat
 	r := reflect.ValueOf(app)
 	rNow := reflect.ValueOf(NowDbpg())
-	mapStat := mapStatusDate[stat]
-
-	if mapStat == "" {
-		mapStat = CardSuspendedFillRejectedDate
-	}
-
 	fStatDt := r.Elem().FieldByName(mapStat)
 	fStatDt.Set(rNow)
 }
