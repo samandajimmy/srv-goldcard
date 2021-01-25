@@ -317,6 +317,11 @@ type PayloadInsertPublicHoliday struct {
 	PublicHolidayDate []string `json:"publicHolidayDate" validate:"required,gte=1"`
 }
 
+// PayloadBRICardReplace is a struct to store payload calling api card replace to BRI
+type PayloadBRICardReplace struct {
+	BriXkey string `json:"briXkey" validate:"required"`
+}
+
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI
 func (plBRIReg *PayloadBriRegister) ValidateBRIRegisterSpecification() error {
 	plBRIReg.FirstName = StringNameFormatter(plBRIReg.FirstName, 15, false)

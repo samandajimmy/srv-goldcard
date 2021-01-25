@@ -25,11 +25,20 @@ func NewPsqlCardsRepository(Conn *sql.DB, dbpg *pg.DB) cards.Repository {
 func (PSQLCard *psqlCardsRepository) UpdateCardStatus(c echo.Context, card models.Card, cs models.CardStatuses) error {
 	var nilFilters []string
 
+	// query for insert card block statuses
 	stmts := []*gcdb.PipelineStmt{
 		gcdb.NewPipelineStmt(`UPDATE cards SET status = $1, updated_at = $2 WHERE id = $3`,
 			nilFilters, card.Status, time.Now(), card.ID),
 		gcdb.NewPipelineStmt(`INSERT INTO card_statuses (card_id, reason, reason_code, blocked_date, is_reactivated, created_at) VALUES ($1, $2, $3, $4, $5, $6)`,
 			nilFilters, card.ID, cs.Reason, cs.ReasonCode, cs.BlockedDate, cs.IsReactivated, time.Now()),
+	}
+
+	// query for update when card is being replaced
+	if cs.ID != 0 {
+		stmts = []*gcdb.PipelineStmt{
+			gcdb.NewPipelineStmt(`UPDATE card_statuses SET is_replaced = $1, replaced_date = $2, updated_at = $3 WHERE id = $4`,
+				nilFilters, models.CardIsReplaced, time.Now(), time.Now(), cs.ID),
+		}
 	}
 
 	err := gcdb.WithTransaction(PSQLCard.Conn, func(tx gcdb.Transaction) error {

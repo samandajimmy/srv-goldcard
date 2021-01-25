@@ -5,6 +5,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/transactions"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -84,13 +85,31 @@ func (cus *cardsUseCase) GetCardStatus(c echo.Context, pl models.PayloadAccNumbe
 		return models.RespCardStatus{}, err
 	}
 
-	// TODO: check trfStatus from bri and do process
-
-	// prepare response data card status
+	// prepare response data card status and update if necessary
 	err = cus.cRepo.GetCardStatus(c, &acc.Card)
 
 	if err != nil {
 		return models.RespCardStatus{}, models.ErrUpdateCardStatus
+	}
+
+	// check trfStatus from card information
+	// calling card replace to BRI when trfStatus equal to 4 and update corresponding data in DB
+	if cardInfo.TrfStatus == "4" && acc.Card.CardStatus.IsReplaced == models.CardIsntReplaced {
+		plCardReplace := models.PayloadBRICardReplace{BriXkey: acc.BrixKey}
+		_, err := cus.crRepo.PostCardReplaceBRI(c, plCardReplace)
+
+		if err != nil {
+			return models.RespCardStatus{}, models.ErrReplaceCard
+		}
+
+		// update card replaced data in db
+		acc.Card.CardStatus.IsReplaced = models.CardIsReplaced
+		acc.Card.CardStatus.ReplacedDate = time.Now()
+		err = cus.cRepo.UpdateCardStatus(c, acc.Card, acc.Card.CardStatus)
+
+		if err != nil {
+			return models.RespCardStatus{}, models.ErrUpdateCardStatus
+		}
 	}
 
 	cardStatus := models.RespCardStatus{Status: acc.Card.Status}
@@ -102,6 +121,7 @@ func (cus *cardsUseCase) GetCardStatus(c echo.Context, pl models.PayloadAccNumbe
 	return cardStatus, nil
 }
 
+// blockaCard is function to update card status, insert cardStatuses data, and do block goldcard account into core
 func (cus *cardsUseCase) blockaCard(c echo.Context, cardBlock models.CardBlock, card *models.Card) error {
 	// do nothing when card has been blocked
 	if card.Status == models.CardStatusBlocked {

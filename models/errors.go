@@ -284,6 +284,9 @@ var (
 
 	// ErrDateFormat to store error when inputted date cant be parse do date
 	ErrDateFormat = errors.New("Format tanggal tidak sesuai. Input tanggal harus dalam format dd/mm/yyyy")
+
+	// ErrReplaceCard to store error when failed to replace card
+	ErrReplaceCard = errors.New("Terjadi kesalahan ketika melakukan replace kartu")
 )
 
 // DynamicErr to return parameterize errors

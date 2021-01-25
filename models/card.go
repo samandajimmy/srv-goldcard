@@ -33,6 +33,10 @@ const (
 	IsReactivatedNo string = "no"
 	// ReasonCodeOther is block reason code other
 	ReasonCodeOther string = "other"
+	// CardIsReplaced is parameter to define is card already replaced to BRI
+	CardIsReplaced string = "yes"
+	// CardIsntReplaced is parameter to define card not been replaced to BRI
+	CardIsntReplaced string = "no"
 )
 
 var allowedBlockCodes = []string{"F", "L"}
@@ -145,6 +149,12 @@ type CardBlock struct {
 	ReasonCode  string `json:"reasonCode"`
 	BlockedDate string `json:"blockedDate"`
 	BlockedCode string `json:"blockedCode"`
+}
+
+// BRICardReplaceStatus to store response BRI card replace status
+type BRICardReplaceStatus struct {
+	ReportingDate string `json:"reportingDate"`
+	ReportDesc    string `json:"reportDesc"`
 }
 
 func (cb *CardBlock) IsCardBlockedBri() bool {
