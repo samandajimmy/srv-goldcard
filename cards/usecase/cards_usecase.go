@@ -85,32 +85,18 @@ func (cus *cardsUseCase) GetCardStatus(c echo.Context, pl models.PayloadAccNumbe
 		return models.RespCardStatus{}, err
 	}
 
-	// prepare response data card status and update if necessary
+	// prepare response data card status
 	err = cus.cRepo.GetCardStatus(c, &acc.Card)
 
 	if err != nil {
 		return models.RespCardStatus{}, models.ErrUpdateCardStatus
 	}
 
-	// check trfStatus from card information
-	// calling card replace to BRI when trfStatus equal to 4 and update corresponding data in DB
-	if cardInfo.TrfStatus == "4" && acc.Card.CardStatus.IsReplaced == models.CardIsntReplaced {
-		plCardReplace := models.PayloadBRICardReplace{BriXkey: acc.BrixKey}
-		_, err := cus.crRepo.PostCardReplaceBRI(c, plCardReplace)
+	// do process replace card to BRI when needed
+	err = cus.replaceaCard(c, &acc.Card.CardStatus, acc, cardInfo)
 
-		if err != nil {
-			return models.RespCardStatus{}, models.ErrReplaceCard
-		}
-
-		// update card replaced data in db
-		acc.Card.CardStatus.IsReplaced = models.CardIsReplaced
-		acc.Card.CardStatus.ReplacedDate = time.Now()
-		acc.Card.CardStatus.LastEncryptedCardNumber = cardInfo.BillKey
-		err = cus.cRepo.UpdateCardStatus(c, acc.Card, acc.Card.CardStatus)
-
-		if err != nil {
-			return models.RespCardStatus{}, models.ErrUpdateCardStatus
-		}
+	if err != nil {
+		return models.RespCardStatus{}, err
 	}
 
 	cardStatus := models.RespCardStatus{Status: acc.Card.Status}
@@ -145,6 +131,39 @@ func (cus *cardsUseCase) blockaCard(c echo.Context, cardBlock models.CardBlock, 
 	// Update Table Cards status to "blocked" and Insert Table Card Statuses
 	card.Status = models.CardStatusBlocked
 	err = cus.cRepo.UpdateCardStatus(c, *card, cardStatus)
+
+	if err != nil {
+		return models.ErrUpdateCardStatus
+	}
+
+	return nil
+}
+
+// replaceaCard is function to replace card to BRI and update card status
+func (cus *cardsUseCase) replaceaCard(c echo.Context, cardStatus *models.CardStatuses,
+	acc models.Account, cardInfo models.BRICardBalance) error {
+	// do nothing when card is already do replace process
+	if cardStatus.IsReplaced == models.Yes {
+		return nil
+	}
+
+	// wait trfStatus equal 4 for replace card to BRI
+	if cardInfo.TrfStatus != "4" {
+		return nil
+	}
+
+	plCardReplace := models.PayloadBriXkey{BriXkey: acc.BrixKey}
+	_, err := cus.crRepo.PostCardReplaceBRI(c, plCardReplace)
+
+	if err != nil {
+		return models.ErrReplaceCard
+	}
+
+	// update card replaced data in db
+	cardStatus.IsReplaced = models.Yes
+	cardStatus.ReplacedDate = time.Now()
+	cardStatus.LastEncryptedCardNumber = cardInfo.BillKey
+	err = cus.cRepo.UpdateCardStatus(c, acc.Card, *cardStatus)
 
 	if err != nil {
 		return models.ErrUpdateCardStatus

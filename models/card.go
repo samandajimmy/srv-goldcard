@@ -33,10 +33,10 @@ const (
 	IsReactivatedNo string = "no"
 	// ReasonCodeOther is block reason code other
 	ReasonCodeOther string = "other"
-	// CardIsReplaced is parameter to define is card already replaced to BRI
-	CardIsReplaced string = "yes"
-	// CardIsntReplaced is parameter to define card not been replaced to BRI
-	CardIsntReplaced string = "no"
+	// Yes is parameter constant yes
+	Yes string = "yes"
+	// No is parameter constant no
+	No string = "no"
 )
 
 var allowedBlockCodes = []string{"F", "L"}

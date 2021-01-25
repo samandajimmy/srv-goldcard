@@ -58,7 +58,7 @@ func (rc *restCards) GetBRICardBlockStatus(c echo.Context, acc models.Account, p
 	return briCardBlockStatus, nil
 }
 
-func (rc *restCards) PostCardReplaceBRI(c echo.Context, pl models.PayloadBRICardReplace) (models.BRICardReplaceStatus, error) {
+func (rc *restCards) PostCardReplaceBRI(c echo.Context, pl models.PayloadBriXkey) (models.BRICardReplaceStatus, error) {
 	var briCardReplaceStatus models.BRICardReplaceStatus
 	respBRI := api.BriResponse{}
 	requestDataBRI := map[string]interface{}{

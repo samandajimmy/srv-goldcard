@@ -15,5 +15,5 @@ type Repository interface {
 // RestRepository represent the rest cards repository contract
 type RestRepository interface {
 	GetBRICardBlockStatus(c echo.Context, acc models.Account, pl models.PayloadCardBlock) (models.BRICardBlockStatus, error)
-	PostCardReplaceBRI(c echo.Context, pl models.PayloadBRICardReplace) (models.BRICardReplaceStatus, error)
+	PostCardReplaceBRI(c echo.Context, pl models.PayloadBriXkey) (models.BRICardReplaceStatus, error)
 }

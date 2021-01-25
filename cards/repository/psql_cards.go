@@ -37,7 +37,7 @@ func (PSQLCard *psqlCardsRepository) UpdateCardStatus(c echo.Context, card model
 	if cs.ID != 0 {
 		stmts = []*gcdb.PipelineStmt{
 			gcdb.NewPipelineStmt(`UPDATE card_statuses SET is_replaced = $1, replaced_date = $2, last_encrypted_card_number = $3, updated_at = $4 WHERE id = $5`,
-				nilFilters, models.CardIsReplaced, time.Now(), cs.LastEncryptedCardNumber, time.Now(), cs.ID),
+				nilFilters, models.Yes, time.Now(), cs.LastEncryptedCardNumber, time.Now(), cs.ID),
 		}
 	}
 

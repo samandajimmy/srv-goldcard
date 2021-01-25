@@ -256,8 +256,8 @@ type RespActivations struct {
 	AccountNumber string `json:"accountNumber"`
 }
 
-// Payload PayloadBriGetCardInformation a struct to store all payload for card information inquiry to BRI
-type PayloadBriGetCardInformation struct {
+// Payload PayloadBriXkey a struct to store all payload for card information, card block, card replace to BRI
+type PayloadBriXkey struct {
 	BriXkey string `json:"briXkey" validate:"required"`
 }
 
@@ -315,11 +315,6 @@ type PayloadCoreGtePayment struct {
 // PayloadInsertPublicHoliday is a struct to store all payload for insert public holiday date
 type PayloadInsertPublicHoliday struct {
 	PublicHolidayDate []string `json:"publicHolidayDate" validate:"required,gte=1"`
-}
-
-// PayloadBRICardReplace is a struct to store payload calling api card replace to BRI
-type PayloadBRICardReplace struct {
-	BriXkey string `json:"briXkey" validate:"required"`
 }
 
 // ValidateBRIRegisterSpecification a function to validate registration specification to BRI
