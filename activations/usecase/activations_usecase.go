@@ -178,8 +178,8 @@ func (aUsecase *activationsUseCase) PostReactivations(c echo.Context, pa models.
 	go func() {
 		cardStatus.IsReactivated = models.BoolYes
 		cardStatus.ReactivatedDate = models.NowDbpg()
-		acc.Card.Status = models.CardStatusActive
-		err = aUsecase.cardRepo.UpdateCardStatus(c, acc.Card, cardStatus)
+		cols := []string{"is_reactivated", "last_encrypted_card_number", "reactivated_date", "updated_at"}
+		err = aUsecase.cardRepo.UpdateOneCardStatus(c, cardStatus, cols)
 
 		if err != nil {
 			logger.Make(c, nil).Debug(models.ErrUpdateCardStatus)

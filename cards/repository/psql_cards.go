@@ -24,21 +24,12 @@ func NewPsqlCardsRepository(Conn *sql.DB, dbpg *pg.DB) cards.Repository {
 
 func (PSQLCard *psqlCardsRepository) UpdateCardStatus(c echo.Context, card models.Card, cs models.CardStatuses) error {
 	var nilFilters []string
-	logger.MakeStructToJSON(cs)
-
-	cardStatsQuery := `INSERT INTO card_statuses (card_id, reason, reason_code, blocked_date, is_reactivated, created_at) VALUES ($1, $2, $3, $4, $5, $6)`
-	cardStatsParams := []interface{}{card.ID, cs.Reason, cs.ReasonCode, cs.BlockedDate, cs.IsReactivated, time.Now()}
-
-	if cs.ID != 0 {
-		cardStatsQuery = `UPDATE card_statuses SET is_reactivated = $1, last_encrypted_card_number = $2, reactivated_date = $3, updated_at = $4 where id = $5`
-		cardStatsParams = []interface{}{cs.IsReactivated, cs.LastEncryptedCardNumber, cs.ReactivatedDate, time.Now(), cs.ID}
-	}
 
 	stmts := []*gcdb.PipelineStmt{
 		gcdb.NewPipelineStmt(`UPDATE cards SET status = $1, updated_at = $2 WHERE id = $3`,
 			nilFilters, card.Status, time.Now(), card.ID),
-		gcdb.NewPipelineStmt(cardStatsQuery,
-			nilFilters, cardStatsParams...),
+		gcdb.NewPipelineStmt(`INSERT INTO card_statuses (card_id, reason, reason_code, blocked_date, is_reactivated, created_at) VALUES ($1, $2, $3, $4, $5, $6)`,
+			nilFilters, card.ID, cs.Reason, cs.ReasonCode, cs.BlockedDate, cs.IsReactivated, time.Now()),
 	}
 
 	err := gcdb.WithTransaction(PSQLCard.Conn, func(tx gcdb.Transaction) error {
@@ -68,5 +59,18 @@ func (PSQLCard *psqlCardsRepository) GetCardStatus(c echo.Context, card *models.
 	}
 
 	card.CardStatus = cardStatus
+	return nil
+}
+
+func (PSQLCard *psqlCardsRepository) UpdateOneCardStatus(c echo.Context, cardStatus models.CardStatuses, cols []string) error {
+	cardStatus.UpdatedAt = models.NowDbpg()
+	_, err := PSQLCard.DBpg.Model(&cardStatus).Column(cols...).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
 	return nil
 }
