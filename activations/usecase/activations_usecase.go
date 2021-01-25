@@ -3,6 +3,7 @@ package usecase
 import (
 	"errors"
 	"gade/srv-goldcard/activations"
+	"gade/srv-goldcard/cards"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/registrations"
@@ -20,13 +21,14 @@ type activationsUseCase struct {
 	rrRepo   registrations.RestRepository
 	rUsecase registrations.UseCase
 	trRepo   transactions.RestRepository
+	cardRepo cards.Repository
 }
 
 // ActivationUseCase represent Activation Use Case
 func ActivationUseCase(aRepo activations.Repository, arRepo activations.RestRepository,
 	rRepo registrations.Repository, rrRepo registrations.RestRepository, rUsecase registrations.UseCase,
-	trRepo transactions.RestRepository) activations.UseCase {
-	return &activationsUseCase{aRepo, arRepo, rRepo, rrRepo, rUsecase, trRepo}
+	trRepo transactions.RestRepository, cardRepo cards.Repository) activations.UseCase {
+	return &activationsUseCase{aRepo, arRepo, rRepo, rrRepo, rUsecase, trRepo, cardRepo}
 }
 
 func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, acc models.Account) (models.CardBalance, models.ResponseErrors) {
@@ -133,39 +135,58 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, acc models
 
 func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.PayloadActivations) (models.RespActivations, error) {
 	var respActNil models.RespActivations
-	var errs models.ResponseErrors
 	acc, err := aUsecase.rUsecase.CheckApplication(c, pa)
 
 	if err != nil {
 		return respActNil, err
 	}
 
-	acc.Card.CardNumber = pa.FirstSixDigits + models.AppendXCardNumber + pa.LastFourDigits
-	acc.Card.ValidUntil = pa.ExpDate
+	return aUsecase.doActivation(c, &acc, pa)
+}
 
-	// Inquiry activation
-	cardBal, errs := aUsecase.InquiryActivation(c, acc)
-
-	if errs.Title != "" && errs.Code != "44" {
-		return respActNil, errors.New(errs.Title)
-	}
-
-	// do re registration of the inquiry code 44
-	if errs.Code == "44" && acc.AccountNumber == "" {
-		err = aUsecase.reRegistration(c, acc, cardBal)
-
-		if err != nil {
-			return respActNil, models.ErrPostActivationsFailed
-		}
-	}
-
-	err = aUsecase.goldcardActivation(c, &acc, pa)
+func (aUsecase *activationsUseCase) PostReactivations(c echo.Context, pa models.PayloadActivations) (models.RespActivations, error) {
+	var respActNil models.RespActivations
+	acc, err := aUsecase.rUsecase.CheckApplication(c, pa)
 
 	if err != nil {
-		return respActNil, models.ErrPostActivationsFailed
+		return respActNil, err
 	}
 
-	return models.RespActivations{AccountNumber: acc.AccountNumber}, nil
+	err = aUsecase.cardRepo.GetCardStatus(c, &acc.Card)
+
+	if err != nil {
+		return respActNil, models.ErrUpdateCardStatus
+	}
+
+	// only do reactivation when card blocked and is reactivation no
+	cardStatus := acc.Card.CardStatus
+	cardStatus.LastEncryptedCardNumber = acc.Card.EncryptedCardNumber
+
+	if !acc.Card.IsReactivationAvail() {
+		return respActNil, models.ErrCannotReactivation
+	}
+
+	// make reactivation available
+	acc.Card.EncryptedCardNumber = ""
+	acc.AccountNumber = ""
+	response, err := aUsecase.doActivation(c, &acc, pa)
+
+	if err != nil {
+		return response, err
+	}
+
+	go func() {
+		cardStatus.IsReactivated = models.BoolYes
+		cardStatus.ReactivatedDate = models.NowDbpg()
+		acc.Card.Status = models.CardStatusActive
+		err = aUsecase.cardRepo.UpdateCardStatus(c, acc.Card, cardStatus)
+
+		if err != nil {
+			logger.Make(c, nil).Debug(models.ErrUpdateCardStatus)
+		}
+	}()
+
+	return response, nil
 }
 
 func (aUsecase *activationsUseCase) ValidateActivation(c echo.Context, pa models.PayloadActivations) models.ResponseErrors {
@@ -335,4 +356,36 @@ func (aUsecase *activationsUseCase) briActivation(c echo.Context, acc *models.Ac
 	acc.Card.ActivatedDate = time.Now()
 
 	return nil
+}
+
+func (aUsecase *activationsUseCase) doActivation(c echo.Context, acc *models.Account, pa models.PayloadActivations) (models.RespActivations, error) {
+	var respActNil models.RespActivations
+	var errs models.ResponseErrors
+
+	acc.Card.CardNumber = pa.FirstSixDigits + models.AppendXCardNumber + pa.LastFourDigits
+	acc.Card.ValidUntil = pa.ExpDate
+
+	// Inquiry activation
+	cardBal, errs := aUsecase.InquiryActivation(c, *acc)
+
+	if errs.Title != "" && errs.Code != "44" {
+		return respActNil, errors.New(errs.Title)
+	}
+
+	// do re registration of the inquiry code 44
+	if errs.Code == "44" && acc.AccountNumber == "" {
+		err := aUsecase.reRegistration(c, *acc, cardBal)
+
+		if err != nil {
+			return respActNil, models.ErrPostActivationsFailed
+		}
+	}
+
+	err := aUsecase.goldcardActivation(c, acc, pa)
+
+	if err != nil {
+		return respActNil, models.ErrPostActivationsFailed
+	}
+
+	return models.RespActivations{AccountNumber: acc.AccountNumber}, nil
 }
