@@ -105,6 +105,7 @@ func (cus *cardsUseCase) GetCardStatus(c echo.Context, pl models.PayloadAccNumbe
 		// update card replaced data in db
 		acc.Card.CardStatus.IsReplaced = models.CardIsReplaced
 		acc.Card.CardStatus.ReplacedDate = time.Now()
+		acc.Card.CardStatus.LastEncryptedCardNumber = cardInfo.BillKey
 		err = cus.cRepo.UpdateCardStatus(c, acc.Card, acc.Card.CardStatus)
 
 		if err != nil {
