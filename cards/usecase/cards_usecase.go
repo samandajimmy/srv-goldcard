@@ -143,7 +143,7 @@ func (cus *cardsUseCase) blockaCard(c echo.Context, cardBlock models.CardBlock, 
 func (cus *cardsUseCase) replaceaCard(c echo.Context, cardStatus *models.CardStatuses,
 	acc models.Account, cardInfo models.BRICardBalance) error {
 	// do nothing when card is already do replace process
-	if cardStatus.IsReplaced == models.Yes {
+	if cardStatus.IsReplaced == models.BoolYes {
 		return nil
 	}
 
@@ -160,10 +160,13 @@ func (cus *cardsUseCase) replaceaCard(c echo.Context, cardStatus *models.CardSta
 	}
 
 	// update card replaced data in db
-	cardStatus.IsReplaced = models.Yes
+	cardStatus.IsReplaced = models.BoolYes
 	cardStatus.ReplacedDate = time.Now()
 	cardStatus.LastEncryptedCardNumber = cardInfo.BillKey
-	err = cus.cRepo.UpdateCardStatus(c, acc.Card, *cardStatus)
+
+	// create interface of data to update selected column
+	col := []string{"is_replaced", "replaced_date", "last_encrypted_card_number"}
+	err = cus.cRepo.UpdateOneCardStatus(c, *cardStatus, col)
 
 	if err != nil {
 		return models.ErrUpdateCardStatus

@@ -31,10 +31,6 @@ const (
 	CardStatusBlocked string = "blocked"
 	// ReasonCodeOther is block reason code other
 	ReasonCodeOther string = "other"
-	// Yes is parameter constant yes
-	Yes string = "yes"
-	// No is parameter constant no
-	No string = "no"
 )
 
 var allowedBlockCodes = []string{"F", "L"}
