@@ -29,8 +29,6 @@ const (
 	CardStatusInactive string = "inactive"
 	// CardStatusBlocked card status blocked
 	CardStatusBlocked string = "blocked"
-	// IsReactivatedNo is re activation status false
-	IsReactivatedNo string = "no"
 	// ReasonCodeOther is block reason code other
 	ReasonCodeOther string = "other"
 	// Yes is parameter constant yes
@@ -101,7 +99,7 @@ func (c *Card) MappingBlockCard(cardBlock CardBlock) (CardStatuses, error) {
 	cardStatus.Reason = cardBlock.Reason
 	cardStatus.ReasonCode = cardBlock.ReasonCode
 	cardStatus.CardID = c.ID
-	cardStatus.IsReactivated = IsReactivatedNo
+	cardStatus.IsReactivated = BoolNo
 	cardStatus.BlockedDate, err = time.Parse(DateTimeFormat, cardBlock.BlockedDate)
 
 	if err != nil {
@@ -111,6 +109,18 @@ func (c *Card) MappingBlockCard(cardBlock CardBlock) (CardStatuses, error) {
 	}
 
 	return cardStatus, nil
+}
+
+func (c *Card) IsReactivationAvail() bool {
+	if c.Status != CardStatusBlocked {
+		return true
+	}
+
+	if c.CardStatus.IsReactivated == BoolNo {
+		return true
+	}
+
+	return false
 }
 
 // BRICardBlockStatus to store response BRI card block status

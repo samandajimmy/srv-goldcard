@@ -110,7 +110,7 @@ func main() {
 	tokenUseCase := _tokenUseCase.NewTokenUseCase(tokenRepository, timeoutContext)
 	transactionsUseCase := _transactionsUseCase.TransactionsUseCase(transactionsRepository, billingsRepository, restTransactionsRepo, registrationsRepository, restRegistrationsRepo)
 	registrationsUseCase := _registrationsUseCase.RegistrationsUseCase(registrationsRepository, restRegistrationsRepo, processHandlerUseCase, transactionsUseCase, restActivationRepository)
-	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo, registrationsUseCase, restTransactionsRepo)
+	activationUserCase := _activationUseCase.ActivationUseCase(activationRepository, restActivationRepository, registrationsRepository, restRegistrationsRepo, registrationsUseCase, restTransactionsRepo, cardsRepository)
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
 	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, billingsRestRepository, restRegistrationsRepo, transactionsUseCase)
 	updateLimitUseCase := _updateLimitUseCase.UpdateLimitUseCase(restActivationRepository, transactionsRepository, restTransactionsRepo, transactionsUseCase, registrationsRepository, restRegistrationsRepo, registrationsUseCase, updateLimitRepo, restUpdateLimitRepo)

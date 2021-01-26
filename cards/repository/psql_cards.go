@@ -57,7 +57,7 @@ func (PSQLCard *psqlCardsRepository) UpdateCardStatus(c echo.Context, card model
 func (PSQLCard *psqlCardsRepository) GetCardStatus(c echo.Context, card *models.Card) error {
 	cardStatus := models.CardStatuses{}
 	err := PSQLCard.DBpg.Model(&cardStatus).
-		Where("card_id = ? AND is_reactivated = ?", card.ID, models.IsReactivatedNo).
+		Where("card_id = ? AND is_reactivated = ?", card.ID, models.BoolNo).
 		Order("created_at DESC").
 		Limit(1).Select()
 
@@ -68,5 +68,18 @@ func (PSQLCard *psqlCardsRepository) GetCardStatus(c echo.Context, card *models.
 	}
 
 	card.CardStatus = cardStatus
+	return nil
+}
+
+func (PSQLCard *psqlCardsRepository) UpdateOneCardStatus(c echo.Context, cardStatus models.CardStatuses, cols []string) error {
+	cardStatus.UpdatedAt = models.NowDbpg()
+	_, err := PSQLCard.DBpg.Model(&cardStatus).Column(cols...).WherePK().Update()
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
 	return nil
 }

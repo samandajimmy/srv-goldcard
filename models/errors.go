@@ -207,6 +207,9 @@ var (
 	// ErrGetAccByAccountNumber to store account number not found error message
 	ErrGetAccByAccountNumber = errors.New("Nomor akun kartu emas tidak di temukan")
 
+	// ErrCannotReactivation to store cannot reactivation error message
+	ErrCannotReactivation = errors.New("Nomor akun kartu emas tidak dapat melakukan aktivasi ulang")
+
 	// ErrGetAccBySavingAcc to store saving account not found error message
 	ErrGetAccBySavingAcc = errors.New("Nomor rekening tabungan emas tidak di temukan")
 

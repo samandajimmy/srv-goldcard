@@ -20,6 +20,7 @@ func NewActivationsHandler(echoGroup models.EchoGroup, aUseCase activations.UseC
 
 	// End Point For External
 	echoGroup.API.POST("/activations", handler.Activations)
+	echoGroup.API.POST("/re-activations", handler.Reactivations)
 	echoGroup.API.POST("/activations/inquiry", handler.ActivationsInquiry)
 }
 
@@ -83,6 +84,43 @@ func (ah *ActivationsHandler) Activations(c echo.Context) error {
 	}
 
 	resp, err := ah.aUsecase.PostActivations(c, pa)
+
+	if err != nil {
+		ah.respErrors.SetTitle(err.Error())
+		ah.response.SetResponse("", &ah.respErrors)
+
+		return ah.response.Body(c, err)
+	}
+
+	ah.response.SetResponse(resp, &ah.respErrors)
+
+	return ah.response.Body(c, err)
+}
+func (ah *ActivationsHandler) Reactivations(c echo.Context) error {
+	var pa models.PayloadActivations
+	ah.response, ah.respErrors = models.NewResponse()
+
+	if err := c.Bind(&pa); err != nil {
+		ah.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		ah.response.SetResponse("", &ah.respErrors)
+
+		return ah.response.Body(c, err)
+	}
+
+	if err := c.Validate(pa); err != nil {
+		ah.respErrors.SetTitle(err.Error())
+		ah.response.SetResponse("", &ah.respErrors)
+
+		return ah.response.Body(c, err)
+	}
+
+	if err := ah.aUsecase.ValidateActivation(c, pa); err.Title != "" {
+		ah.response.SetResponse("", &err)
+
+		return ah.response.Body(c, nil)
+	}
+
+	resp, err := ah.aUsecase.PostReactivations(c, pa)
 
 	if err != nil {
 		ah.respErrors.SetTitle(err.Error())
