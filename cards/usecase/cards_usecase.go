@@ -5,6 +5,7 @@ import (
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/transactions"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -84,13 +85,18 @@ func (cus *cardsUseCase) GetCardStatus(c echo.Context, pl models.PayloadAccNumbe
 		return models.RespCardStatus{}, err
 	}
 
-	// TODO: check trfStatus from bri and do process
-
 	// prepare response data card status
 	err = cus.cRepo.GetCardStatus(c, &acc.Card)
 
 	if err != nil {
 		return models.RespCardStatus{}, models.ErrUpdateCardStatus
+	}
+
+	// do process replace card to BRI when needed
+	err = cus.replaceaCard(c, &acc.Card.CardStatus, acc, cardInfo)
+
+	if err != nil {
+		return models.RespCardStatus{}, err
 	}
 
 	cardStatus := models.RespCardStatus{Status: acc.Card.Status}
@@ -102,6 +108,7 @@ func (cus *cardsUseCase) GetCardStatus(c echo.Context, pl models.PayloadAccNumbe
 	return cardStatus, nil
 }
 
+// blockaCard is function to update card status, insert cardStatuses data, and do block goldcard account into core
 func (cus *cardsUseCase) blockaCard(c echo.Context, cardBlock models.CardBlock, card *models.Card) error {
 	// do nothing when card has been blocked
 	if card.Status == models.CardStatusBlocked {
@@ -124,6 +131,42 @@ func (cus *cardsUseCase) blockaCard(c echo.Context, cardBlock models.CardBlock, 
 	// Update Table Cards status to "blocked" and Insert Table Card Statuses
 	card.Status = models.CardStatusBlocked
 	err = cus.cRepo.UpdateCardStatus(c, *card, cardStatus)
+
+	if err != nil {
+		return models.ErrUpdateCardStatus
+	}
+
+	return nil
+}
+
+// replaceaCard is function to replace card to BRI and update card status
+func (cus *cardsUseCase) replaceaCard(c echo.Context, cardStatus *models.CardStatuses,
+	acc models.Account, cardInfo models.BRICardBalance) error {
+	// do nothing when card is already do replace process
+	if cardStatus.IsReplaced == models.BoolYes {
+		return nil
+	}
+
+	// wait trfStatus equal 4 for replace card to BRI
+	if cardInfo.TrfStatus != "4" {
+		return nil
+	}
+
+	plCardReplace := models.PayloadBriXkey{BriXkey: acc.BrixKey}
+	_, err := cus.crRepo.PostCardReplaceBRI(c, plCardReplace)
+
+	if err != nil {
+		return models.ErrReplaceCard
+	}
+
+	// update card replaced data in db
+	cardStatus.IsReplaced = models.BoolYes
+	cardStatus.ReplacedDate = time.Now()
+	cardStatus.LastEncryptedCardNumber = cardInfo.BillKey
+
+	// create interface of data to update selected column
+	col := []string{"is_replaced", "replaced_date", "last_encrypted_card_number"}
+	err = cus.cRepo.UpdateOneCardStatus(c, *cardStatus, col)
 
 	if err != nil {
 		return models.ErrUpdateCardStatus

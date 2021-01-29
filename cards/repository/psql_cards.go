@@ -64,6 +64,7 @@ func (PSQLCard *psqlCardsRepository) GetCardStatus(c echo.Context, card *models.
 
 func (PSQLCard *psqlCardsRepository) UpdateOneCardStatus(c echo.Context, cardStatus models.CardStatuses, cols []string) error {
 	cardStatus.UpdatedAt = models.NowDbpg()
+	cols = append(cols, "updated_at")
 	_, err := PSQLCard.DBpg.Model(&cardStatus).Column(cols...).WherePK().Update()
 
 	if err != nil {

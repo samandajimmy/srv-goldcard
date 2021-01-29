@@ -157,6 +157,12 @@ type CardBlock struct {
 	BlockedCode string `json:"blockedCode"`
 }
 
+// BRICardReplaceStatus to store response BRI card replace status
+type BRICardReplaceStatus struct {
+	ReportingDate string `json:"reportingDate"`
+	ReportDesc    string `json:"reportDesc"`
+}
+
 func (cb *CardBlock) IsCardBlockedBri() bool {
 	if cb.BlockedCode == "" {
 		return true

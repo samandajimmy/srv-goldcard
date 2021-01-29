@@ -57,3 +57,39 @@ func (rc *restCards) GetBRICardBlockStatus(c echo.Context, acc models.Account, p
 
 	return briCardBlockStatus, nil
 }
+
+func (rc *restCards) PostCardReplaceBRI(c echo.Context, pl models.PayloadBriXkey) (models.BRICardReplaceStatus, error) {
+	var briCardReplaceStatus models.BRICardReplaceStatus
+	respBRI := api.BriResponse{}
+	requestDataBRI := map[string]interface{}{
+		"briXkey": pl.BriXkey,
+	}
+
+	requestPath := "/card/replace"
+	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
+	errBRI := api.RetryableBriPost(c, requestPath, reqBRIBody.RequestData, &respBRI)
+
+	if errBRI != nil {
+		logger.Make(c, nil).Debug(errBRI)
+
+		return briCardReplaceStatus, errBRI
+	}
+
+	mrshlCardRplc, err := json.Marshal(respBRI.DataOne)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return briCardReplaceStatus, err
+	}
+
+	err = json.Unmarshal(mrshlCardRplc, &briCardReplaceStatus)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return briCardReplaceStatus, err
+	}
+
+	return briCardReplaceStatus, nil
+}
