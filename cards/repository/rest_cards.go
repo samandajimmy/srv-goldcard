@@ -93,3 +93,31 @@ func (rc *restCards) PostCardReplaceBRI(c echo.Context, pl models.PayloadBriXkey
 
 	return briCardReplaceStatus, nil
 }
+
+func (rc *restCards) CoreBlockaCard(c echo.Context, acc models.Account, cardBlock models.CardBlock) error {
+	if cardBlock.Description == "" {
+		cardBlock.Description = "Card Blocked"
+	}
+
+	r := api.SwitchingResponse{}
+	body := map[string]interface{}{
+		"isBlokir":   "0",
+		"noRek":      acc.AccountNumber,
+		"cardNumber": acc.Card.CardNumber,
+		"reportDesc": cardBlock.Description,
+	}
+
+	req := api.MappingRequestSwitching(body)
+	err := api.RetryableSwitchingPost(c, req, "/goldcard/protect", &r)
+
+	if err != nil {
+		return err
+	}
+
+	if r.ResponseCode != "00" {
+		return models.DynamicErr(models.ErrSwitchingAPIRequest, []interface{}{r.ResponseCode,
+			r.ResponseDesc})
+	}
+
+	return nil
+}

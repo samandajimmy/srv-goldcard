@@ -155,6 +155,7 @@ type CardBlock struct {
 	ReasonCode  string `json:"reasonCode"`
 	BlockedDate string `json:"blockedDate"`
 	BlockedCode string `json:"blockedCode"`
+	Description string `json:"description"`
 }
 
 // BRICardReplaceStatus to store response BRI card replace status

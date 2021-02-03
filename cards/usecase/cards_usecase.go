@@ -43,8 +43,9 @@ func (cus *cardsUseCase) BlockCard(c echo.Context, pl models.PayloadCardBlock) e
 		Reason:      pl.Reason,
 		ReasonCode:  pl.ReasonCode,
 		BlockedDate: briCardBlockStatus.ReportingDate,
+		Description: briCardBlockStatus.ReportDesc,
 	}
-	err = cus.blockaCard(c, cardBlock, &acc.Card)
+	err = cus.blockaCard(c, cardBlock, &acc)
 
 	if err != nil {
 		return err
@@ -79,7 +80,7 @@ func (cus *cardsUseCase) GetCardStatus(c echo.Context, pl models.PayloadAccNumbe
 	}
 
 	// run block a card process
-	err = cus.blockaCard(c, cardBlock, &acc.Card)
+	err = cus.blockaCard(c, cardBlock, &acc)
 
 	if err != nil {
 		return models.RespCardStatus{}, err
@@ -109,7 +110,8 @@ func (cus *cardsUseCase) GetCardStatus(c echo.Context, pl models.PayloadAccNumbe
 }
 
 // blockaCard is function to update card status, insert cardStatuses data, and do block goldcard account into core
-func (cus *cardsUseCase) blockaCard(c echo.Context, cardBlock models.CardBlock, card *models.Card) error {
+func (cus *cardsUseCase) blockaCard(c echo.Context, cardBlock models.CardBlock, acc *models.Account) error {
+	card := &acc.Card
 	// do nothing when card has been blocked
 	if card.Status == models.CardStatusBlocked {
 		return nil
@@ -119,7 +121,12 @@ func (cus *cardsUseCase) blockaCard(c echo.Context, cardBlock models.CardBlock, 
 		return nil
 	}
 
-	// TODO: hit endpoint core to block a card
+	// hit endpoint core to block a card
+	err := cus.crRepo.CoreBlockaCard(c, *acc, cardBlock)
+
+	if err != nil {
+		return err
+	}
 
 	// Mapping Card Statuses
 	cardStatus, err := card.MappingBlockCard(cardBlock)
