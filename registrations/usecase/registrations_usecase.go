@@ -153,7 +153,7 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 	// run job for expiration process on background
 	diff := app.ExpiredAt.Sub(app.CreatedAt)
 	delay := time.Duration(diff.Seconds())
-	go reg.appTimeoutJob(c, acc, diff, delay)
+	reg.appTimeoutJob(c, acc, diff, delay)
 
 	return models.RespRegistration{
 		ApplicationNumber: app.ApplicationNumber,
