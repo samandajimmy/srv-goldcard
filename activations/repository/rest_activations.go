@@ -41,10 +41,17 @@ func (ra *restActivations) GetDetailGoldUser(c echo.Context, accNumber string) (
 
 func (ra *restActivations) ActivationsToCore(c echo.Context, acc *models.Account) error {
 	respSwitching := api.SwitchingResponse{}
+	cardNumber := ""
+
+	if (acc.Card.CardStatus != models.CardStatuses{}) {
+		cardNumber = acc.Card.CardStatus.LastEncryptedCardNumber
+	}
+
 	requestDataSwitching := map[string]interface{}{
 		"cif":        acc.CIF,
 		"noRek":      acc.Application.SavingAccount,
 		"branchCode": acc.BranchCode,
+		"cardNumber": cardNumber,
 	}
 
 	req := api.MappingRequestSwitching(requestDataSwitching)
