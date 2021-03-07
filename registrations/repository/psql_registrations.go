@@ -307,26 +307,38 @@ func (regis *psqlRegistrationsRepository) GetCityFromZipcode(c echo.Context, zip
 func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc models.Account, fnAfter func() error) error {
 	var nilFilters []string
 	var upsertFilters []string
-	var upsertQuery string
+	var upsertQueryCard string
+	var updateQueryApplication string
 	var stmts []*gcdb.PipelineStmt
 
-	// query if account has not any card data yet
-	upsertFilters = []string{"cardID"}
-	upsertQuery = `INSERT INTO cards (card_limit, created_at, gold_limit, stl_limit, balance,
-		gold_balance, stl_balance) VALUES ($1, $2, $3, $4, $1, $3, $4) RETURNING id;`
+	// query for table applications to save applicant initial limit
+	if acc.Application.CardLimit == 0 {
+		updateQueryApplication = `UPDATE applications set card_limit = $1, updated_at = $2 WHERE id = ` +
+			strconv.Itoa(int(acc.ApplicationID)) + `;`
+	}
 
-	// query if account has any card data then update
+	// query for table cards if account has not any card data yet
+	upsertFilters = []string{"cardID"}
+	upsertQueryCard = `INSERT INTO cards (card_limit, created_at, gold_limit, stl_limit, balance,
+		gold_balance, stl_balance, previous_card_balance, previous_card_balance_date, previous_card_limit,
+		previous_card_limit_date) VALUES ($1, $2, $3, $4, $1, $3, $4, $1, $2, $1, $2) RETURNING id;`
+
+	// query for table cards if account has any card data then update
 	if acc.CardID != 0 {
-		upsertQuery = `UPDATE cards set card_limit = $1, updated_at = $2, gold_limit = $3,
+		upsertQueryCard = `UPDATE cards set card_limit = $1, updated_at = $2, gold_limit = $3,
 			stl_limit = $4, balance = $1, gold_balance = $3, stl_balance = $4 WHERE id = ` +
 			strconv.Itoa(int(acc.CardID)) + ` RETURNING id;`
 	}
 
 	stmts = []*gcdb.PipelineStmt{
-		gcdb.NewPipelineStmt(upsertQuery, upsertFilters, acc.Card.CardLimit, time.Now(),
+		gcdb.NewPipelineStmt(upsertQueryCard, upsertFilters, acc.Card.CardLimit, time.Now(),
 			acc.Card.GoldLimit, acc.Card.StlLimit),
 		gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1 WHERE id = $2`,
 			nilFilters, time.Now(), acc.ID),
+	}
+
+	if updateQueryApplication != "" {
+		stmts = append(stmts, gcdb.NewPipelineStmt(updateQueryApplication, nil, acc.Card.CardLimit, time.Now()))
 	}
 
 	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {

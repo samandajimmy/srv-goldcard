@@ -37,24 +37,28 @@ var allowedBlockCodes = []string{"F", "L"}
 
 // Card is a struct to store card data
 type Card struct {
-	ID                  int64        `json:"id"`
-	CardName            string       `json:"cardName"`
-	CardNumber          string       `json:"cardNumber"`
-	CardLimit           int64        `json:"cardLimit"`
-	GoldLimit           float64      `json:"goldLimit"`
-	StlLimit            int64        `json:"stlLimit"`
-	ValidUntil          string       `json:"validUntil"`
-	PinNumber           string       `json:"pinNumber"`
-	Description         string       `json:"description"`
-	Balance             int64        `json:"balance"`
-	GoldBalance         float64      `json:"goldBalance"`
-	StlBalance          int64        `json:"stlBalance"`
-	Status              string       `json:"status"`
-	EncryptedCardNumber string       `json:"encryptedCardNumber"`
-	UpdatedAt           time.Time    `json:"updatedAt"`
-	CreatedAt           time.Time    `json:"createdAt"`
-	ActivatedDate       time.Time    `json:"activatedDate"`
-	CardStatus          CardStatuses `json:"cardStatus" pg:"-"`
+	ID                      int64        `json:"id"`
+	CardName                string       `json:"cardName"`
+	CardNumber              string       `json:"cardNumber"`
+	CardLimit               int64        `json:"cardLimit"`
+	GoldLimit               float64      `json:"goldLimit"`
+	StlLimit                int64        `json:"stlLimit"`
+	ValidUntil              string       `json:"validUntil"`
+	PinNumber               string       `json:"pinNumber"`
+	Description             string       `json:"description"`
+	Balance                 int64        `json:"balance"`
+	GoldBalance             float64      `json:"goldBalance"`
+	StlBalance              int64        `json:"stlBalance"`
+	Status                  string       `json:"status"`
+	EncryptedCardNumber     string       `json:"encryptedCardNumber"`
+	PreviousCardBalance     int64        `json:"previousCardBalance"`
+	PreviousCardBalanceDate time.Time    `json:"previousCardBalanceDate"`
+	PreviousCardLimit       int64        `json:"previousCardLimit"`
+	PreviousCardLimitDate   time.Time    `json:"previousCardLimitDate"`
+	UpdatedAt               time.Time    `json:"updatedAt"`
+	CreatedAt               time.Time    `json:"createdAt"`
+	ActivatedDate           time.Time    `json:"activatedDate"`
+	CardStatus              CardStatuses `json:"cardStatus" pg:"-"`
 }
 
 // ConvertMoneyToGold to convert rupiah into gram

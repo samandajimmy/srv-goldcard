@@ -158,6 +158,7 @@ type Applications struct {
 	ExpiredAt                time.Time  `json:"expiredAt"`
 	Documents                []Document `json:"documents" pg:"-"`
 	CoreOpen                 bool       `json:"coreOpen"`
+	CardLimit                int64      `json:"cardLimit"`
 	CreatedAt                time.Time  `json:"createdAt"`
 	UpdatedAt                time.Time  `json:"updatedAt"`
 }
