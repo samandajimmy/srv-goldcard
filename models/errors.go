@@ -273,6 +273,9 @@ var (
 	// ErrPostInquiryUpdateLimitToCore to store error when posting inquiry update limit to core endpoint
 	ErrPostInquiryUpdateLimitToCore = errors.New("Terjadi kesalahan ketika memposting data inquiry update limit ke Core")
 
+	// ErrClosedUpdateLimitInquiries to store error when try to update limit on closed date for update limit
+	ErrClosedUpdateLimitInquiries = errors.New("Mohon maaf pengajuan belum bisa dilakukan, nasabah bisa mengajukan kembali setelah jatuh tempo periode pembayaran tagihan bulan ini")
+
 	// ErrSendNotification to store error message sending notifaction
 	ErrSendNotification = errors.New("Gagal mengirim notifikasi ke PDS")
 

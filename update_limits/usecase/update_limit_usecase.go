@@ -11,7 +11,10 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
+	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"gopkg.in/gomail.v2"
@@ -181,6 +184,29 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 
 	if lastLimitUpdate.ID != 0 {
 		errors.SetTitleCode("12", models.ErrPendingUpdateLimitAvailable.Error(), "")
+		return response, errors
+	}
+
+	// validate inquiry update limit closed date
+	// the closed date is parameterized
+	upLimClosedDate, err := upLimUC.upLimRepo.GetUpdateLimitInquiriesClosedDate(c)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetParameter.Error())
+		return response, errors
+	}
+
+	spew.Dump(time.Now().Format("02"))
+	if strings.Contains(upLimClosedDate, time.Now().Format("02")) {
+		errors.SetTitle(models.ErrClosedUpdateLimitInquiries.Error())
+		return response, errors
+	}
+
+	// syncronize card limit and balance with provider's data first
+	acc.Card, err = upLimUC.trxUS.UpdateAndGetCardBalance(c, acc)
+
+	if err != nil {
+		errors.SetTitle(models.ErrGetCardBalance.Error())
 		return response, errors
 	}
 
