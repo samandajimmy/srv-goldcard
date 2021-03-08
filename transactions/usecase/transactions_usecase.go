@@ -363,7 +363,11 @@ func (trxUS *transactionsUseCase) UpdateAndGetCardBalance(c echo.Context, acc mo
 
 	// get gold balance
 	goldBalance := acc.Card.SetGoldLimit(cardBal.AvailableCredit, stl)
-
+	// define previous card limit and balance
+	acc.Card.PreviousCardBalance = acc.Card.Balance
+	acc.Card.PreviousCardBalanceDate = models.NowDbpg()
+	acc.Card.PreviousCardLimit = acc.Card.CardLimit
+	acc.Card.PreviousCardLimitDate = models.NowDbpg()
 	// define new card balances
 	acc.Card.Balance = cardBal.AvailableCredit
 	acc.Card.GoldBalance = goldBalance
