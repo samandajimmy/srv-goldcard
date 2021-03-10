@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/fatih/structs"
 	"github.com/labstack/echo"
 	"github.com/sirupsen/logrus"
@@ -95,17 +96,9 @@ func GetEchoRID(c echo.Context) string {
 
 // MakeStructToJSON to get a json string of struct
 // JUST FOR DEBUGGING TOOL
-func MakeStructToJSON(strct interface{}) {
-	b, err := json.Marshal(strct)
-
-	if err != nil {
-		Make(nil, nil).Fatal(err)
-
-		return
-	}
-
+func Dump(strct ...interface{}) {
 	fmt.Println("DEBUGGING ONLY")
-	MakeWithoutReportCaller(nil, nil).Debug(string(b))
+	spew.Dump(strct)
 	fmt.Println("DEBUGGING ONLY")
 }
 

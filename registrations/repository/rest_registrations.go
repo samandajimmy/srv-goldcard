@@ -160,7 +160,6 @@ func (rr *restRegistrations) AuthLogin() error {
 
 	if err != nil {
 		logger.Make(nil, nil).Debug(err)
-		logger.MakeStructToJSON(resp)
 
 		return err
 	}
