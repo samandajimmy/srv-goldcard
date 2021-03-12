@@ -92,6 +92,18 @@ func (c *Card) SetCardLimit(stl int64) error {
 	return nil
 }
 
+func (c *Card) MappingPrevCardData(briCardBal BRICardBalance) {
+	if int64(briCardBal.CreditLimit) != c.CardLimit {
+		c.PreviousCardLimit = c.CardLimit
+		c.PreviousCardLimitDate = NowDbpg()
+	}
+
+	if briCardBal.AvailableCredit != c.Balance {
+		c.PreviousCardBalance = c.Balance
+		c.PreviousCardBalanceDate = NowDbpg()
+	}
+}
+
 func (c *Card) MappingBlockCard(cardBlock CardBlock) (CardStatuses, error) {
 	var err error
 	var cardStatus CardStatuses

@@ -76,7 +76,9 @@ func (PSQLTrx *psqlTransactionsRepository) GetAccountByAccountNumber(c echo.Cont
 
 func (PSQLTrx *psqlTransactionsRepository) UpdateCardBalance(c echo.Context, card models.Card) error {
 	card.UpdatedAt = models.NowDbpg()
-	col := []string{"balance", "gold_balance", "stl_balance", "updated_at"}
+	col := []string{"balance", "gold_balance", "stl_balance", "card_limit", "previous_card_balance",
+		"previous_card_balance_date", "previous_card_limit", "previous_card_limit_date", "updated_at"}
+
 	_, err := PSQLTrx.DBpg.Model(&card).Column(col...).WherePK().Update()
 
 	if err != nil {

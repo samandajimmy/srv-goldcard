@@ -308,14 +308,7 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 	var nilFilters []string
 	var upsertFilters []string
 	var upsertQueryCard string
-	var updateQueryApplication string
 	var stmts []*gcdb.PipelineStmt
-
-	// query for table applications to save applicant initial limit
-	if acc.Application.CardLimit == 0 {
-		updateQueryApplication = `UPDATE applications set card_limit = $1, updated_at = $2 WHERE id = ` +
-			strconv.Itoa(int(acc.ApplicationID)) + `;`
-	}
 
 	// query for table cards if account has not any card data yet
 	upsertFilters = []string{"cardID"}
@@ -335,10 +328,8 @@ func (regis *psqlRegistrationsRepository) UpdateCardLimit(c echo.Context, acc mo
 			acc.Card.GoldLimit, acc.Card.StlLimit),
 		gcdb.NewPipelineStmt(`UPDATE accounts set card_id = {cardID}, updated_at = $1 WHERE id = $2`,
 			nilFilters, time.Now(), acc.ID),
-	}
-
-	if updateQueryApplication != "" {
-		stmts = append(stmts, gcdb.NewPipelineStmt(updateQueryApplication, nil, acc.Card.CardLimit, time.Now()))
+		gcdb.NewPipelineStmt(`UPDATE applications set card_limit = $1, updated_at = $2 WHERE id = $3`,
+			nilFilters, acc.Application.CardLimit, time.Now(), acc.ApplicationID),
 	}
 
 	err := gcdb.WithTransaction(regis.Conn, func(tx gcdb.Transaction) error {

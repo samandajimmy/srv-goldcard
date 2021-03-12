@@ -258,6 +258,7 @@ func (reg *registrationsUseCase) PostCardLimit(c echo.Context, pl models.Payload
 	acc.Card.GoldLimit = acc.Card.SetGoldLimit(pl.CardLimit, currStl)
 	acc.Card.StlLimit = currStl
 	acc.Card.StlBalance = currStl
+	acc.Application.CardLimit = pl.CardLimit
 	err = reg.regRepo.UpdateCardLimit(c, acc, nil)
 
 	if err != nil {
