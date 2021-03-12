@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/google/uuid"
 	"github.com/labstack/echo"
 	"gopkg.in/gomail.v2"
@@ -196,7 +195,6 @@ func (upLimUC *updateLimitUseCase) InquiryUpdateLimit(c echo.Context, pl models.
 		return response, errors
 	}
 
-	spew.Dump(time.Now().Format("02"))
 	if strings.Contains(upLimClosedDate, time.Now().Format("02")) {
 		errors.SetTitle(models.ErrClosedUpdateLimitInquiries.Error())
 		return response, errors
