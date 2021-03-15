@@ -42,6 +42,27 @@ func (psqlUL *psqlUpdateLimitsRepository) GetEmailByKey(c echo.Context) (string,
 	return param.Value, nil
 }
 
+// function to get date validation to not allow update limit inquiries
+func (psqlUL *psqlUpdateLimitsRepository) GetUpdateLimitInquiriesClosedDate(c echo.Context) (string, error) {
+	param := models.Parameter{}
+	err := psqlUL.DBpg.Model(&param).
+		Where("key = ?", "UPDATE_LIMIT_INQUIRIES_CLOSED_DATE").Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", err
+	}
+
+	if err == pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return "", models.ErrGetParameter
+	}
+
+	return param.Value, nil
+}
+
 func (psqlUL *psqlUpdateLimitsRepository) GetLastLimitUpdate(c echo.Context, accId int64) (models.LimitUpdate, error) {
 	var limitUpdate models.LimitUpdate
 	statuses := []string{"pending", "applied"}
