@@ -137,7 +137,7 @@ func (c *Card) IsReactivationAvail() bool {
 
 // BRICardBlockStatus to store response BRI card block status
 type BRICardBlockStatus struct {
-	ReportingDate string `json:"reportingDate"`
+	ReportingDate int64  `json:"reportingDate"`
 	ReportDesc    string `json:"reportDesc"`
 }
 
