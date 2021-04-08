@@ -42,7 +42,7 @@ func (cus *cardsUseCase) BlockCard(c echo.Context, pl models.PayloadCardBlock) e
 	cardBlock := models.CardBlock{
 		Reason:      pl.Reason,
 		ReasonCode:  pl.ReasonCode,
-		BlockedDate: briCardBlockStatus.ReportingDate,
+		BlockedDate: time.Unix(briCardBlockStatus.ReportingDate/1000, 0).Format(models.DateTimeFormat),
 		Description: briCardBlockStatus.ReportDesc,
 	}
 	err = cus.blockaCard(c, cardBlock, &acc)
