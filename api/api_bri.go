@@ -26,6 +26,7 @@ type BriResponse struct {
 	ResponseData    interface{}              `json:"responseData,omitempty"`
 	Data            []map[string]interface{} `json:"data,omitempty"`
 	DataOne         map[string]interface{}   `json:"dataOne,omitempty"`
+	DataString      string                   `json:"dataString,omitempty"`
 	Status          map[string]interface{}   `json:"status,omitempty"`
 }
 
@@ -216,6 +217,8 @@ func (bri *APIbri) remappingBriResponseData(v interface{}) {
 			dt := rrd.Index(i).Interface().(map[string]interface{})
 			rd.Index(i).Set(reflect.ValueOf(dt))
 		}
+	} else if rrd.Kind() == reflect.String {
+		rr.Elem().FieldByName("DataString").Set(rrd)
 	} else {
 		rr.Elem().FieldByName("DataOne").Set(rrd)
 	}

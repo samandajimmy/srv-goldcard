@@ -58,8 +58,7 @@ func (rc *restCards) GetBRICardBlockStatus(c echo.Context, acc models.Account, p
 	return briCardBlockStatus, nil
 }
 
-func (rc *restCards) PostCardReplaceBRI(c echo.Context, pl models.PayloadBriXkey) (models.BRICardReplaceStatus, error) {
-	var briCardReplaceStatus models.BRICardReplaceStatus
+func (rc *restCards) PostCardReplaceBRI(c echo.Context, pl models.PayloadBriXkey) error {
 	respBRI := api.BriResponse{}
 	requestDataBRI := map[string]interface{}{
 		"briXkey": pl.BriXkey,
@@ -72,26 +71,14 @@ func (rc *restCards) PostCardReplaceBRI(c echo.Context, pl models.PayloadBriXkey
 	if errBRI != nil {
 		logger.Make(c, nil).Debug(errBRI)
 
-		return briCardReplaceStatus, errBRI
+		return errBRI
 	}
 
-	mrshlCardRplc, err := json.Marshal(respBRI.DataOne)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return briCardReplaceStatus, err
+	if respBRI.ResponseCode != "00" {
+		return models.ErrReplaceCard
 	}
 
-	err = json.Unmarshal(mrshlCardRplc, &briCardReplaceStatus)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
-		return briCardReplaceStatus, err
-	}
-
-	return briCardReplaceStatus, nil
+	return nil
 }
 
 func (rc *restCards) CoreBlockaCard(c echo.Context, acc models.Account, cardBlock models.CardBlock) error {
@@ -102,7 +89,7 @@ func (rc *restCards) CoreBlockaCard(c echo.Context, acc models.Account, cardBloc
 	r := api.SwitchingResponse{}
 	body := map[string]interface{}{
 		"isBlokir":   "0",
-		"noRek":      acc.AccountNumber,
+		"noRek":      acc.Application.SavingAccount,
 		"cardNumber": acc.Card.CardNumber,
 		"reportDesc": cardBlock.Description,
 	}

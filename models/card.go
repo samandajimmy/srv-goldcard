@@ -33,7 +33,8 @@ const (
 	ReasonCodeOther string = "other"
 )
 
-var allowedBlockCodes = []string{"F", "L"}
+// Block codes from card information when card is blocked by BRI
+var allowedBlockCodes = []string{"F", "L", "4"}
 
 // Card is a struct to store card data
 type Card struct {
@@ -112,7 +113,7 @@ func (c *Card) MappingBlockCard(cardBlock CardBlock) (CardStatuses, error) {
 	cardStatus.ReasonCode = cardBlock.ReasonCode
 	cardStatus.CardID = c.ID
 	cardStatus.IsReactivated = BoolNo
-	cardStatus.BlockedDate, err = time.Parse(DateTimeFormat, cardBlock.BlockedDate)
+	cardStatus.BlockedDate, err = time.Parse(DateFormat, cardBlock.BlockedDate)
 
 	if err != nil {
 		logger.Make(nil, nil).Debug(err)
