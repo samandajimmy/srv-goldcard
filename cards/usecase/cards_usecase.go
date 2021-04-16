@@ -4,6 +4,7 @@ import (
 	"gade/srv-goldcard/cards"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
+	"gade/srv-goldcard/registrations"
 	"gade/srv-goldcard/transactions"
 	"time"
 
@@ -15,12 +16,13 @@ type cardsUseCase struct {
 	crRepo   cards.RestRepository
 	trRepo   transactions.RestRepository
 	tUseCase transactions.UseCase
+	rRepo    registrations.Repository
 }
 
 // cardsUseCase represent cards Use Case
 func CardsUseCase(cRepo cards.Repository, crRepo cards.RestRepository, trRepo transactions.RestRepository,
-	tUseCase transactions.UseCase) cards.UseCase {
-	return &cardsUseCase{cRepo, crRepo, trRepo, tUseCase}
+	tUseCase transactions.UseCase, rRepo registrations.Repository) cards.UseCase {
+	return &cardsUseCase{cRepo, crRepo, trRepo, tUseCase, rRepo}
 }
 
 func (cus *cardsUseCase) BlockCard(c echo.Context, pl models.PayloadCardBlock) error {
@@ -182,6 +184,13 @@ func (cus *cardsUseCase) replaceaCard(c echo.Context, cardStatus *models.CardSta
 	// create interface of data to update selected column
 	col := []string{"is_replaced", "replaced_date", "last_encrypted_card_number"}
 	err = cus.cRepo.UpdateOneCardStatus(c, *cardStatus, col)
+
+	if err != nil {
+		return models.ErrUpdateCardStatus
+	}
+
+	// reset application status to card processed
+	err = cus.rRepo.ResetAppStatusToCardProcessed(acc.ApplicationID)
 
 	if err != nil {
 		return models.ErrUpdateCardStatus

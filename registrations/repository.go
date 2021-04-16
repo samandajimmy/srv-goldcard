@@ -36,6 +36,7 @@ type Repository interface {
 	ForceUpdateAppStatusTimeout() error
 	GetAppOngoing() ([]models.Account, error)
 	ForceDeliverAccount(c echo.Context, acc models.Account) error
+	ResetAppStatusToCardProcessed(appsId int64) error
 }
 
 // RestRepository represent the rest registrations repository contract
