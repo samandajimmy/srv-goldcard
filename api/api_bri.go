@@ -217,10 +217,12 @@ func (bri *APIbri) remappingBriResponseData(v interface{}) {
 			dt := rrd.Index(i).Interface().(map[string]interface{})
 			rd.Index(i).Set(reflect.ValueOf(dt))
 		}
+		return
 	}
 
 	if rrd.Kind() == reflect.String {
 		rr.Elem().FieldByName("DataString").Set(rrd)
+		return
 	}
 
 	rr.Elem().FieldByName("DataOne").Set(rrd)
