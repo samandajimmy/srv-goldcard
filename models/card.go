@@ -34,7 +34,7 @@ const (
 )
 
 // Block codes from card information when card is blocked by BRI
-var allowedBlockCodes = []string{"F", "L", "4"}
+var allowedBlockCodes = []string{"F", "L"}
 
 // Card is a struct to store card data
 type Card struct {
@@ -173,6 +173,7 @@ type CardBlock struct {
 	BlockedDate string `json:"blockedDate"`
 	BlockedCode string `json:"blockedCode"`
 	Description string `json:"description"`
+	TrfStatus   string `json:"trfStatus"`
 }
 
 // BRICardReplaceStatus to store response BRI card replace status
@@ -183,6 +184,10 @@ type BRICardReplaceStatus struct {
 
 func (cb *CardBlock) IsCardBlockedBri() bool {
 	if cb.BlockedCode == "" {
+		return true
+	}
+
+	if cb.TrfStatus == "4" {
 		return true
 	}
 

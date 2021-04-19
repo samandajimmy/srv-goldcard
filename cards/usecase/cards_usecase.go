@@ -76,17 +76,11 @@ func (cus *cardsUseCase) GetCardStatus(c echo.Context, pl models.PayloadAccNumbe
 	// check card block status from bri
 	// update card status based on bri card info
 	// the trigger when card is being blocked by BRI is by blockCode 'F' or 'L' and trfStatus '4'
-	blockCode := cardInfo.BlockCode
-
-	// scenario when card information in bri show card is blocked and request to replace at the same time
-	if cardInfo.TrfStatus == "4" {
-		blockCode = "4"
-	}
-
 	cardBlock := models.CardBlock{
 		BlockedDate: cardInfo.BlockedDate,
-		BlockedCode: blockCode,
+		BlockedCode: cardInfo.BlockCode,
 		ReasonCode:  models.ReasonCodeOther,
+		TrfStatus:   cardInfo.TrfStatus,
 	}
 
 	// run block a card process

@@ -217,11 +217,13 @@ func (bri *APIbri) remappingBriResponseData(v interface{}) {
 			dt := rrd.Index(i).Interface().(map[string]interface{})
 			rd.Index(i).Set(reflect.ValueOf(dt))
 		}
-	} else if rrd.Kind() == reflect.String {
-		rr.Elem().FieldByName("DataString").Set(rrd)
-	} else {
-		rr.Elem().FieldByName("DataOne").Set(rrd)
 	}
+
+	if rrd.Kind() == reflect.String {
+		rr.Elem().FieldByName("DataString").Set(rrd)
+	}
+
+	rr.Elem().FieldByName("DataOne").Set(rrd)
 }
 
 func (bri *APIbri) setBriSignature(endpoint string, body interface{}) error {
