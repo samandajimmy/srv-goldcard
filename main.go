@@ -114,7 +114,7 @@ func main() {
 	_apiRequestsUseCase.ARUseCase = _apiRequestsUseCase.APIRequestsUseCase(apiRequestsRepository)
 	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, billingsRestRepository, restRegistrationsRepo, transactionsUseCase)
 	updateLimitUseCase := _updateLimitUseCase.UpdateLimitUseCase(restActivationRepository, transactionsRepository, restTransactionsRepo, transactionsUseCase, registrationsRepository, restRegistrationsRepo, registrationsUseCase, updateLimitRepo, restUpdateLimitRepo)
-	cardsUseCase := _cardsUseCase.CardsUseCase(cardsRepository, restCardsRepo, restTransactionsRepo, transactionsUseCase)
+	cardsUseCase := _cardsUseCase.CardsUseCase(cardsRepository, restCardsRepo, restTransactionsRepo, transactionsUseCase, registrationsRepository)
 
 	// DELIVERIES
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)

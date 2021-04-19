@@ -46,6 +46,9 @@ var (
 	// AppStatusProcessed is to store var application status proccesed
 	AppStatusProcessed = "application_processed"
 
+	// AppStatusCardProcessed is to store var application status card processed
+	AppStatusCardProcessed = "card_processed"
+
 	// AppStatusActive is to store var application status active
 	AppStatusActive = "active"
 

@@ -453,6 +453,21 @@ func (regis *psqlRegistrationsRepository) UpdateAppStatus(c echo.Context, app mo
 	return nil
 }
 
+func (regis *psqlRegistrationsRepository) ResetAppStatusToCardProcessed(appsId int64) error {
+	app := models.Applications{}
+
+	_, err := regis.DBpg.Model(app).Exec(`UPDATE applications SET status = ?, card_processed_date = ?, card_sent_date = null, card_send_date = null, 
+		rejected_date = null where id = ?`, models.AppStatusCardProcessed, models.NowDbpg(), appsId)
+
+	if err != nil {
+		logger.Make(nil, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
+
 func (regis *psqlRegistrationsRepository) UpdateAppDocID(c echo.Context, app models.Applications) error {
 	app.UpdatedAt = models.NowDbpg()
 	_, err := regis.DBpg.Model(&app).
@@ -653,7 +668,7 @@ func (regis *psqlRegistrationsRepository) GetAppOngoing() ([]models.Account, err
 }
 
 func (regis *psqlRegistrationsRepository) ForceDeliverAccount(c echo.Context, acc models.Account) error {
-	query := `UPDATE applications set status = $1, updated_at = $2 WHERE id = $3;`
+	query := `UPDATE applications set status = $1, card_sent_date = $2, updated_at = $2 WHERE id = $3;`
 	stmt, err := regis.Conn.Prepare(query)
 
 	if err != nil {

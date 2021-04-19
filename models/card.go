@@ -33,6 +33,7 @@ const (
 	ReasonCodeOther string = "other"
 )
 
+// Block codes from card information when card is blocked by BRI
 var allowedBlockCodes = []string{"F", "L"}
 
 // Card is a struct to store card data
@@ -112,7 +113,7 @@ func (c *Card) MappingBlockCard(cardBlock CardBlock) (CardStatuses, error) {
 	cardStatus.ReasonCode = cardBlock.ReasonCode
 	cardStatus.CardID = c.ID
 	cardStatus.IsReactivated = BoolNo
-	cardStatus.BlockedDate, err = time.Parse(DateTimeFormat, cardBlock.BlockedDate)
+	cardStatus.BlockedDate, err = time.Parse(DateFormat, cardBlock.BlockedDate)
 
 	if err != nil {
 		logger.Make(nil, nil).Debug(err)
@@ -172,6 +173,7 @@ type CardBlock struct {
 	BlockedDate string `json:"blockedDate"`
 	BlockedCode string `json:"blockedCode"`
 	Description string `json:"description"`
+	TrfStatus   string `json:"trfStatus"`
 }
 
 // BRICardReplaceStatus to store response BRI card replace status
@@ -182,6 +184,10 @@ type BRICardReplaceStatus struct {
 
 func (cb *CardBlock) IsCardBlockedBri() bool {
 	if cb.BlockedCode == "" {
+		return true
+	}
+
+	if cb.TrfStatus == "4" {
 		return true
 	}
 
