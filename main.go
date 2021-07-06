@@ -18,6 +18,10 @@ import (
 	_billingsHttpDelivery "gade/srv-goldcard/billings/delivery/http"
 	_billingsRepository "gade/srv-goldcard/billings/repository"
 	_billingsUseCase "gade/srv-goldcard/billings/usecase"
+	_cardsHttpDelivery "gade/srv-goldcard/cards/delivery/http"
+	_cardsRepository "gade/srv-goldcard/cards/repository"
+	_cardsUseCase "gade/srv-goldcard/cards/usecase"
+	_healthsHttpDelivery "gade/srv-goldcard/healths/delivery/http"
 	_processHandlerRepository "gade/srv-goldcard/process_handler/repository"
 	_processHandlerUseCase "gade/srv-goldcard/process_handler/usecase"
 	_productreqsHttpsDelivery "gade/srv-goldcard/productreqs/delivery/http"
@@ -35,10 +39,6 @@ import (
 	_updateLimitHttpDelivery "gade/srv-goldcard/update_limits/delivery/http"
 	_updateLimitRepository "gade/srv-goldcard/update_limits/repository"
 	_updateLimitUseCase "gade/srv-goldcard/update_limits/usecase"
-
-	_cardsHttpDelivery "gade/srv-goldcard/cards/delivery/http"
-	_cardsRepository "gade/srv-goldcard/cards/repository"
-	_cardsUseCase "gade/srv-goldcard/cards/usecase"
 
 	"github.com/go-pg/pg/v9"
 	"github.com/golang-migrate/migrate/v4"
@@ -125,6 +125,7 @@ func main() {
 	_billingsHttpDelivery.NewBillingsHandler(echoGroup, billingsUseCase)
 	_updateLimitHttpDelivery.NewUpdateLimitHandler(echoGroup, updateLimitUseCase)
 	_cardsHttpDelivery.NewCardsHandler(echoGroup, cardsUseCase)
+	_healthsHttpDelivery.NewHealthsHandler(ech)
 
 	// PING
 	ech.GET("/ping", ping)

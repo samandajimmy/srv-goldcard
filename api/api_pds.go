@@ -51,6 +51,31 @@ func NewPdsAPI(c echo.Context, contentType string) (APIpds, error) {
 	return apiPds, nil
 }
 
+func PdsHealthCheck(c echo.Context) error {
+	pds, err := NewPdsAPI(c, echo.MIMEApplicationForm)
+
+	if err != nil {
+		logger.Make(c, err)
+
+		return err
+	}
+
+	resp, err := http.Get(pds.Host.String())
+
+	if err != nil {
+		logger.Make(c, err)
+
+		return err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return models.DynamicErr(models.ErrPdsAPIRequest, []interface{}{resp.Status,
+			"health check error"})
+	}
+
+	return nil
+}
+
 // PdsPost function to request PDS API with post method
 func PdsPost(c echo.Context, endpoint string, reqBody, resp interface{}, contentType string) error {
 	pds, err := NewPdsAPI(c, contentType)

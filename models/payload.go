@@ -366,3 +366,9 @@ type RespCardStatus struct {
 	Status     string `json:"status"`
 	IsReplaced string `json:"isReplaced"`
 }
+
+type RespHealthCheck struct {
+	SwitchingApi bool `json:"switchingApi"`
+	BriApi       bool `json:"briApi"`
+	PdsApi       bool `json:"pdsApi"`
+}
