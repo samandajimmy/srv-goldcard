@@ -173,7 +173,7 @@ func (bri *APIbri) Request(endpoint string, method string, body interface{}) (*h
 		return nil, err
 	}
 
-	req.Header.Add("Authorization", "Bearer "+bri.AccessToken)
+	req.Header.Set("Authorization", "Bearer "+bri.AccessToken)
 	req.Header.Set("BRI-Signature", bri.BRISignature)
 	req.Header.Set("BRI-Timestamp", bri.BRITimestamp)
 

@@ -109,7 +109,7 @@ func (switc *APIswitching) Request(endpoint, method string, body interface{}) (*
 		return nil, err
 	}
 
-	req.Header.Add("Authorization", "Bearer "+switc.AccessToken)
+	req.Header.Set("Authorization", "Bearer "+switc.AccessToken)
 
 	return req, nil
 }
