@@ -160,6 +160,7 @@ func (bri *APIbri) Request(endpoint string, method string, body interface{}) (*h
 	logger.MakeWithoutReportCaller(bri.ctx, nil).Info(debugStart)
 	bri.Method = method
 	bri.Endpoint = endpoint
+	bearerToken := "Bearer " + bri.AccessToken
 	req, err := bri.API.Request(endpoint, method, body)
 
 	if err != nil {
@@ -173,7 +174,7 @@ func (bri *APIbri) Request(endpoint string, method string, body interface{}) (*h
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", "Bearer "+bri.AccessToken)
+	req.Header.Set("Authorization", bearerToken)
 	req.Header.Set("BRI-Signature", bri.BRISignature)
 	req.Header.Set("BRI-Timestamp", bri.BRITimestamp)
 
