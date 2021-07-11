@@ -102,6 +102,7 @@ func (switc *APIswitching) Do(req *http.Request, v interface{}) (*http.Response,
 // Request represent global API Request
 func (switc *APIswitching) Request(endpoint, method string, body interface{}) (*http.Request, error) {
 	switc.Method = method
+	bearerToken := "Bearer " + switc.AccessToken
 
 	req, err := switc.API.Request(endpoint, method, body)
 
@@ -109,7 +110,7 @@ func (switc *APIswitching) Request(endpoint, method string, body interface{}) (*
 		return nil, err
 	}
 
-	req.Header.Set("Authorization", "Bearer "+switc.AccessToken)
+	req.Header.Set("Authorization", bearerToken)
 
 	return req, nil
 }
