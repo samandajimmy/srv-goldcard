@@ -73,18 +73,24 @@ func NewBriAPI(c echo.Context) (APIbri, error) {
 	url, err := url.Parse(os.Getenv(`BRI_HOST`))
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
 		return apiBri, err
 	}
 
 	api, err := NewAPI(apiBri.ctx, os.Getenv(`BRI_HOST`), echo.MIMEApplicationJSON)
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
 		return apiBri, err
 	}
 
 	err = apiBri.setAccessToken()
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
 		return apiBri, err
 	}
 

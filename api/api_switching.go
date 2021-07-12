@@ -59,18 +59,24 @@ func NewSwitchingAPI(c echo.Context) (APIswitching, error) {
 	url, err := url.Parse(os.Getenv(`SWITCHING_HOST`))
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
 		return apiSwitching, err
 	}
 
 	api, err := NewAPI(apiSwitching.ctx, os.Getenv(`SWITCHING_HOST`), echo.MIMEApplicationJSON)
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
 		return apiSwitching, err
 	}
 
 	err = apiSwitching.setAccessTokenSwitching()
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
 		return apiSwitching, err
 	}
 

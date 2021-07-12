@@ -55,7 +55,7 @@ func PdsHealthCheck(c echo.Context) error {
 	pds, err := NewPdsAPI(c, echo.MIMEApplicationForm)
 
 	if err != nil {
-		logger.Make(c, err)
+		logger.Make(c, nil).Debug(err)
 
 		return err
 	}
@@ -63,14 +63,17 @@ func PdsHealthCheck(c echo.Context) error {
 	resp, err := http.Get(pds.Host.String())
 
 	if err != nil {
-		logger.Make(c, err)
+		logger.Make(c, nil).Debug(err)
 
 		return err
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return models.DynamicErr(models.ErrPdsAPIRequest, []interface{}{resp.Status,
+		err = models.DynamicErr(models.ErrPdsAPIRequest, []interface{}{resp.Status,
 			"health check error"})
+		logger.Make(c, nil).Debug(err)
+
+		return err
 	}
 
 	return nil
