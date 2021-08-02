@@ -34,7 +34,7 @@ const (
 )
 
 // Block codes from card information when card is blocked by BRI
-var allowedBlockCodes = []string{"F", "L"}
+var allowedBlockCodes = []string{"F", "L", "Permanent Blocked"}
 
 // Card is a struct to store card data
 type Card struct {
