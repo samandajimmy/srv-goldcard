@@ -58,14 +58,13 @@ func (reqPdf *RequestPdf) GeneratePDF() ([]byte, error) {
 
 	// Open File HTML
 	fileHtml, err := os.Open("template/" + uniqueNumber + ".html")
-	if fileHtml != nil {
-		defer fileHtml.Close()
-	}
 
 	if err != nil {
 		logger.Make(nil, nil).Debug(err)
 		return nil, err
 	}
+
+	defer fileHtml.Close()
 
 	// Generate New PDF File
 	pdfg, err := wkhtmltopdf.NewPDFGenerator()
@@ -101,7 +100,6 @@ func (reqPdf *RequestPdf) GeneratePDF() ([]byte, error) {
 	err = os.Remove("template/" + uniqueNumber + ".html")
 	if err != nil {
 		logger.Make(nil, nil).Debug(err)
-		return nil, err
 	}
 
 	return bufPDF, nil
