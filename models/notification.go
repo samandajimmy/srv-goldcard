@@ -94,7 +94,7 @@ func (pdsNotif *PdsNotification) GcApplication(acc Account, notifType string) {
 		},
 		{
 			Key:   "Harga/0.01gr",
-			Value: ac.FormatMoney(acc.Card.StlLimit),
+			Value: ac.FormatMoney(acc.Card.StlLimit / 100),
 		},
 		{
 			Key:   "Pengajuan Gram Limit",
