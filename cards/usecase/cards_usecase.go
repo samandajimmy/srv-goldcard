@@ -192,3 +192,21 @@ func (cus *cardsUseCase) replaceaCard(c echo.Context, cardStatus *models.CardSta
 
 	return nil
 }
+
+func (cus *cardsUseCase) CloseCard(c echo.Context, pl models.PayloadCIF) error {
+	// Get Account
+	acc, err := cus.tUseCase.CheckAccountByCIF(c, pl)
+
+	if err != nil {
+		return models.ErrGetAccByCIF
+	}
+
+	// Close Card (Update status to inactive in cards, application, account)
+	err = cus.cRepo.SetInactiveStatus(c, acc)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

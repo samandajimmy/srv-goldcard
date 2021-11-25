@@ -372,3 +372,7 @@ type RespHealthCheck struct {
 	BriApi       bool `json:"briApi"`
 	PdsApi       bool `json:"pdsApi"`
 }
+
+type PayloadCIF struct {
+	CIF string `json:"cif" validate:"required"`
+}
