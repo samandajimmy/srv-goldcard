@@ -17,4 +17,5 @@ type UseCase interface {
 	PostPaymentTransaction(c echo.Context, pl models.PayloadPaymentTransactions) models.ResponseErrors
 	PaymentInquiry(c echo.Context, ppi models.PlPaymentInquiry) (map[string]interface{}, models.ResponseErrors)
 	PostPaymentTrxCore(c echo.Context, pl models.PlPaymentTrxCore) models.ResponseErrors
+	CheckAccountByCIF(c echo.Context, pl models.PayloadCIF) (models.Account, error)
 }

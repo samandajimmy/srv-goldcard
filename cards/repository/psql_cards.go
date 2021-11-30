@@ -75,3 +75,31 @@ func (PSQLCard *psqlCardsRepository) UpdateOneCardStatus(c echo.Context, cardSta
 
 	return nil
 }
+
+func (PSQLCard *psqlCardsRepository) SetInactiveStatus(c echo.Context, acc models.Account) error {
+	var nilFilters []string
+
+	stmts := []*gcdb.PipelineStmt{
+		// update account
+		gcdb.NewPipelineStmt("UPDATE accounts SET status = $1, updated_at = $2 WHERE id = $3;",
+			nilFilters, models.AccStatusInactive, time.Now(), acc.ID),
+		// update application
+		gcdb.NewPipelineStmt(`UPDATE applications set status = $1, updated_at = $2 WHERE id = $3`,
+			nilFilters, models.AppStatusInactive, time.Now(), acc.Application.ID),
+		// update cards
+		gcdb.NewPipelineStmt(`UPDATE cards set status = $1, updated_at = $2 WHERE id = $3`,
+			nilFilters, models.CardStatusInactive, time.Now(), acc.Card.ID),
+	}
+
+	err := gcdb.WithTransaction(PSQLCard.Conn, func(tx gcdb.Transaction) error {
+		return gcdb.RunPipelineQueryRow(tx, stmts...)
+	})
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}

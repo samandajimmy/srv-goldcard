@@ -206,3 +206,24 @@ func (PSQLTrx *psqlTransactionsRepository) GetPaymentInquiryNotificationData(c e
 
 	return pind, nil
 }
+
+func (PSQLTrx *psqlTransactionsRepository) GetAccountByCIF(c echo.Context, acc *models.Account) error {
+	newAcc := models.Account{}
+	err := PSQLTrx.DBpg.Model(&newAcc).Relation("Application").Relation("PersonalInformation").
+		Relation("Card").Relation("Occupation").Relation("EmergencyContact").
+		Where("cif = ? AND account.status = ?", acc.CIF, models.AccStatusActive).
+		Limit(1).Select()
+
+	if err != nil && err != pg.ErrNoRows {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	if err == pg.ErrNoRows {
+		return models.ErrGetAccByCIF
+	}
+
+	*acc = newAcc
+	return nil
+}

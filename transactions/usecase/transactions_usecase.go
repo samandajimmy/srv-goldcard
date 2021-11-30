@@ -537,3 +537,17 @@ func (trxUS *transactionsUseCase) mappingCoreInquiry(c echo.Context, respInquiry
 
 	return respJSON, nil
 }
+
+func (trxUS *transactionsUseCase) CheckAccountByCIF(c echo.Context, pl models.PayloadCIF) (models.Account, error) {
+	// Get Account by Account Number
+	acc := models.Account{CIF: pl.CIF}
+	err := trxUS.trxRepo.GetAccountByCIF(c, &acc)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return models.Account{}, models.ErrGetAccByCIF
+	}
+
+	return acc, nil
+}

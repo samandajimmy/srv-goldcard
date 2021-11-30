@@ -293,6 +293,9 @@ var (
 
 	// ErrReplaceCard to store error when failed to replace card
 	ErrReplaceCard = errors.New("Terjadi kesalahan ketika melakukan replace kartu")
+
+	// ErrGetAccByCIF to store cif not found error message
+	ErrGetAccByCIF = errors.New("CIF akun kartu emas tidak di temukan")
 )
 
 // DynamicErr to return parameterize errors
