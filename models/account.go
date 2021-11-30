@@ -67,7 +67,7 @@ func (acc *Account) MappingRegistrationData(pl PayloadPersonalInformation, addrD
 	acc.PersonalInformation.Nationality = nationalityMap[pl.Nationality]
 	acc.PersonalInformation.Sex = acc.PersonalInformation.GetSex(pl.Sex)
 	acc.PersonalInformation.Education = pl.Education
-	acc.PersonalInformation.MaritalStatus = pl.MaritalStatus
+	acc.PersonalInformation.MaritalStatus = mappingMaritalStatus(pl.MaritalStatus)
 	acc.PersonalInformation.MotherName = pl.MotherName
 	acc.PersonalInformation.HomeStatus = pl.HomeStatus
 	acc.PersonalInformation.Zipcode = pl.Zipcode
@@ -149,4 +149,22 @@ type AddressData struct {
 	AddressLine2 string `json:"addressLine2"`
 	AddressLine3 string `json:"addressLine3"`
 	Zipcode      string `json:"zipcode"`
+}
+
+func mappingMaritalStatus(ms int64) int64 {
+	newMs := 1
+
+	switch ms {
+	case 1:
+		//Married
+		newMs = 2
+	case 2:
+		//Single
+		newMs = 1
+	case 4:
+		//Widow
+		newMs = 3
+	}
+
+	return int64(newMs)
 }

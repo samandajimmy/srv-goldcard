@@ -538,12 +538,9 @@ func (trxUS *transactionsUseCase) mappingCoreInquiry(c echo.Context, respInquiry
 	return respJSON, nil
 }
 
-func (trxUS *transactionsUseCase) CheckAccountByCIF(c echo.Context, pl interface{}) (models.Account, error) {
-	r := reflect.ValueOf(pl)
-	cif := r.FieldByName("CIF")
-
+func (trxUS *transactionsUseCase) CheckAccountByCIF(c echo.Context, pl models.PayloadCIF) (models.Account, error) {
 	// Get Account by Account Number
-	acc := models.Account{CIF: cif.String()}
+	acc := models.Account{CIF: pl.CIF}
 	err := trxUS.trxRepo.GetAccountByCIF(c, &acc)
 
 	if err != nil {
