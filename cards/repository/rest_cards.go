@@ -108,3 +108,19 @@ func (rc *restCards) CoreBlockaCard(c echo.Context, acc models.Account, cardBloc
 
 	return nil
 }
+
+func (rc *restCards) PdsSetNullAppAccNumber(c echo.Context, cif models.PayloadCIF) error {
+	resp := api.PdsResponse{}
+	reqBody := cif
+	endpoint := "/goldcard/set_null_gcnumber"
+
+	err := api.RetryablePdsPost(c, endpoint, reqBody, &resp, echo.MIMEApplicationForm)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return err
+	}
+
+	return nil
+}
