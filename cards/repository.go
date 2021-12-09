@@ -19,4 +19,5 @@ type RestRepository interface {
 	GetBRICardBlockStatus(c echo.Context, acc models.Account, pl models.PayloadCardBlock) (models.BRICardBlockStatus, error)
 	PostCardReplaceBRI(c echo.Context, pl models.PayloadBriXkey) error
 	CoreBlockaCard(c echo.Context, acc models.Account, cardBlock models.CardBlock) error
+	PdsSetNullAppAccNumber(c echo.Context, cif models.PayloadCIF) error
 }

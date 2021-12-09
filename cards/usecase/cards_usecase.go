@@ -208,5 +208,11 @@ func (cus *cardsUseCase) CloseCard(c echo.Context, pl models.PayloadCIF) error {
 		return err
 	}
 
+	err = cus.crRepo.PdsSetNullAppAccNumber(c, pl)
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
