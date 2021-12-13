@@ -11,3 +11,4 @@ public.bak/
 srv-goldcard
 ./srv-goldcard
 outputs
+latest_commit_hash

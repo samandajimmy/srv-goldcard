@@ -31,8 +31,7 @@ type requestLogger struct {
 // Init function to make an initial logger
 func Init() {
 	logrus.SetReportCaller(true)
-	formatter := &logrus.TextFormatter{
-		FullTimestamp:   true,
+	formatter := &logrus.JSONFormatter{
 		TimestampFormat: timestampFormat,
 		CallerPrettyfier: func(f *runtime.Frame) (string, string) {
 			tmp := strings.Split(f.File, "/")

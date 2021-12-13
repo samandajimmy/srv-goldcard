@@ -41,7 +41,7 @@ lint:
   only:
     - merge_requests
 
-build:
+build_dev:
   stage: build
   image: artifactory.pegadaian.co.id:8084/docker:latest
   services:
@@ -49,12 +49,26 @@ build:
       command: ["--insecure-registry=artifactory.pegadaian.co.id:8084"]
   <<: *store_commit_hash
   script:
-    - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS artifactory.pegadaian.co.id:8084
+    - mkdir -p ~/.docker/ && echo $DOCKER_AUTH_CONFIG > ~/.docker/config.json
     - docker build --pull -t $IMAGE_URL .
-    - docker login -u $NEXUS_DOCKER_USER -p $NEXUS_DOCKER_PASS artifactory.pegadaian.co.id:5443
     - docker push $IMAGE_URL
   only:
     - master
+
+build_prod:
+  stage: build
+  image: artifactory.pegadaian.co.id:8084/docker:latest
+  services:
+    - name: artifactory.pegadaian.co.id:8084/docker:dind
+      command: ["--insecure-registry=artifactory.pegadaian.co.id:8084"]
+  only:
+    - tags
+  <<: *store_commit_hash
+  script:
+    - if [ -z "$CI_COMMIT_TAG" ]; then export TAG=$CI_COMMIT_REF_SLUG; else export TAG=$CI_COMMIT_TAG; fi
+    - mkdir -p ~/.docker/ && echo $DOCKER_AUTH_CONFIG > ~/.docker/config.json
+    - docker build --pull -t artifactory.pegadaian.co.id:5443/$CI_PROJECT_NAME:$TAG .
+    - docker push artifactory.pegadaian.co.id:5443/$CI_PROJECT_NAME:$TAG
 
 deploy_dev:
   image: artifactory.pegadaian.co.id:8084/tj/openshift-client:latest

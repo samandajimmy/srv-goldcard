@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"database/sql"
 	"fmt"
 	"gade/srv-goldcard/middleware"
@@ -128,6 +129,7 @@ func main() {
 	_healthsHttpDelivery.NewHealthsHandler(ech)
 
 	// PING
+	ech.GET("/", ping)
 	ech.GET("/ping", ping)
 
 	// run refresh all token
@@ -143,9 +145,26 @@ func main() {
 }
 
 func ping(echTx echo.Context) error {
+	file, err := os.Open("latest_commit_hash")
+
+	if err != nil {
+		logger.Make(nil, nil).Debug("failed to open")
+
+	}
+
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	scanner.Split(bufio.ScanLines)
+	var text []string
+
+	for scanner.Scan() {
+		text = append(text, scanner.Text())
+	}
+
 	response := models.Response{}
 	response.Status = models.StatusSuccess
 	response.Message = "PONG!!"
+	response.Data = text
 
 	return echTx.JSON(http.StatusOK, response)
 }
