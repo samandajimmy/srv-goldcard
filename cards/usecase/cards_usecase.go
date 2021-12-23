@@ -33,6 +33,17 @@ func (cus *cardsUseCase) BlockCard(c echo.Context, pl models.PayloadCardBlock) e
 		return models.ErrGetAccByAccountNumber
 	}
 
+	// Get Cards Status to validate if there user card blocking process still on progress
+	err = cus.cRepo.GetCardStatus(c, &acc.Card)
+
+	if err != nil {
+		return models.ErrUpdateCardStatus
+	}
+
+	if acc.Card.CardStatus.ID != 0 {
+		return models.ErrUserBlockProcessStillExisted
+	}
+
 	// Hit BRI based on reasonCode
 	briCardBlockStatus, err := cus.crRepo.GetBRICardBlockStatus(c, acc, pl)
 
