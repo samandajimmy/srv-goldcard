@@ -84,6 +84,12 @@ var (
 	// ErrUpdateCardStatus to store updating card status data error message
 	ErrUpdateCardStatus = errors.New("Terjadi kesalahan saat update status kartu")
 
+	// ErrGetCardStatus to store get card status data error message
+	ErrGetCardStatus = errors.New("Terjadi kesalahan saat mendapatkan data status kartu")
+
+	// ErrUserBlockProcessStillExisted to store when user already do process block card error message
+	ErrUserBlockProcessStillExisted = errors.New("Anda sudah melakukan proses blokir kartu")
+
 	// ErrZipcodeNotFound to store zip code not found error message
 	ErrZipcodeNotFound = errors.New("Kode pos tidak ditemukan")
 

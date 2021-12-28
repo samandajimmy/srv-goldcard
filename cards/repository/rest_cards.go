@@ -6,6 +6,7 @@ import (
 	"gade/srv-goldcard/cards"
 	"gade/srv-goldcard/logger"
 	"gade/srv-goldcard/models"
+	"time"
 
 	"github.com/labstack/echo"
 )
@@ -32,6 +33,13 @@ func (rc *restCards) GetBRICardBlockStatus(c echo.Context, acc models.Account, p
 
 	reqBRIBody := api.BriRequest{RequestData: requestDataBRI}
 	errBRI := api.RetryableBriPost(c, requestPath, reqBRIBody.RequestData, &respBRI)
+
+	// RC 73 means that cards already blocked in BRI, so we may skip this process
+	if respBRI.ResponseCode == "73" {
+		briCardBlockStatus.ReportDesc = "Card already blocked in BRI, trying to block core"
+		briCardBlockStatus.ReportingDate = time.Now().Unix() * 1000
+		return briCardBlockStatus, nil
+	}
 
 	if errBRI != nil {
 		logger.Make(c, nil).Debug(errBRI)
