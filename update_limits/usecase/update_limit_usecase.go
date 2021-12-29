@@ -348,7 +348,7 @@ func (upLimUC *updateLimitUseCase) CoreGtePayment(c echo.Context, pcgp models.Pa
 
 	// if account is closed or payment notif already succeess then set response code to 22
 	if err == models.ErrGtePaymenTrxIdExist || err == models.ErrSavingAccNotFound {
-		errors.SetTitleCode("22", models.ErrGtePaymenTrxIdExist.Error(), models.ErrGtePaymenTrxIdExist.Error())
+		errors.SetTitleCode("22", models.ErrGtePaymenTrxIdExistOrAccountClosed.Error(), models.ErrGtePaymenTrxIdExistOrAccountClosed.Error())
 		return errors
 	}
 
