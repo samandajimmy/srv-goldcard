@@ -153,3 +153,20 @@ func (reg *registrationsUseCase) appTimeoutJob(c echo.Context, acc models.Accoun
 		}
 	}()
 }
+
+func (reg *registrationsUseCase) CheckApplicationByCIF(c echo.Context, pl interface{}) models.Applications {
+	r := reflect.ValueOf(pl)
+	cif := r.FieldByName("CIF")
+
+	if cif.IsZero() {
+		return models.Applications{}
+	}
+
+	app, err := reg.regRepo.GetAppByCIF(cif.String())
+
+	if err != nil {
+		return models.Applications{}
+	}
+
+	return app
+}

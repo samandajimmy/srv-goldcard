@@ -10,6 +10,7 @@ import (
 	"gade/srv-goldcard/retry"
 	"gade/srv-goldcard/transactions"
 	"os"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -98,6 +99,23 @@ func (reg *registrationsUseCase) GetAddress(c echo.Context, pl models.PayloadApp
 
 func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models.PayloadRegistration) (models.RespRegistration, error) {
 	var respRegNil models.RespRegistration
+
+	r := reflect.ValueOf(payload)
+	payloadAppNumber := r.FieldByName("ApplicationNumber")
+	app := models.Applications{}
+
+	if payloadAppNumber.IsZero() {
+		app = reg.CheckApplicationByCIF(c, payload)
+	}
+
+	if app.ID != 0 {
+		return models.RespRegistration{
+			ApplicationNumber: app.ApplicationNumber,
+			ApplicationStatus: app.Status,
+			CurrentStep:       app.CurrentStep,
+		}, nil
+	}
+
 	acc, err := reg.CheckApplication(c, payload)
 
 	if err != nil && err != models.ErrAppNumberNotFound {
@@ -134,7 +152,7 @@ func (reg *registrationsUseCase) PostRegistration(c echo.Context, payload models
 	expiryDur, _ := strconv.ParseInt(os.Getenv(`APP_TIMEOUT_DURATION`), 10, 64)
 	expiryAt := now.Add(time.Duration(expiryDur) * time.Second)
 
-	app := models.Applications{
+	app = models.Applications{
 		ApplicationNumber: appNumber.String(),
 		Status:            models.AppStatusOngoing,
 		ExpiredAt:         expiryAt,
