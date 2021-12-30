@@ -288,6 +288,9 @@ var (
 	// ErrGtePaymenTrxIdExist to store gte payment trx id already existed error message
 	ErrGtePaymenTrxIdExist = errors.New("Transaksi ID pembayaran GTE sudah diproses sebelumnya")
 
+	// ErrGtePaymenTrxIdExistOrAccountClosed to store error when gte payment notification alreadey processed or account closed
+	ErrGtePaymenTrxIdExistOrAccountClosed = errors.New("Transaksi ID pembayaran GTE sudah diproses sebelumnya atau Akun sudah tutup kartu")
+
 	// ErrCoreOpen to store error failed when post open goldcard to core
 	ErrCoreOpen = errors.New("Pengajuan pembukaan kartu emas gagal")
 
