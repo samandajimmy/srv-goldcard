@@ -687,3 +687,17 @@ func (regis *psqlRegistrationsRepository) ForceDeliverAccount(c echo.Context, ac
 
 	return nil
 }
+
+func (regis *psqlRegistrationsRepository) GetAppByCIF(cif string) (models.Applications, error) {
+	acc := models.Account{}
+	statuses := []string{"application_processed", "card_processed", "card_send", "card_sent"}
+
+	err := regis.DBpg.Model(&acc).Relation("Application").
+		Where("cif = ? and application.status in (?)", cif, pg.In(statuses)).
+		Order("application.created_at DESC").Limit(1).Select()
+	if err != nil && err != pg.ErrNoRows {
+		return models.Applications{}, err
+	}
+
+	return acc.Application, nil
+}
