@@ -58,6 +58,12 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, acc models
 		return cardBal, errors
 	}
 
+	// if card is being replaced skip activation validation process
+	// the condition if there is some record on Card Status table with corresponding card_id then the user has been activated before and request for card replacement
+	if aUsecase.isActivationForReplacedCard(acc.Card) {
+		return cardBal, errors
+	}
+
 	// validation on inquiry
 	// validate application expiry from application_processed_date < 12 months
 	// add a year for expiry date
@@ -388,4 +394,14 @@ func (aUsecase *activationsUseCase) doActivation(c echo.Context, acc *models.Acc
 	}
 
 	return models.RespActivations{AccountNumber: acc.AccountNumber}, nil
+}
+
+func (aUsecase *activationsUseCase) isActivationForReplacedCard(card models.Card) bool {
+	_ = aUsecase.cardRepo.GetCardStatus(nil, &card)
+
+	if card.CardStatus.ID == 0 {
+		return false
+	}
+
+	return true
 }
