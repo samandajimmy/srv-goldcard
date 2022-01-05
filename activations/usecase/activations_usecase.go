@@ -398,10 +398,5 @@ func (aUsecase *activationsUseCase) doActivation(c echo.Context, acc *models.Acc
 
 func (aUsecase *activationsUseCase) isActivationForReplacedCard(card models.Card) bool {
 	_ = aUsecase.cardRepo.GetCardStatus(nil, &card)
-
-	if card.CardStatus.ID == 0 {
-		return false
-	}
-
-	return true
+	return card.CardStatus.ID != 0
 }
