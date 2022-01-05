@@ -1,5 +1,3 @@
-UPDATE applications SET status = 'inactive' WHERE status = 'application_ongoing';
-
 -- rename the existing type
 ALTER TYPE application_status_enum RENAME TO application_status_enum_old;
 

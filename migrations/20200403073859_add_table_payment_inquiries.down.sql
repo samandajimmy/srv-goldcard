@@ -1,4 +1,3 @@
 DROP INDEX index_payment_inquiries;
 DROP TABLE IF EXISTS payment_inquiries;
-
-DROP TYPE billing_status_enum;
+DROP TYPE payment_inquiry_status_enum;
