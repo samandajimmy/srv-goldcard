@@ -4,5 +4,5 @@ UPDATE parameters SET "key" = 'PUSH_PROCESS_TIME', description = 'Jam push proce
 DELETE FROM parameters WHERE "key" = 'PUSH_PROCESS_STOP_TIME'
 ;
 
-DELETE FROM parameters WHERE "key" = 'PUSH_PROCESS_HOUR_INTERVAL'
+DELETE FROM parameters WHERE "key" = 'PUSH_PROCESS_SEC_INTERVAL'
 ;

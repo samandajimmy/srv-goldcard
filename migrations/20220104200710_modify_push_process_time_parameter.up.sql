@@ -8,5 +8,5 @@ VALUES('PUSH_PROCESS_STOP_TIME', '22:00', 'Jam stop push process', now(), NULL)
 
 INSERT INTO parameters
 ("key", value, description, created_at, updated_at)
-VALUES('PUSH_PROCESS_HOUR_INTERVAL', '1', 'Jumlah interval setiap jam untuk push proses', now(), NULL)
+VALUES('PUSH_PROCESS_SEC_INTERVAL', '3600', 'Jumlah interval setiap detik untuk push proses', now(), NULL)
 ;
