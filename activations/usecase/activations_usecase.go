@@ -58,6 +58,19 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, acc models
 		return cardBal, errors
 	}
 
+	// if card is being replaced skip activation validation process
+	// the condition if there is some record on Card Status table with corresponding card_id then the user has been activated before and request for card replacement
+	err = aUsecase.cardRepo.GetCardStatus(c, &acc.Card)
+
+	if err != nil {
+		errors.SetTitle(models.ErrInqActivation.Error())
+		return cardBal, errors
+	}
+
+	if acc.Card.CardStatus.ID != 0 {
+		return cardBal, errors
+	}
+
 	// validation on inquiry
 	// validate application expiry from application_processed_date < 12 months
 	// add a year for expiry date

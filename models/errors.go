@@ -305,6 +305,9 @@ var (
 
 	// ErrGetAccByCIF to store cif not found error message
 	ErrGetAccByCIF = errors.New("CIF akun kartu emas tidak di temukan")
+
+	// ErrInqActivation to store error when failed to inquiry card activation
+	ErrInqActivation = errors.New("Terjadi kesalahan ketika melakukan inquiry aktivasi kartu")
 )
 
 // DynamicErr to return parameterize errors
