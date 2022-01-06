@@ -60,14 +60,14 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, acc models
 
 	// if card is being replaced skip activation validation process
 	// the condition if there is some record on Card Status table with corresponding card_id then the user has been activated before and request for card replacement
-	activationForReplacedCard, err := aUsecase.isActivationForReplacedCard(acc.Card)
+	err = aUsecase.cardRepo.GetCardStatus(c, &acc.Card)
 
 	if err != nil {
 		errors.SetTitle(models.ErrInqActivation.Error())
 		return cardBal, errors
 	}
 
-	if activationForReplacedCard {
+	if acc.Card.CardStatus.ID != 0 {
 		return cardBal, errors
 	}
 
@@ -401,9 +401,4 @@ func (aUsecase *activationsUseCase) doActivation(c echo.Context, acc *models.Acc
 	}
 
 	return models.RespActivations{AccountNumber: acc.AccountNumber}, nil
-}
-
-func (aUsecase *activationsUseCase) isActivationForReplacedCard(card models.Card) (bool, error) {
-	err := aUsecase.cardRepo.GetCardStatus(nil, &card)
-	return card.CardStatus.ID != 0, err
 }
