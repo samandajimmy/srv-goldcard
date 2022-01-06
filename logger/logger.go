@@ -93,11 +93,26 @@ func GetEchoRID(c echo.Context) string {
 	return c.Response().Header().Get(echo.HeaderXRequestID)
 }
 
-// MakeStructToJSON to get a json string of struct
 // JUST FOR DEBUGGING TOOL
 func Dump(strct ...interface{}) {
 	fmt.Println("DEBUGGING ONLY")
 	spew.Dump(strct)
+	fmt.Println("DEBUGGING ONLY")
+}
+
+// MakeStructToJSON to get a json string of struct
+// JUST FOR DEBUGGING TOOL
+func MakeStructToJSON(strct interface{}) {
+	b, err := json.Marshal(strct)
+
+	if err != nil {
+		Make(nil, nil).Fatal(err)
+
+		return
+	}
+
+	fmt.Println("DEBUGGING ONLY")
+	MakeWithoutReportCaller(nil, nil).Debug(string(b))
 	fmt.Println("DEBUGGING ONLY")
 }
 

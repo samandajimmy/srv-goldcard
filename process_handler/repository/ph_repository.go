@@ -2,7 +2,6 @@ package repository
 
 import (
 	"database/sql"
-	"time"
 
 	"gade/srv-goldcard/models"
 	"gade/srv-goldcard/process_handler"
@@ -39,7 +38,7 @@ func (psqlPH *psqlProcHandler) GetProcessHandler(ps models.ProcessStatus) (model
 
 // Insert Process handler
 func (psqlPH *psqlProcHandler) PostProcessHandler(ps models.ProcessStatus) error {
-	ps.CreatedAt = time.Now()
+	ps.CreatedAt = models.NowDbpg()
 	err := psqlPH.DBpg.Insert(&ps)
 
 	if err != nil {
@@ -51,7 +50,7 @@ func (psqlPH *psqlProcHandler) PostProcessHandler(ps models.ProcessStatus) error
 
 // Update Process Handler
 func (psqlPH *psqlProcHandler) UpdateProcessHandler(ps models.ProcessStatus, col []string) error {
-	ps.UpdatedAt = time.Now()
+	ps.UpdatedAt = models.NowDbpg()
 
 	_, err := psqlPH.DBpg.Model(&ps).Column(col...).
 		Where("process_id = ?", ps.ProcessID).
