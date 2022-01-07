@@ -127,8 +127,7 @@ func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.A
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 		// send notif app failed
-		notif.GcApplication(accChannel, "failed")
-		_ = reg.rrr.SendNotification(c, notif, "")
+		_ = reg.appFailedNotification(c, accChannel)
 		return err
 	}
 
@@ -169,4 +168,21 @@ func (reg *registrationsUseCase) CheckApplicationByCIF(c echo.Context, pl interf
 	}
 
 	return app
+}
+
+func (reg *registrationsUseCase) appFailedNotification(c echo.Context, acc models.Account) error {
+	var notif models.PdsNotification
+	appProcessExisted, err := reg.phUC.IsProcessedAppExisted(c, acc)
+
+	if err != nil {
+		return err
+	}
+
+	if appProcessExisted {
+		return nil
+	}
+
+	notif.GcApplication(acc, "failed")
+
+	return reg.rrr.SendNotification(c, notif, "")
 }

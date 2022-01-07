@@ -363,8 +363,6 @@ func (reg *registrationsUseCase) PostSavingAccount(c echo.Context, pl models.Pay
 }
 
 func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.PayloadAppNumber, fn models.FuncAfterGC) error {
-	var notif models.PdsNotification
-
 	acc, err := reg.CheckApplication(c, pl)
 
 	if err != nil {
@@ -399,8 +397,7 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 
 	if err != nil {
 		// send notif app failed
-		notif.GcApplication(acc, "failed")
-		_ = reg.rrr.SendNotification(c, notif, "")
+		_ = reg.appFailedNotification(c, acc)
 
 		return err
 	}
@@ -448,7 +445,8 @@ func (reg *registrationsUseCase) openCore(c echo.Context, acc *models.Account) e
 	}
 
 	// update Core open Status
-	reg.coreOpenStatus(c, *acc)
+	_ = reg.regRepo.UpdateCoreOpen(c, acc)
+
 	return nil
 }
 
@@ -492,33 +490,6 @@ func (reg *registrationsUseCase) concurrentlyAfterOpenGoldcard(c echo.Context, a
 	}()
 
 	return nil
-}
-
-func (reg *registrationsUseCase) upsertProcessHandler(c echo.Context, acc *models.Account, errCore error) {
-	var ps models.ProcessStatus
-	err := ps.MapInsertProcessStatus(models.FinalAppProcessType, models.ApplicationTableName, acc.Application.ID, errCore)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
-
-	err = reg.phUC.PostProcessHandler(c, ps)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
-}
-
-// function to update status core open if success
-func (reg *registrationsUseCase) coreOpenStatus(c echo.Context, acc models.Account) {
-	err := reg.regRepo.UpdateCoreOpen(c, &acc)
-
-	if err != nil {
-		logger.Make(c, nil).Debug(err)
-		return
-	}
 }
 
 // Function to Generate Application Form

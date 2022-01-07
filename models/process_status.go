@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -23,18 +22,6 @@ type ProcessStatus struct {
 	Error       string    `json:"error"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
-}
-
-func (ps *ProcessStatus) MapInsertProcessStatus(processType, tableName string, processID int64, reason interface{}) error {
-	rString := fmt.Sprintf("%v", reason)
-
-	ps.Reason = rString
-	ps.ProcessID = processID
-	ps.ProcessType = processType
-	ps.TblName = tableName
-	ps.Error = "true"
-
-	return nil
 }
 
 func (ps *ProcessStatus) MapUpdateProcessStatus(tableName string, processID int64) error {

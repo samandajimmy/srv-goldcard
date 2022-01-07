@@ -22,12 +22,37 @@ func ProcessHandUseCase(phRepo process_handler.Repository, regRepo registrations
 	}
 }
 
-// PostProcessHandler represent Usecase push process handler
-func (ph *processHandUseCase) PostProcessHandler(c echo.Context, ps models.ProcessStatus) error {
+func (ph *processHandUseCase) IsProcessedAppExisted(c echo.Context, acc models.Account) (bool, error) {
+	ps := models.ProcessStatus{
+		ProcessID: acc.Application.ID,
+		TblName:   models.ApplicationTableName,
+	}
+
+	psExisting, err := ph.phRepo.GetProcessHandler(ps)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return false, err
+	}
+
+	return psExisting.ID != 0, nil
+}
+
+func (ph *processHandUseCase) UpsertAppProcess(c echo.Context, acc *models.Account, errStr string) error {
+	ps := models.ProcessStatus{
+		Reason:      errStr,
+		ProcessID:   acc.Application.ID,
+		ProcessType: models.FinalAppProcessType,
+		TblName:     models.ApplicationTableName,
+		Error:       "true",
+	}
+
 	res, err := ph.phRepo.GetProcessHandler(ps)
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
+
 		return err
 	}
 
@@ -46,6 +71,7 @@ func (ph *processHandUseCase) PostProcessHandler(c echo.Context, ps models.Proce
 
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
+
 		return err
 	}
 

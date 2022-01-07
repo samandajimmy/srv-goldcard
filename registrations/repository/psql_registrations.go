@@ -548,6 +548,8 @@ func (regis *psqlRegistrationsRepository) UpdateCoreOpen(c echo.Context, acc *mo
 		Where("application_number = ?", acc.Application.ApplicationNumber).Update()
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
 		return err
 	}
 
