@@ -12,10 +12,11 @@ func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, p
 	err := reg.briRegister(c, acc, pl)
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
 		// insert error to process handler
 		// ubah status error jadi true di table process_statuses
-		go reg.upsertProcessHandler(c, acc, err)
-		logger.Make(c, nil).Debug(err)
+		go func() { _ = reg.phUC.UpsertAppProcess(c, acc, err.Error()) }()
+
 		return err
 	}
 
@@ -26,7 +27,8 @@ func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, p
 		if len(err) > 0 {
 			// insert error to process handler
 			// ubah status error jadi true di table proess_statuses
-			go reg.upsertProcessHandler(c, acc, err[0])
+			go func() { _ = reg.phUC.UpsertAppProcess(c, acc, err[0].Error()) }()
+
 			logger.Make(c, nil).Debug(err[0])
 		}
 	}()

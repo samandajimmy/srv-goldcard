@@ -8,6 +8,7 @@ import (
 
 // UseCase represent the process handler usecases
 type UseCase interface {
-	PostProcessHandler(c echo.Context, ps models.ProcessStatus) error
+	IsProcessedAppExisted(c echo.Context, acc models.Account) (bool, error)
+	UpsertAppProcess(c echo.Context, acc *models.Account, errStr string) error
 	UpdateErrorStatus(c echo.Context, acc models.Account) error
 }
