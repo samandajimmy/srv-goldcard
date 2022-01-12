@@ -397,7 +397,7 @@ func (reg *registrationsUseCase) FinalRegistration(c echo.Context, pl models.Pay
 
 	if err != nil {
 		// send notif app failed
-		_ = reg.appFailedNotification(c, acc)
+		_ = reg.appNotification(c, acc, "failed", true)
 
 		return err
 	}

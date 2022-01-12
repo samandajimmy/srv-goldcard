@@ -119,7 +119,6 @@ func (reg *registrationsUseCase) RefreshAppTimeoutJob() {
 
 func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.Account,
 	briPl models.PayloadBriRegister, accChan chan models.Account) error {
-	var notif models.PdsNotification
 	accChannel := <-accChan
 	// function to apply to bri
 	err := reg.briApply(c, acc, briPl)
@@ -127,13 +126,14 @@ func (reg *registrationsUseCase) afterOpenGoldcard(c echo.Context, acc *models.A
 	if err != nil {
 		logger.Make(c, nil).Debug(err)
 		// send notif app failed
-		_ = reg.appFailedNotification(c, accChannel)
+		_ = reg.appNotification(c, accChannel, "failed", true)
+
 		return err
 	}
 
 	// send notif app succeeded
-	notif.GcApplication(accChannel, "succeeded")
-	_ = reg.rrr.SendNotification(c, notif, "")
+	_ = reg.appNotification(c, accChannel, "succeeded", true)
+
 	return nil
 }
 
@@ -170,7 +170,7 @@ func (reg *registrationsUseCase) CheckApplicationByCIF(c echo.Context, pl interf
 	return app
 }
 
-func (reg *registrationsUseCase) appFailedNotification(c echo.Context, acc models.Account) error {
+func (reg *registrationsUseCase) appNotification(c echo.Context, acc models.Account, notifType string, existDependent bool) error {
 	var notif models.PdsNotification
 	appProcessExisted, err := reg.phUC.IsProcessedAppExisted(c, acc)
 
@@ -178,11 +178,12 @@ func (reg *registrationsUseCase) appFailedNotification(c echo.Context, acc model
 		return err
 	}
 
-	if appProcessExisted {
+	// if it has been processed, do not send notification
+	if appProcessExisted && existDependent {
 		return nil
 	}
 
-	notif.GcApplication(acc, "failed")
+	notif.GcApplication(acc, notifType)
 
 	return reg.rrr.SendNotification(c, notif, "")
 }

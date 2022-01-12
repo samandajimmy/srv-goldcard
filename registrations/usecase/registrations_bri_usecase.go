@@ -24,13 +24,11 @@ func (reg *registrationsUseCase) briApply(c echo.Context, acc *models.Account, p
 	go func() {
 		err := reg.uploadAppDocs(c, acc)
 
-		if len(err) > 0 {
-			// insert error to process handler
-			// ubah status error jadi true di table proess_statuses
-			go func() { _ = reg.phUC.UpsertAppProcess(c, acc, err[0].Error()) }()
-
-			logger.Make(c, nil).Debug(err[0])
+		if err != nil {
+			return
 		}
+
+		_ = reg.appNotification(c, *acc, "succeeded", false)
 	}()
 
 	return nil
@@ -74,7 +72,7 @@ func (reg *registrationsUseCase) briRegister(c echo.Context, acc *models.Account
 	return nil
 }
 
-func (reg *registrationsUseCase) uploadAppDocs(c echo.Context, acc *models.Account) []error {
+func (reg *registrationsUseCase) uploadAppDocs(c echo.Context, acc *models.Account) error {
 	// concurrently upload application documents to BRI
 	var errors []error
 
@@ -86,7 +84,15 @@ func (reg *registrationsUseCase) uploadAppDocs(c echo.Context, acc *models.Accou
 		}
 	}
 
-	return errors
+	if len(errors) > 0 {
+		// insert error to process handler
+		// ubah status error jadi true di table proess_statuses
+		go func() { _ = reg.phUC.UpsertAppProcess(c, acc, errors[0].Error()) }()
+
+		return errors[0]
+	}
+
+	return nil
 }
 
 func (reg *registrationsUseCase) UploadAppDoc(c echo.Context, brixkey string, doc models.Document) error {
@@ -107,6 +113,8 @@ func (reg *registrationsUseCase) UploadAppDoc(c echo.Context, brixkey string, do
 	err := api.RetryableBriPost(c, "/document", reqBody, &resp)
 
 	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
 		return err
 	}
 
