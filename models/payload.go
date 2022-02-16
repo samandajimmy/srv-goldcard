@@ -192,6 +192,7 @@ type PayloadActivations struct {
 	LastFourDigits    string `json:"lastFourDigits" validate:"required"`
 	BirthDate         string `json:"birthDate" validate:"required"`
 	ApplicationNumber string `json:"applicationNumber" validate:"required"`
+	IsForced          bool   `json:"isForced"`
 }
 
 // PayloadCardBlock a struct to store all payload for block a card

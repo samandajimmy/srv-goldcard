@@ -99,6 +99,8 @@ func (ra *restActivations) ActivationsToBRI(c echo.Context, acc models.Account, 
 	errBRI := api.RetryableBriPost(c, "/card/activation", reqBRIBody.RequestData, &respBRI)
 
 	if errBRI != nil {
+		logger.Make(c, nil).Debug(err)
+
 		return errBRI
 	}
 
