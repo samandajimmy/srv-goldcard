@@ -146,6 +146,28 @@ func (aUsecase *activationsUseCase) InquiryActivation(c echo.Context, acc models
 	return cardBal, errors
 }
 
+func (aUsecase *activationsUseCase) ForceActivation(c echo.Context, acc models.Account) (models.RespActivations, error) {
+	var respActNil models.RespActivations
+
+	appNumber := models.PayloadAppNumber{
+		ApplicationNumber: acc.Application.ApplicationNumber,
+	}
+
+	acc, err := aUsecase.rUsecase.CheckApplication(c, appNumber)
+
+	if err != nil {
+		return respActNil, err
+	}
+
+	err = aUsecase.goldcardActivation(c, &acc, models.PayloadActivations{IsForced: true})
+
+	if err != nil {
+		return respActNil, models.ErrPostActivationsFailed
+	}
+
+	return respActNil, err
+}
+
 func (aUsecase *activationsUseCase) PostActivations(c echo.Context, pa models.PayloadActivations) (models.RespActivations, error) {
 	var respActNil models.RespActivations
 	acc, err := aUsecase.rUsecase.CheckApplication(c, pa)
@@ -344,6 +366,24 @@ func (aUsecase *activationsUseCase) reRegistration(c echo.Context, acc models.Ac
 }
 
 func (aUsecase *activationsUseCase) briActivation(c echo.Context, acc *models.Account, pa models.PayloadActivations) error {
+	fnMapBillKey := func(c echo.Context, acc *models.Account) error {
+		// get card information
+		cardInformation, err := aUsecase.trRepo.GetBRICardInformation(c, *acc)
+
+		if err != nil {
+			return err
+		}
+
+		acc.Card.EncryptedCardNumber = cardInformation.BillKey
+		acc.Card.ActivatedDate = time.Now()
+
+		return nil
+	}
+
+	if pa.IsForced {
+		return fnMapBillKey(c, acc)
+	}
+
 	if acc.Card.EncryptedCardNumber != "" {
 		return nil
 	}
@@ -351,22 +391,14 @@ func (aUsecase *activationsUseCase) briActivation(c echo.Context, acc *models.Ac
 	err := aUsecase.arRepo.ActivationsToBRI(c, *acc, pa)
 
 	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
 		return err
 	}
 
-	// get card information
-	cardInformation, err := aUsecase.trRepo.GetBRICardInformation(c, *acc)
+	err = fnMapBillKey(c, acc)
 
 	if err != nil {
-		logger.Make(c, nil).Debug(err)
-
 		return err
 	}
-
-	acc.Card.EncryptedCardNumber = cardInformation.BillKey
-	acc.Card.ActivatedDate = time.Now()
 
 	return nil
 }

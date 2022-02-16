@@ -22,6 +22,7 @@ func NewActivationsHandler(echoGroup models.EchoGroup, aUseCase activations.UseC
 	echoGroup.API.POST("/activations", handler.Activations)
 	echoGroup.API.POST("/re-activations", handler.Reactivations)
 	echoGroup.API.POST("/activations/inquiry", handler.ActivationsInquiry)
+	echoGroup.API.POST("/activations/force", handler.ActivationsForce)
 }
 
 // ActivationsInquiry a handler to handle goldcard inquiry activations
@@ -56,6 +57,40 @@ func (ah *ActivationsHandler) ActivationsInquiry(c echo.Context) error {
 
 	ah.response.SetResponse("", &err)
 	return ah.response.Body(c, nil)
+}
+
+func (ah *ActivationsHandler) ActivationsForce(c echo.Context) error {
+	var pl models.PayloadAppNumber
+
+	if err := c.Bind(&pl); err != nil {
+		ah.respErrors.SetTitle(models.MessageUnprocessableEntity)
+		ah.response.SetResponse("", &ah.respErrors)
+
+		return ah.response.Body(c, err)
+	}
+
+	if err := c.Validate(pl); err != nil {
+		ah.respErrors.SetTitle(err.Error())
+		ah.response.SetResponse("", &ah.respErrors)
+
+		return ah.response.Body(c, err)
+	}
+
+	acc := models.Account{}
+	acc.Application.ApplicationNumber = pl.ApplicationNumber
+
+	resp, err := ah.aUsecase.ForceActivation(c, acc)
+
+	if err != nil {
+		ah.respErrors.SetTitle(err.Error())
+		ah.response.SetResponse("", &ah.respErrors)
+
+		return ah.response.Body(c, err)
+	}
+
+	ah.response.SetResponse(resp, &ah.respErrors)
+
+	return ah.response.Body(c, err)
 }
 
 // Activations a handler to activations
