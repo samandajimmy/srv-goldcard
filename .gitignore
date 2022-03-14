@@ -1,5 +1,5 @@
 vendor/
-article_clean
+bin
 _*
 *.test
 .DS_Store
@@ -13,3 +13,4 @@ srv-goldcard
 outputs
 latest_commit_hash
 *.bak
+ssl_cert*

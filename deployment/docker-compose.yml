@@ -1,0 +1,21 @@
+version: '3'
+services:
+  db:
+    container_name: goldcard-db
+    image: postgres:9.6-alpine
+    ports:
+      - 54321:5432
+    environment:
+      - POSTGRES_HOST_AUTH_METHOD=trust
+
+  app:
+    container_name: goldcard-app
+    build:
+      context: ${APP_PATH}/.
+      dockerfile: deployment/Dockerfile
+    depends_on:
+      - db
+    ports:
+      - 8084:8084
+    env_file:
+      - ${APP_PATH}/.env
