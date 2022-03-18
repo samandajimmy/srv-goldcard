@@ -18,6 +18,41 @@ func NewRestTransactions() transaction.RestRepository {
 	return &restTransactions{}
 }
 
+func (ra *restTransactions) GetBRIAppStatus(c echo.Context, brixkey string) (model.BRIAppStatus, error) {
+	resp := api.BriResponse{}
+	appStatus := model.BRIAppStatus{}
+	reqBody := map[string]interface{}{
+		"briXkey": brixkey,
+	}
+
+	err := api.RetryableBriPost(c, "/card/appstatus", reqBody, &resp)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return appStatus, err
+	}
+
+	data := resp.Data[0]
+	mrshlCardInfo, err := json.Marshal(data)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return appStatus, err
+	}
+
+	err = json.Unmarshal(mrshlCardInfo, &appStatus)
+
+	if err != nil {
+		logger.Make(c, nil).Debug(err)
+
+		return appStatus, err
+	}
+
+	return appStatus, nil
+}
+
 func (ra *restTransactions) GetBRICardInformation(c echo.Context, acc model.Account) (model.BRICardBalance, error) {
 	var briCardBal model.BRICardBalance
 	respBRI := api.BriResponse{}
@@ -42,6 +77,7 @@ func (ra *restTransactions) GetBRICardInformation(c echo.Context, acc model.Acco
 		return briCardBal, err
 	}
 
+	briCardBal.JSON = mrshlCardInfo
 	err = json.Unmarshal(mrshlCardInfo, &briCardBal)
 
 	if err != nil {

@@ -100,19 +100,22 @@ func Dump(strct ...interface{}) {
 	fmt.Println("DEBUGGING ONLY")
 }
 
-// MakeStructToJSON to get a json string of struct
-// JUST FOR DEBUGGING TOOL
-func MakeStructToJSON(strct interface{}) {
-	b, err := json.Marshal(strct)
+func DumpJson(args ...interface{}) {
+	var b []byte
+	var err error
 
-	if err != nil {
-		Make(nil, nil).Fatal(err)
+	for idx, data := range args {
+		b, err = json.Marshal(data)
 
-		return
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		args[idx] = string(b)
 	}
 
 	fmt.Println("DEBUGGING ONLY")
-	MakeWithoutReportCaller(nil, nil).Debug(string(b))
+	spew.Dump(args)
 	fmt.Println("DEBUGGING ONLY")
 }
 

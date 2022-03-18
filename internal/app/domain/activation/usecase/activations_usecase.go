@@ -201,16 +201,11 @@ func (aUsecase *activationsUseCase) PostReactivations(c echo.Context, pa model.P
 		return respActNil, model.ErrCannotReactivation
 	}
 
-	// make reactivation available
-	acc.Card.EncryptedCardNumber = ""
-	acc.AccountNumber = ""
-	response, err := aUsecase.doActivation(c, &acc, pa)
+	defer func() {
+		if err != nil {
+			return
+		}
 
-	if err != nil {
-		return response, err
-	}
-
-	go func() {
 		cardStatus.IsReactivated = model.BoolYes
 		cardStatus.ReactivatedDate = model.NowDbpg()
 		cols := []string{"is_reactivated", "last_encrypted_card_number", "reactivated_date"}
@@ -221,11 +216,32 @@ func (aUsecase *activationsUseCase) PostReactivations(c echo.Context, pa model.P
 		}
 	}()
 
+	if pa.IsForced {
+		err = aUsecase.goldcardActivation(c, &acc, pa)
+
+		return respActNil, err
+	}
+
+	// make reactivation available
+	acc.Card.EncryptedCardNumber = ""
+	acc.AccountNumber = ""
+	response, err := aUsecase.doActivation(c, &acc, pa)
+
+	if err != nil {
+		return response, err
+	}
+
 	return response, nil
 }
 
 func (aUsecase *activationsUseCase) ValidateActivation(c echo.Context, pa model.PayloadActivations) model.ResponseErrors {
 	var errors model.ResponseErrors
+
+	// skip validation when its forced
+	if pa.IsForced {
+		return errors
+	}
+
 	// get account and check app number
 	acc, err := aUsecase.rUsecase.CheckApplication(c, pa)
 

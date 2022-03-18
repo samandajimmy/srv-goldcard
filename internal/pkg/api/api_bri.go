@@ -14,8 +14,6 @@ import (
 	"srv-goldcard/internal/pkg/logger"
 	"time"
 
-	_apiRequestsUseCase "srv-goldcard/internal/app/domain/apirequest/usecase"
-
 	"github.com/labstack/echo"
 )
 
@@ -128,7 +126,7 @@ func BriPost(c echo.Context, endpoint string, reqBody, resp interface{}) error {
 	res.SetRC()
 
 	go func() {
-		_ = _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, bri.API, reqBody, resp)
+		// _ = _apiRequestsUseCase.ARUseCase.PostAPIRequest(c, r.StatusCode, bri.API, reqBody, resp)
 	}()
 
 	if r.StatusCode != http.StatusOK {

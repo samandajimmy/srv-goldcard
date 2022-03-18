@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/json"
 	"reflect"
 	"time"
 
@@ -74,6 +75,12 @@ type BRICardBalance struct {
 	BlockCode       string  `json:"blockCode"`
 	TrfStatus       string  `json:"trfStatus"`
 	BlockedDate     string  `json:"blockedDate"`
+	JSON            json.RawMessage
+}
+
+type BRIAppStatus struct {
+	AppCode   string `json:"appCode"`
+	AppStatus string `json:"appStatus"`
 }
 
 // MappingTrx is a struct to mapping trx data

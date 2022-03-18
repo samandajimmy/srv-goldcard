@@ -23,6 +23,7 @@ type Repository interface {
 
 // RestRepository represent the rest transactions repository contract
 type RestRepository interface {
+	GetBRIAppStatus(c echo.Context, brixkey string) (model.BRIAppStatus, error)
 	GetBRICardInformation(c echo.Context, acc model.Account) (model.BRICardBalance, error)
 	CorePaymentInquiry(c echo.Context, pl model.PlPaymentInquiry, acc model.Account) (map[string]interface{}, error)
 	PostPaymentTransactionToCore(c echo.Context, bill model.Billing) error

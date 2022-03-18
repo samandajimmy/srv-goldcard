@@ -14,3 +14,4 @@ outputs
 latest_commit_hash
 *.bak
 ssl_cert*
+*.csv

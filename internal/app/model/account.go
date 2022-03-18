@@ -168,3 +168,18 @@ func mappingMaritalStatus(ms int64) int64 {
 
 	return int64(newMs)
 }
+
+type SyncActivation struct {
+	Brixkey             string    // 	a.brixkey,
+	Name                string    // 	concat(pi2.first_name, ' ', pi2.last_name) as name,
+	Email               string    // 	pi2.email,
+	Nik                 string    // 	pi2.nik,
+	Cif                 string    // 	a.cif,
+	HandPhoneNumber     string    // 	pi2.hand_phone_number,
+	ActivatedDate       time.Time // 	c.activated_date,
+	EncryptedCardNumber string    // 	c.encrypted_card_number,
+	CreditLimit         string    // 	coalesce(histlu.card_limit, app.card_limit) credit_limit,
+	ApplicationStatus   string    // 	app.status application_status,
+	AccountStatus       string    // 	a.status account_status,
+	CardStatus          string    // 	c.status card_status
+}

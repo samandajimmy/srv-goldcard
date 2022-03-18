@@ -23,6 +23,9 @@ import (
 	_cardsHttpDelivery "srv-goldcard/internal/app/domain/card/delivery/http"
 	_cardsRepository "srv-goldcard/internal/app/domain/card/repository"
 	_cardsUseCase "srv-goldcard/internal/app/domain/card/usecase"
+	_datasyncHttpDelivery "srv-goldcard/internal/app/domain/datasync/delivery/http"
+	_datasyncRepository "srv-goldcard/internal/app/domain/datasync/repository"
+	_datasyncUseCase "srv-goldcard/internal/app/domain/datasync/usecase"
 	_healthsHttpDelivery "srv-goldcard/internal/app/domain/health/delivery/http"
 	_processHandlerRepository "srv-goldcard/internal/app/domain/process_handler/repository"
 	_processHandlerUseCase "srv-goldcard/internal/app/domain/process_handler/usecase"
@@ -103,6 +106,7 @@ func main() {
 	cardsRepository := _cardsRepository.NewPsqlCardsRepository(dbConn, dbpg)
 	restCardsRepo := _cardsRepository.NewRestCards()
 	productReqsRepo := _productreqsRepository.NewPsqlProductReqsRepository(dbConn, dbpg)
+	datasyncRepo := _datasyncRepository.NewDatasyncRepository(dbConn, dbpg)
 
 	// USECASES
 	productreqsUseCase := _productreqsUseCase.ProductReqsUseCase(productReqsRepo)
@@ -115,6 +119,7 @@ func main() {
 	billingsUseCase := _billingsUseCase.BillingsUseCase(billingsRepository, billingsRestRepository, restRegistrationsRepo, transactionsUseCase)
 	updateLimitUseCase := _updateLimitUseCase.UpdateLimitUseCase(restActivationRepository, transactionsRepository, restTransactionsRepo, transactionsUseCase, registrationsRepository, restRegistrationsRepo, registrationsUseCase, updateLimitRepo, restUpdateLimitRepo)
 	cardsUseCase := _cardsUseCase.CardsUseCase(cardsRepository, restCardsRepo, restTransactionsRepo, transactionsUseCase, registrationsRepository)
+	datasyncUsecase := _datasyncUseCase.NewDatasyncUsecase(datasyncRepo, restTransactionsRepo)
 
 	// DELIVERIES
 	_productreqsHttpsDelivery.NewProductreqsHandler(echoGroup, productreqsUseCase)
@@ -125,6 +130,7 @@ func main() {
 	_billingsHttpDelivery.NewBillingsHandler(echoGroup, billingsUseCase)
 	_updateLimitHttpDelivery.NewUpdateLimitHandler(echoGroup, updateLimitUseCase)
 	_cardsHttpDelivery.NewCardsHandler(echoGroup, cardsUseCase)
+	_datasyncHttpDelivery.NewDatasyncHandler(echoGroup, datasyncUsecase)
 	_healthsHttpDelivery.NewHealthsHandler(ech)
 
 	// PING
@@ -133,7 +139,7 @@ func main() {
 
 	// run refresh all token
 	_ = tokenUseCase.RefreshAllToken()
-	go registrationsUseCase.RefreshAppTimeoutJob()
+	// go registrationsUseCase.RefreshAppTimeoutJob()
 
 	err = ech.Start(":" + os.Getenv(`PORT`))
 
@@ -148,6 +154,8 @@ func ping(echTx echo.Context) error {
 	response.Status = model.StatusSuccess
 	response.Message = "PONG!!"
 	response.Data = map[string]interface{}{
+		"appSlug":    AppSlug,
+		"appName":    AppName,
 		"appVersion": AppVersion,
 		"appHash":    BuildHash,
 	}

@@ -149,11 +149,11 @@ func (ah *ActivationsHandler) Reactivations(c echo.Context) error {
 		return ah.response.Body(c, err)
 	}
 
-	if err := ah.aUsecase.ValidateActivation(c, pa); err.Title != "" {
-		ah.response.SetResponse("", &err)
+	// if err := ah.aUsecase.ValidateActivation(c, pa); err.Title != "" {
+	// ah.response.SetResponse("", &err)
 
-		return ah.response.Body(c, nil)
-	}
+	// return ah.response.Body(c, nil)
+	// }
 
 	resp, err := ah.aUsecase.PostReactivations(c, pa)
 
