@@ -1,0 +1,4 @@
+ALTER TABLE gte_convertions
+ADD encrypted_card_number VARCHAR(20) DEFAULT NULL,
+ADD status VARCHAR(50) DEFAULT NULL,
+ADD reason VARCHAR(255) DEFAULT NULL;
